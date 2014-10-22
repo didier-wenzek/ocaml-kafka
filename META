@@ -1,0 +1,7 @@
+name="okafka"
+version="0.1.0"
+description="OCaml bindings for Kafka"
+requires=""
+archive(byte) = "okafka.cma"
+archive(native) = "okafka.cmxa"
+
