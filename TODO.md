@@ -1,0 +1,22 @@
+ - (X) Consumer,Producer,Topic CRUD.
+ - (X) Produce and consume messages.
+ - (X) Support for topic properties.
+ - ( ) make install.
+ - ( ) Support for queues.
+ - ( ) Improve error handling on consume : no-more-message, timeout, error.
+ - ( ) Free message once consumed using rd_kafka_message_destroy.
+ - ( ) Support for delivery report, error, log, stats callbacks.
+ - ( ) Helper function Kafka.conf_properties_show.
+ - ( ) Support for topic properties.
+ - ( ) Support for partitionner callback.
+ - ( ) Specific offsets: Kafka.offset_stored, Kafka.offset_tail(n).
+ - ( ) Wrap messages in message enveloppes with topic,partition,offset,payload,key.
+ - ( ) Support to consume batch of messages.
+ - ( ) Support to consume messages through a callback.
+ - ( ) Support for stored offsets.
+ - ( ) Support for keys.
+ - ( ) Support to produce batch of messages.
+ - ( ) Support for meta-data API.
+ - ( ) Function: Kafka.version: unit -> string.
+ - ( ) Function: Kafka.wait_destroyed.
+ - ( ) Function: Kafka.outq_len.

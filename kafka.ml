@@ -42,7 +42,7 @@ type error =
   | PARTITION_EOF                       (* Reached the end of the topic+partition queue on the broker.  Not really an error. *)
   | UNKNOWN_PARTITION                   (* Permanent: Partition does not exist in cluster. *)
   | FS                                  (* File or filesystem error *)
-  | UNKNOWN_TOPIC                       (* Permanent: * Topic does not exist  in cluster. *)
+  | UNKNOWN_TOPIC                       (* Permanent: Topic does not exist  in cluster. *)
   | ALL_BROKERS_DOWN                    (* All broker connections  are down. *)
   | INVALID_ARG                         (* Invalid argument, or invalid configuration *)
   | TIMED_OUT                           (* Operation timed out *)

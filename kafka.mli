@@ -33,12 +33,27 @@ val topic_partition_available: topic -> int -> bool
 val produce: topic -> int -> string -> unit
 val partition_unassigned: int
 
-(* [consume_start topic partition offset] starts consuming messages from the given topic/partition. *)
+(* [consume_start topic partition offset]
+  starts consuming messages for topic [topic] and [partition] at [offset].
+
+  Offset may either be a proper offset (0..N)
+  or one of the the special offsets:
+  [Kafka.offset_beginning], [Kafka.offset_end].
+  
+  rdkafka will attempt to keep 'queued.min.messages' (consumer config property)
+  messages in the local queue by repeatedly fetching batches of messages
+  from the broker until the threshold is reached.
+
+  Raise an Error of error * string on error.
+*)
 val consume_start : topic -> int -> int64 -> unit
 val offset_beginning: int64
 val offset_end: int64
 
-(* [consume_stop topic partition] stops consuming messages from the given topic/partition. *)
+(* [consume_stop topic partition]
+   stop consuming messages for topic [topic] and [partition],
+   purging all messages currently in the local queue.
+*)
 val consume_stop : topic -> int -> unit
 
 type message = {
@@ -48,7 +63,12 @@ type message = {
     payload: string;
 }
 
-(* [consume topic partition timeout_ms] consumes a message. *)
+(* [consume topic partition timeout_ms]
+   consumes a single message from topic [topic] and [partition],
+   waiting at most [timeout_ms] milli-seconds for a message to be received.
+
+   Consumer must have been previously started with [Kafka.consume_start].
+*)
 val consume : topic -> int -> int -> int64*string
 
 type error =
