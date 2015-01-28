@@ -4,9 +4,8 @@
  - ( ) make install.
  - ( ) Support for queues.
  - ( ) Improve error handling on consume : no-more-message, timeout, error.
- - ( ) Free message once consumed using rd_kafka_message_destroy.
+ - (X) Free messages once consumed using rd_kafka_message_destroy.
  - ( ) Support for delivery report, error, log, stats callbacks.
- - ( ) Helper function Kafka.conf_properties_show.
  - ( ) Support for topic properties.
  - ( ) Support for partitionner callback.
  - ( ) Specific offsets: Kafka.offset_stored, Kafka.offset_tail(n).

@@ -328,6 +328,8 @@ value ocaml_kafka_consume(value caml_kafka_topic, value caml_kafka_partition, va
   caml_offset_msg_pair = caml_alloc(2, 0);
   Store_field( caml_offset_msg_pair, 0, caml_copy_int64(message->offset) );
   Store_field( caml_offset_msg_pair, 1, caml_msg );
+
+  rd_kafka_message_destroy(message);
   CAMLreturn(caml_offset_msg_pair);
 }
 
