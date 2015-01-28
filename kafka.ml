@@ -72,5 +72,5 @@ type error =
 exception Error of error * string
 
 let _ = 
-  Callback.register_exception "kakfa.error" (Error(UNKNOWN,"msg string"));
+  Callback.register_exception "kafka.error" (Error(UNKNOWN,"msg string"));
 

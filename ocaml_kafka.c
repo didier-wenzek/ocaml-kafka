@@ -16,6 +16,7 @@
 /* Must be synchronized with Kafka.Error. */
 static int const ERROR_CODES[] = {
     // not an error RD_KAFKA_RESP_ERR__BEGIN
+    RD_KAFKA_RESP_ERR__BAD_MSG,
     RD_KAFKA_RESP_ERR__BAD_COMPRESSION,
     RD_KAFKA_RESP_ERR__DESTROY,
     RD_KAFKA_RESP_ERR__FAIL,
