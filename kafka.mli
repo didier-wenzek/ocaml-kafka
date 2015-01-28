@@ -1,20 +1,44 @@
+(* Handler to a cluster of kafka brokers. *)
 type handler
 
+(* Create a kafka handler aimed to consume messages.
+
+ - A single option is required : "metadata.broker.list", which is a comma sepated list of "host:port".
+ - For a list of options,
+   see https://github.com/edenhill/librdkafka/blob/master/CONFIGURATION.md
+   and https://kafka.apache.org/documentation.html#configuration
+*)
 val new_consumer : (string*string) list -> handler
+
+(* Create a kafka handler aimed to consume messages.
+
+ - A single option is required : "metadata.broker.list", which is a comma sepated list of "host:port".
+ - For a list of options,
+   see https://github.com/edenhill/librdkafka/blob/master/CONFIGURATION.md
+   and https://kafka.apache.org/documentation.html#configuration
+*)
 val new_producer : (string*string) list -> handler
 
 val destroy_handler : handler -> unit
 val handler_name : handler -> string
 
+(* A named topic to which message can be produced or consumed. *)
 type topic
 val new_topic : handler -> string -> topic
 val destroy_topic : topic -> unit
 val topic_name : topic -> string
 val topic_partition_available: topic -> int -> bool
 
+(* [produce topic partition message] *)
 val produce: topic -> int -> string -> unit
+val partition_unassigned: int
 
+(* [consume_start topic partition offset] starts consuming messages from the given topic/partition. *)
 val consume_start : topic -> int -> int64 -> unit
+val offset_beginning: int64
+val offset_end: int64
+
+(* [consume_stop topic partition] stops consuming messages from the given topic/partition. *)
 val consume_stop : topic -> int -> unit
 
 type message = {
@@ -24,6 +48,7 @@ type message = {
     payload: string;
 }
 
+(* [consume topic partition timeout_ms] consumes a message. *)
 val consume : topic -> int -> int -> int64*string
 
 type error =

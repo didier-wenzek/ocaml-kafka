@@ -16,6 +16,10 @@ external produce: topic -> int -> string -> unit = "ocaml_kafka_produce"
 external consume_start : topic -> int -> int64 -> unit = "ocaml_kafka_consume_start"
 external consume_stop : topic -> int -> unit = "ocaml_kafka_consume_stop"
 
+let partition_unassigned = -1
+let offset_beginning = -2L
+let offset_end = -1L
+
 type message = {
     topic: string;
     partition: int;
