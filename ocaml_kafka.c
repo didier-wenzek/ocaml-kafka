@@ -303,7 +303,7 @@ value ocaml_kafka_consume_start(value caml_kafka_topic, value caml_kafka_partiti
   int err = rd_kafka_consume_start(topic, partition, offset);
   if (err) {
      rd_kafka_resp_err_t rd_errno = rd_kafka_errno2err(errno);
-     RAISE(rd_errno, "Failed to start consume (%s)", rd_kafka_err2str(rd_errno));
+     RAISE(rd_errno, "Failed to start consuming messages (%s)", rd_kafka_err2str(rd_errno));
   }
 
   CAMLreturn(Val_unit);
@@ -319,7 +319,7 @@ value ocaml_kafka_consume_stop(value caml_kafka_topic, value caml_kafka_partitio
   int err = rd_kafka_consume_stop(topic, partition);
   if (err) {
      rd_kafka_resp_err_t rd_errno = rd_kafka_errno2err(errno);
-     RAISE(rd_errno, "Failed to stop consume (%s)", rd_kafka_err2str(rd_errno));
+     RAISE(rd_errno, "Failed to stop consuming messages (%s)", rd_kafka_err2str(rd_errno));
   }
 
   CAMLreturn(Val_unit);
@@ -384,6 +384,23 @@ value ocaml_kafka_produce(value caml_kafka_topic, value caml_kafka_partition, va
   if (err) {
      rd_kafka_resp_err_t rd_errno = rd_kafka_errno2err(errno);
      RAISE(rd_errno, "Failed to produce message (%s)", rd_kafka_err2str(rd_errno));
+  }
+
+  CAMLreturn(Val_unit);
+}
+
+extern CAMLprim
+value ocaml_kafka_store_offset(value caml_kafka_topic, value caml_kafka_partition, value caml_kafka_offset)
+{
+  CAMLparam3(caml_kafka_topic,caml_kafka_partition,caml_kafka_offset);
+
+  rd_kafka_topic_t *topic = get_handler(caml_kafka_topic);
+  int32 partition = Int_val(caml_kafka_partition);
+  int64 offset = Int64_val(caml_kafka_offset);
+
+  rd_kafka_resp_err_t rd_errno = rd_kafka_offset_store(topic, partition, offset);
+  if (rd_errno) {
+     RAISE(rd_errno, "Failed to store offset (%s)", rd_kafka_err2str(rd_errno));
   }
 
   CAMLreturn(Val_unit);

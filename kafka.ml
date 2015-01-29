@@ -19,12 +19,15 @@ external consume_stop : topic -> int -> unit = "ocaml_kafka_consume_stop"
 let partition_unassigned = -1
 let offset_beginning = -2L
 let offset_end = -1L
+let offset_stored = -1000L
+let offset_tail n = Int64.sub (-2000L) (Int64.of_int n)
 
 type message =
   | Message of topic * int * int64 * string              (* topic, partition, offset, payload *)
   | PartitionEnd of topic * int * int64                  (* topic, partition, offset *)
 
 external consume : topic -> int -> int -> message = "ocaml_kafka_consume"
+external store_offset : topic -> int -> int64 -> unit = "ocaml_kafka_store_offset"
 
 type error =
   (* Internal errors to rdkafka: *)

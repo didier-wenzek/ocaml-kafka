@@ -49,6 +49,8 @@ val partition_unassigned: int
 val consume_start : topic -> int -> int64 -> unit
 val offset_beginning: int64
 val offset_end: int64
+val offset_stored: int64
+val offset_tail: int -> int64
 
 (* [consume_stop topic partition]
    stop consuming messages for topic [topic] and [partition],
@@ -67,6 +69,16 @@ type message =
    Consumer must have been previously started with [Kafka.consume_start].
 *)
 val consume : topic -> int -> int -> message
+
+(* [store_offset topic partition offset]
+   stores [offset] for given [topic] and [partition].
+
+   The offset will be commited (written) to the offset store according to the topic properties:
+   - "offset.store.method" : "file" or "broker"
+   - "offset.store.path"
+   - "auto.commit.enable" : must be set to "false"
+*)
+val store_offset : topic -> int -> int64 -> unit
 
 type error =
   (* Internal errors to rdkafka *)

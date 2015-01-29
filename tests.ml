@@ -20,9 +20,16 @@ let main =
    Kafka.produce producer_topic partition "message 2";
    
    (* Consume messages *)
-   let consume t p = match Kafka.consume t p timeout_ms with
+   let rec consume t p = match Kafka.consume t p timeout_ms with
       | Kafka.Message(_,_,_,msg) -> msg
-      | Kafka.PartitionEnd(_,_,_) -> assert false
+      | Kafka.PartitionEnd(_,_,_) -> (
+          Printf.fprintf stderr "No message for now\n%!";
+          consume t p
+      )
+      | exception Kafka.Error(Kafka.TIMED_OUT,_) -> (
+          Printf.fprintf stderr "Timeout after: %d ms\n%!" timeout_ms;
+          consume t p
+      )
    in
    let msg = consume consumer_topic partition in assert (msg = "message 0");
    let msg = consume consumer_topic partition in assert (msg = "message 1");
