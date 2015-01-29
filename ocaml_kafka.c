@@ -24,7 +24,6 @@ static int const ERROR_CODES[] = {
     RD_KAFKA_RESP_ERR__CRIT_SYS_RESOURCE,
     RD_KAFKA_RESP_ERR__RESOLVE,
     RD_KAFKA_RESP_ERR__MSG_TIMED_OUT,
-    RD_KAFKA_RESP_ERR__PARTITION_EOF,
     RD_KAFKA_RESP_ERR__UNKNOWN_PARTITION,
     RD_KAFKA_RESP_ERR__FS,
     RD_KAFKA_RESP_ERR__UNKNOWN_TOPIC,
@@ -36,7 +35,6 @@ static int const ERROR_CODES[] = {
     // not an error RD_KAFKA_RESP_ERR__END
     
     RD_KAFKA_RESP_ERR_UNKNOWN,
-    RD_KAFKA_RESP_ERR_NO_ERROR,
     RD_KAFKA_RESP_ERR_OFFSET_OUT_OF_RANGE,
     RD_KAFKA_RESP_ERR_INVALID_MSG,
     RD_KAFKA_RESP_ERR_UNKNOWN_TOPIC_OR_PART,
@@ -331,7 +329,7 @@ extern CAMLprim
 value ocaml_kafka_consume(value caml_kafka_topic, value caml_kafka_partition, value caml_kafka_timeout)
 {
   CAMLparam3(caml_kafka_topic,caml_kafka_partition,caml_kafka_timeout);
-  CAMLlocal2(caml_offset_msg_pair, caml_msg);
+  CAMLlocal2(caml_msg, caml_msg_payload);
 
   rd_kafka_topic_t *topic = get_handler(caml_kafka_topic);
   int32 partition = Int_val(caml_kafka_partition);
@@ -342,7 +340,23 @@ value ocaml_kafka_consume(value caml_kafka_topic, value caml_kafka_partition, va
      rd_kafka_resp_err_t rd_errno = rd_kafka_errno2err(errno);
      RAISE(rd_errno, "Failed to consume message (%s)", rd_kafka_err2str(rd_errno));
   }
-  if (message->err) {
+  else if (!message->err) {
+     caml_msg_payload = caml_alloc_string(message->len);
+     memcpy(String_val(caml_msg_payload), message->payload, message->len);
+
+     caml_msg = caml_alloc(4, 0);
+     Store_field( caml_msg, 0, caml_kafka_topic );
+     Store_field( caml_msg, 1, caml_kafka_partition );
+     Store_field( caml_msg, 2, caml_copy_int64(message->offset) );
+     Store_field( caml_msg, 3, caml_msg_payload );
+  }
+  else if (message->err == RD_KAFKA_RESP_ERR__PARTITION_EOF) {
+     caml_msg = caml_alloc(3, 1);
+     Store_field( caml_msg, 0, caml_kafka_topic );
+     Store_field( caml_msg, 1, caml_kafka_partition );
+     Store_field( caml_msg, 2, caml_copy_int64(message->offset) );
+  }
+  else {
      if (message->payload) {
         RAISE(message->err, "Consumed message with error (%s)", (const char *)message->payload);
      } else {
@@ -350,15 +364,10 @@ value ocaml_kafka_consume(value caml_kafka_topic, value caml_kafka_partition, va
      }
   }
 
-  caml_msg = caml_alloc_string(message->len);
-  memcpy(String_val(caml_msg), message->payload, message->len);
-
-  caml_offset_msg_pair = caml_alloc(2, 0);
-  Store_field( caml_offset_msg_pair, 0, caml_copy_int64(message->offset) );
-  Store_field( caml_offset_msg_pair, 1, caml_msg );
-
-  rd_kafka_message_destroy(message);
-  CAMLreturn(caml_offset_msg_pair);
+  if (message) {
+     rd_kafka_message_destroy(message);
+  }
+  CAMLreturn(caml_msg);
 }
 
 extern CAMLprim

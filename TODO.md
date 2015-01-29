@@ -3,7 +3,7 @@
  - (X) Support for topic properties.
  - ( ) make install.
  - ( ) Support for queues.
- - ( ) Improve error handling on consume : no-more-message, timeout, error.
+ - (X) Improve error handling on consume : PartitionEnd vs timeout or error.
  - (X) Free messages once consumed using rd_kafka_message_destroy.
  - ( ) Support for delivery report, error, log, stats callbacks.
  - (X) Support for topic properties.

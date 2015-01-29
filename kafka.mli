@@ -56,12 +56,9 @@ val offset_end: int64
 *)
 val consume_stop : topic -> int -> unit
 
-type message = {
-    topic: string;
-    partition: int;
-    offset: int64;
-    payload: string;
-}
+type message =
+  | Message of topic * int * int64 * string              (* topic, partition, offset, payload *)
+  | PartitionEnd of topic * int * int64                  (* topic, partition, offset *)
 
 (* [consume topic partition timeout_ms]
    consumes a single message from topic [topic] and [partition],
@@ -69,7 +66,7 @@ type message = {
 
    Consumer must have been previously started with [Kafka.consume_start].
 *)
-val consume : topic -> int -> int -> int64*string
+val consume : topic -> int -> int -> message
 
 type error =
   (* Internal errors to rdkafka *)
@@ -81,7 +78,6 @@ type error =
   | CRIT_SYS_RESOURCE                   (* Critical system resource failure *)
   | RESOLVE                             (* Failed to resolve broker.  *)
   | MSG_TIMED_OUT                       (* Produced message timed out. *)
-  | PARTITION_EOF                       (* Reached the end of the topic+partition queue on the broker.  Not really an error. *)
   | UNKNOWN_PARTITION                   (* Permanent: Partition does not exist in cluster. *)
   | FS                                  (* File or filesystem error *)
   | UNKNOWN_TOPIC                       (* Permanent: Topic does not exist  in cluster. *)
@@ -93,7 +89,6 @@ type error =
 
   (* Standard Kafka errors *)
   | UNKNOWN
-  | NO_ERROR
   | OFFSET_OUT_OF_RANGE
   | INVALID_MSG
   | UNKNOWN_TOPIC_OR_PART

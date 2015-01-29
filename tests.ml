@@ -8,6 +8,7 @@ let main =
    let consumer = Kafka.new_consumer ["metadata.broker.list","localhost:9092"] in
    let consumer_topic = Kafka.new_topic consumer "test" ["auto.commit.enable","false"] in
    let partition = 1 in
+   let timeout_ms = 1000 in
 
    (* Start collecting messages *)
    (* Here we start from offset_end, i.e. we will consume only messages produced from now. *)
@@ -19,13 +20,21 @@ let main =
    Kafka.produce producer_topic partition "message 2";
    
    (* Consume messages *)
-   let timeout_ms = 1000 in
-   let (off0,msg) = Kafka.consume consumer_topic partition timeout_ms in
-   assert (msg = "message 0");
-   let (off1,msg) = Kafka.consume consumer_topic partition timeout_ms in
-   assert (msg = "message 1");
-   let (off2,msg) = Kafka.consume consumer_topic partition timeout_ms in
-   assert (msg = "message 2");
+   let consume t p = match Kafka.consume t p timeout_ms with
+      | Kafka.Message(_,_,_,msg) -> msg
+      | Kafka.PartitionEnd(_,_,_) -> assert false
+   in
+   let msg = consume consumer_topic partition in assert (msg = "message 0");
+   let msg = consume consumer_topic partition in assert (msg = "message 1");
+   let msg = consume consumer_topic partition in assert (msg = "message 2");
+
+   (match Kafka.consume consumer_topic partition timeout_ms with
+     | Kafka.PartitionEnd (t,p,o) -> (
+        assert (Kafka.topic_name t = "test");
+        assert (p = partition)
+     )
+     | _ -> assert false
+   );
 
    (* Stop collecting messages. *)
    Kafka.consume_stop consumer_topic partition;
