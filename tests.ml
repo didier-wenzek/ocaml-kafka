@@ -2,11 +2,11 @@ let main =
 
    (* Prepare a producer handler. *)
    let producer = Kafka.new_producer ["metadata.broker.list","localhost:9092"] in
-   let producer_topic = Kafka.new_topic producer "test" in
+   let producer_topic = Kafka.new_topic producer "test" ["message.timeout.ms","10000"] in
 
    (* Prepare a consumer handler *)
    let consumer = Kafka.new_consumer ["metadata.broker.list","localhost:9092"] in
-   let consumer_topic = Kafka.new_topic consumer "test" in
+   let consumer_topic = Kafka.new_topic consumer "test" ["auto.commit.enable","false"] in
    let partition = 1 in
 
    (* Start collecting messages *)

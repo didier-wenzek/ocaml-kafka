@@ -6,7 +6,7 @@
  - ( ) Improve error handling on consume : no-more-message, timeout, error.
  - (X) Free messages once consumed using rd_kafka_message_destroy.
  - ( ) Support for delivery report, error, log, stats callbacks.
- - ( ) Support for topic properties.
+ - (X) Support for topic properties.
  - ( ) Support for partitionner callback.
  - ( ) Specific offsets: Kafka.offset_stored, Kafka.offset_tail(n).
  - ( ) Wrap messages in message enveloppes with topic,partition,offset,payload,key.

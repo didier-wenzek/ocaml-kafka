@@ -7,7 +7,7 @@ external destroy_handler : handler -> unit = "ocaml_kafka_destroy_handler"
 external handler_name : handler -> string = "ocaml_kafka_handler_name"
 
 type topic
-external new_topic : handler -> string -> topic = "ocaml_kafka_new_topic"
+external new_topic : handler -> string -> (string*string) list -> topic = "ocaml_kafka_new_topic"
 external destroy_topic : topic -> unit = "ocaml_kafka_destroy_topic"
 external topic_name : topic -> string = "ocaml_kafka_topic_name"
 external topic_partition_available: topic -> int -> bool = "ocaml_kafka_topic_partition_available"

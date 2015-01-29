@@ -24,7 +24,7 @@ val handler_name : handler -> string
 
 (* A named topic to which message can be produced or consumed. *)
 type topic
-val new_topic : handler -> string -> topic
+val new_topic : handler -> string -> (string*string) list -> topic
 val destroy_topic : topic -> unit
 val topic_name : topic -> string
 val topic_partition_available: topic -> int -> bool

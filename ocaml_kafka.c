@@ -113,18 +113,36 @@ inline static void* get_handler(value caml_handler)
 }
 
 static
-rd_kafka_conf_res_t configure_handler(rd_kafka_conf_t *conf, value caml_consumer_options, char *errstr, size_t errstr_size)
+rd_kafka_conf_res_t configure_handler(rd_kafka_conf_t *conf, value caml_options, char *errstr, size_t errstr_size)
 {
   CAMLlocal3(caml_option_pair, caml_option_name, caml_option_value);
 
   rd_kafka_conf_res_t conf_err;
-  while (caml_consumer_options != Val_emptylist) {
-    caml_option_pair = Field(caml_consumer_options, 0);
-    caml_consumer_options = Field(caml_consumer_options, 1);
+  while (caml_options != Val_emptylist) {
+    caml_option_pair = Field(caml_options, 0);
+    caml_options = Field(caml_options, 1);
     caml_option_name = Field(caml_option_pair,0);
     caml_option_value = Field(caml_option_pair,1);
 
     conf_err = rd_kafka_conf_set(conf, String_val(caml_option_name), String_val(caml_option_value), errstr, errstr_size);
+    if (conf_err) return conf_err;
+  }
+  return RD_KAFKA_CONF_OK;
+};
+
+static
+rd_kafka_conf_res_t configure_topic(rd_kafka_topic_conf_t *conf, value caml_options, char *errstr, size_t errstr_size)
+{
+  CAMLlocal3(caml_option_pair, caml_option_name, caml_option_value);
+
+  rd_kafka_conf_res_t conf_err;
+  while (caml_options != Val_emptylist) {
+    caml_option_pair = Field(caml_options, 0);
+    caml_options = Field(caml_options, 1);
+    caml_option_name = Field(caml_option_pair,0);
+    caml_option_value = Field(caml_option_pair,1);
+
+    conf_err = rd_kafka_topic_conf_set(conf, String_val(caml_option_name), String_val(caml_option_value), errstr, errstr_size);
     if (conf_err) return conf_err;
   }
   return RD_KAFKA_CONF_OK;
@@ -212,10 +230,19 @@ value ocaml_kafka_new_topic(value caml_kafka_handler, value caml_topic_name, val
 
   rd_kafka_t *handler = get_handler(caml_kafka_handler);
   const char* name = String_val(caml_topic_name);
-  rd_kafka_topic_t* topic = rd_kafka_topic_new(handler, name, NULL);
+
+  char error_msg[160];
+  rd_kafka_topic_conf_t *conf = rd_kafka_topic_conf_new();
+  rd_kafka_conf_res_t conf_err = configure_topic(conf, caml_topic_options, error_msg, sizeof(error_msg));
+  if (conf_err) {
+     rd_kafka_topic_conf_destroy(conf);
+     RAISE(RD_KAFKA_CONF_RES(conf_err), "Failed to configure new kafka topic (%s)", error_msg);
+  }
+
+  rd_kafka_topic_t* topic = rd_kafka_topic_new(handler, name, conf);
   if (!topic) {
      rd_kafka_resp_err_t rd_errno = rd_kafka_errno2err(errno);
-     RAISE(rd_errno, "Failed to create new topic handle (%s)", rd_kafka_err2str(rd_errno));
+     RAISE(rd_errno, "Failed to create new kafka topic (%s)", rd_kafka_err2str(rd_errno));
   }
 
   caml_topic = alloc_caml_handler(topic);

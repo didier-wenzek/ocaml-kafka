@@ -24,11 +24,11 @@ Usage
 
     (* Prepare a producer handler. *)
     let producer = Kafka.new_producer ["metadata.broker.list","localhost:9092"];;
-    let producer_topic = Kafka.new_topic producer "test";;
+    let producer_topic = Kafka.new_topic producer "test" ["message.timeout.ms","10000"];;
 
     (* Prepare a consumer handler *)
     let consumer = Kafka.new_consumer ["metadata.broker.list","localhost:9092"];;
-    let consumer_topic = Kafka.new_topic consumer "test";;
+    let consumer_topic = Kafka.new_topic consumer "test" ["auto.commit.enable","false"];;
     let partition = 1;;
 
     (* Start collecting messages *)
