@@ -4,9 +4,12 @@ LIB = $(addprefix _build/, $(TARGETS))
 all:
 	ocamlbuild $(TARGETS)
 
-tests:
-	ocamlbuild -libs okafka -lflags -ccopt,-lrdkafka tests.native --
+tests: tests.ml
+	ocamlbuild -libs okafka tests.native
 	_build/tests.native
+
+kafkatail.native: kafkatail.ml
+	ocamlbuild -libs okafka kafkatail.native
 
 clean:
 	ocamlbuild -clean
