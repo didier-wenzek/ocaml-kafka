@@ -1,7 +1,7 @@
 let main () =
   let brokers = Sys.argv.(1) in
   let topic = Sys.argv.(2) in
-  let partition = int_of_string Sys.argv.(3) in
+  let partition = Sys.argv.(3) in
   let offset = Int64.of_string Sys.argv.(4) in
   let timout = 1000 in
 
@@ -12,25 +12,35 @@ let main () =
     "auto.offset.reset","largest";
     "offset.store.path","."
   ] in
+  let queue = Kafka.new_queue consumer in
+
+  let (partitions,offsets) =
+     try ([int_of_string partition],[offset])
+     with e -> (
+        let meta = Kafka.topic_metadata consumer topic in
+        (meta.Kafka.Metadata.topic_partitions, List.map (fun _ -> offset) meta.Kafka.Metadata.topic_partitions)
+     )
+  in
 
   let rec loop () = 
-    match Kafka.consume topic partition timout with
-    | Kafka.Message (_,_,offset,msg) -> (Printf.printf "%Ld: %s\n%!" offset msg;loop ())
-    | Kafka.PartitionEnd (_,_,offset) -> Printf.printf "%Ld\n%!" offset
+    match Kafka.consume_queue queue timout with
+    | Kafka.Message (topic,partition,offset,msg) -> (Printf.printf "%s,%d,%Ld: %s\n%!" (Kafka.topic_name topic) partition offset msg;loop ())
+    | Kafka.PartitionEnd (topic,partition,offset) -> (Printf.printf "%s,%d,%Ld\n%!" (Kafka.topic_name topic) partition offset; loop())
     | exception Kafka.Error(Kafka.TIMED_OUT,_) -> (Printf.fprintf stderr "Timeout after: %d ms\n%!" timout; loop ())
     | exception Kafka.Error(_,msg) -> Printf.fprintf stderr "Error: %s\n%!" msg
   in
 
-  Kafka.consume_start topic partition offset;
+  List.iter2 (Kafka.consume_start_queue queue topic) partitions offsets;
   loop ();
-  Kafka.consume_stop topic partition;
-  Kafka.store_offset topic partition offset;
+  List.iter (Kafka.consume_stop topic) partitions;
+
   Kafka.destroy_topic topic;
   Kafka.destroy_handler consumer
  
 in 
   if Array.length Sys.argv != 5
-  then Printf.printf "usage: %s brokers topic partition offset\n%!" Sys.argv.(0)
+  then (
+    Printf.printf "usage: %s brokers topic partition offset\n%!" Sys.argv.(0);
+    Printf.printf "       %s brokers topic all offset\n%!" Sys.argv.(0)
+  )
   else main ()
-     
-
