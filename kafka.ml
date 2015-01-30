@@ -35,6 +35,19 @@ external destroy_queue : queue -> unit = "ocaml_kafka_destroy_queue"
 external consume_start_queue : queue -> topic -> int -> int64 -> unit = "ocaml_kafka_consume_start_queue"
 external consume_queue : queue -> int -> message = "ocaml_kafka_consume_queue"
 
+module Metadata = struct
+  type topic_metadata = {
+    topic_name: string;
+    topic_partitions: int list;
+  }
+end
+
+external get_topic_metadata: handler -> topic -> int -> Metadata.topic_metadata = "ocaml_kafka_get_topic_metadata"
+external get_topics_metadata: handler -> bool -> int -> Metadata.topic_metadata list = "ocaml_kafka_get_topics_metadata"
+let topic_metadata ?(timeout_ms = 1000) handler topic = get_topic_metadata handler topic timeout_ms
+let local_topics_metadata ?(timeout_ms = 1000) handler = get_topics_metadata handler false timeout_ms
+let all_topics_metadata ?(timeout_ms = 1000) handler = get_topics_metadata handler true timeout_ms
+
 type error =
   (* Internal errors to rdkafka: *)
   | BAD_MSG                             (* Received message is incorrect *)

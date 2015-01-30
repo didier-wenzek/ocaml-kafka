@@ -15,7 +15,7 @@
  - (X) Support for stored offsets.
  - ( ) Support for keys.
  - ( ) Support to produce batch of messages.
- - ( ) Support for meta-data API.
+ - (/) Support for meta-data API.
  - ( ) Function: Kafka.version: unit -> string.
  - ( ) Function: Kafka.wait_destroyed.
  - ( ) Function: Kafka.outq_len.

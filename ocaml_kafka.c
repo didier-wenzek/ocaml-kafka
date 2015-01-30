@@ -558,3 +558,89 @@ value ocaml_kafka_consume_queue(value caml_kafka_queue, value caml_kafka_timeout
   }
   CAMLreturn(caml_msg);
 }
+
+static
+value make_topic_metadata(rd_kafka_metadata_topic_t *topic)
+{
+  CAMLlocal3(caml_topic_metadata,caml_partitions,caml_cons);
+
+  caml_partitions = Val_emptylist;
+  int i,n;
+  n = topic->partition_cnt;
+  rd_kafka_metadata_partition_t *partition = topic->partitions;
+  for(i=0;i<n;++i,++partition) {
+     caml_cons = caml_alloc(2,0);
+     Store_field(caml_cons, 0, Val_int(partition->id));
+     Store_field(caml_cons, 1, caml_partitions);
+     caml_partitions = caml_cons;
+  }
+
+  caml_topic_metadata = caml_alloc(2, 0);
+  Store_field(caml_topic_metadata, 0, caml_copy_string(topic->topic));
+  Store_field(caml_topic_metadata, 1, caml_partitions );
+
+  return caml_topic_metadata;
+}
+
+extern CAMLprim
+value ocaml_kafka_get_topic_metadata(value caml_handler, value caml_topic, value caml_timeout)
+{
+  CAMLparam3(caml_handler,caml_topic,caml_timeout);
+  CAMLlocal1(caml_topic_metadata);
+
+  rd_kafka_t *handler = get_handler(caml_handler);
+  rd_kafka_topic_t *topic = get_handler(Field(caml_topic,0));
+  int timeout = Int_val(caml_timeout);
+
+  const struct rd_kafka_metadata *metadata = NULL;
+  rd_kafka_resp_err_t err = rd_kafka_metadata (handler, 0, topic, &metadata, timeout);
+  if (err) {
+     RAISE(err, "Failed to fetch topic metadata (%s)", rd_kafka_err2str(err));
+  }
+  if (!metadata || metadata->topic_cnt != 1) {
+     RAISE(RD_KAFKA_RESP_ERR__UNKNOWN_TOPIC, rd_kafka_err2str(RD_KAFKA_RESP_ERR__UNKNOWN_TOPIC));
+  }
+  else {
+     caml_topic_metadata = make_topic_metadata(metadata->topics);
+  }
+  if (metadata) {
+     rd_kafka_metadata_destroy(metadata);
+  }
+
+  CAMLreturn(caml_topic_metadata);
+}
+
+extern CAMLprim
+value ocaml_kafka_get_topics_metadata(value caml_handler, value caml_all_topics, value caml_timeout)
+{
+  CAMLparam3(caml_handler,caml_all_topics,caml_timeout);
+  CAMLlocal3(caml_topics_metadata,caml_topic_metadata,caml_cons);
+
+  rd_kafka_t *handler = get_handler(caml_handler);
+  int all_topics = Bool_val(caml_all_topics);
+  int timeout = Int_val(caml_timeout);
+
+  const struct rd_kafka_metadata *metadata = NULL;
+  rd_kafka_resp_err_t err = rd_kafka_metadata (handler, all_topics, NULL, &metadata, timeout);
+  if (err) {
+     RAISE(err, "Failed to fetch topics metadata (%s)", rd_kafka_err2str(err));
+  }
+
+  caml_topics_metadata = Val_emptylist;
+  if (metadata) {
+     int i,n;
+     n = metadata->topic_cnt;
+     rd_kafka_metadata_topic_t *topic = metadata->topics;
+     for(i=0;i<n;++i,++topic) {
+        caml_topic_metadata = make_topic_metadata(topic);
+
+        caml_cons = caml_alloc(2,0);
+        Store_field(caml_cons, 0, caml_topic_metadata);
+        Store_field(caml_cons, 1, caml_topics_metadata);
+        caml_topics_metadata = caml_cons;
+     }
+     rd_kafka_metadata_destroy(metadata);
+  }
+
+  CAMLreturn(caml_topics_metadata);
+}

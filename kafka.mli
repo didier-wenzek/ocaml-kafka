@@ -126,6 +126,23 @@ val consume_queue : queue -> int -> message
 *)
 val store_offset : topic -> int -> int64 -> unit
 
+module Metadata : sig
+  (* Topic information *)
+  type topic_metadata = {
+    topic_name: string;
+    topic_partitions: int list;
+  }
+end
+
+(* Topic information of a given topic. *)
+val topic_metadata: ?timeout_ms:int -> handler -> topic -> Metadata.topic_metadata
+
+(* Information of all local topics. *)
+val local_topics_metadata: ?timeout_ms:int -> handler -> Metadata.topic_metadata list
+
+(* Information of all topics known by the brokers. *)
+val all_topics_metadata: ?timeout_ms:int -> handler -> Metadata.topic_metadata list
+
 type error =
   (* Internal errors to rdkafka *)
   | BAD_MSG                             (* Received message is incorrect *)

@@ -1,3 +1,4 @@
+open Kafka.Metadata
 let timeout_ms = 1000
 let skip_all_message consume = 
   let rec loop () = match consume (3*timeout_ms) with
@@ -9,7 +10,15 @@ let main =
 
    (* Prepare a producer handler. *)
    let producer = Kafka.new_producer ["metadata.broker.list","localhost:9092"] in
+
+   (* Check that there is a test topic with two partitions. *)
+   let topics = Kafka.all_topics_metadata producer in
+   let test = List.find (fun tm -> tm.topic_name = "test") topics in
+   assert (List.sort compare test.topic_partitions = [0;1]);
+
    let producer_topic = Kafka.new_topic producer "test" ["message.timeout.ms","10000"] in
+   let test = Kafka.topic_metadata producer producer_topic in
+   assert (List.sort compare test.topic_partitions = [0;1]);
 
    (* Prepare a consumer handler *)
    let consumer = Kafka.new_consumer ["metadata.broker.list","localhost:9092"] in
