@@ -19,17 +19,34 @@ val new_consumer : (string*string) list -> handler
 *)
 val new_producer : (string*string) list -> handler
 
+(* Destroy Kafka handle *)
 val destroy_handler : handler -> unit
+
+(* Kafka handle name *)
 val handler_name : handler -> string
 
-(* A named topic to which message can be produced or consumed. *)
+(* A handler to a kafka topic. *)
 type topic
-val new_topic : handler -> string -> (string*string) list -> topic
-val destroy_topic : topic -> unit
-val topic_name : topic -> string
-val topic_partition_available: topic -> int -> bool
 
-(* [produce topic partition message] *)
+(* Creates a new topic handler for the kafka topic with the given name.
+
+ - For a list of options,
+   see https://github.com/edenhill/librdkafka/blob/master/CONFIGURATION.md
+ *)
+val new_topic : handler -> string -> (string*string) list -> topic
+
+(* Destroy topic handle *)
+val destroy_topic : topic -> unit
+
+(* Kafka topic handle name *)
+val topic_name : topic -> string
+
+(* [produce topic partition message]
+  produces and sends a single message to broker.
+
+  Partition may either be a proper partition (0..N)
+  or [Kafka.partition_unassigned].
+*)
 val produce: topic -> int -> string -> unit
 val partition_unassigned: int
 
@@ -38,9 +55,10 @@ val partition_unassigned: int
 
   Offset may either be a proper offset (0..N)
   or one of the the special offsets:
-  [Kafka.offset_beginning], [Kafka.offset_end].
+  [Kafka.offset_beginning], [Kafka.offset_end], [Kafka.offset_stored]
+  of [Kafka.offset_tail n] (i.e. n messages before [Kafka.offset_end]).
   
-  rdkafka will attempt to keep 'queued.min.messages' (consumer config property)
+  The system (librdkafka) will attempt to keep 'queued.min.messages' (consumer config property)
   messages in the local queue by repeatedly fetching batches of messages
   from the broker until the threshold is reached.
 
@@ -69,6 +87,34 @@ type message =
    Consumer must have been previously started with [Kafka.consume_start].
 *)
 val consume : topic -> int -> int -> message
+
+(* A message queue allows the application to re-route consumed messages
+   from multiple topics and partitions into one single queue point. *)
+type queue
+
+(* Create a new message queue. *)
+val new_queue : handler -> queue
+
+(* Destroy a message queue. *)
+val destroy_queue : queue -> unit
+
+(* [consume_start_queue queue topic partition offset]
+  starts consuming messages for topic [topic] and [partition] at [offset]
+  and routes consumed messages to the given queue.
+
+  For a topic, either [consume_start] or [consume_start_queue] must be called.
+
+  [consume_stop] has to be called to stop consuming messages from the topic.
+*)
+val consume_start_queue : queue -> topic -> int -> int64 -> unit
+
+(* [consume_queue queue timeout_ms]
+   consumes a single message from topics and partitions
+   attached to the queue using [Kafka.consume_start_queue].
+
+   Waits at most [timeout_ms] milli-seconds for a message to be received.
+*)
+val consume_queue : queue -> int -> message
 
 (* [store_offset topic partition offset]
    stores [offset] for given [topic] and [partition].

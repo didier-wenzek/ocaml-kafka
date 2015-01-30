@@ -29,6 +29,12 @@ type message =
 external consume : topic -> int -> int -> message = "ocaml_kafka_consume"
 external store_offset : topic -> int -> int64 -> unit = "ocaml_kafka_store_offset"
 
+type queue
+external new_queue : handler -> queue = "ocaml_kafka_new_queue"
+external destroy_queue : queue -> unit = "ocaml_kafka_destroy_queue"
+external consume_start_queue : queue -> topic -> int -> int64 -> unit = "ocaml_kafka_consume_start_queue"
+external consume_queue : queue -> int -> message = "ocaml_kafka_consume_queue"
+
 type error =
   (* Internal errors to rdkafka: *)
   | BAD_MSG                             (* Received message is incorrect *)

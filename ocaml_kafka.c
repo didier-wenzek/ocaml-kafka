@@ -403,3 +403,158 @@ value ocaml_kafka_store_offset(value caml_kafka_topic, value caml_kafka_partitio
 
   CAMLreturn(Val_unit);
 }
+
+/**
+  A rdkafka queue handler is wrapped with a list of OCaml topics,
+  so on message consuption we can return a plain OCaml topic handler.
+**/
+typedef struct chained_topic {
+   rd_kafka_topic_t     *topic;
+   struct chained_topic *next;
+   value                caml_topic;
+} chained_topic_t;
+
+typedef struct queue_topics {
+   rd_kafka_queue_t  *queue;
+   chained_topic_t   *topics;
+} queue_topics_t;
+
+extern CAMLprim
+value ocaml_kafka_new_queue(value caml_kafka_handler)
+{
+  CAMLparam1(caml_kafka_handler);
+  CAMLlocal1(caml_queue);
+
+  rd_kafka_t *handler = get_handler(caml_kafka_handler);
+
+  rd_kafka_queue_t* queue = rd_kafka_queue_new(handler);
+  if (!queue) {
+     rd_kafka_resp_err_t rd_errno = rd_kafka_errno2err(errno);
+     RAISE(rd_errno, "Failed to create new kafka queue (%s)", rd_kafka_err2str(rd_errno));
+  }
+
+  queue_topics_t *queue_topics = malloc(sizeof(queue_topics_t));
+  if (!queue_topics) {
+     RAISE(RD_KAFKA_RESP_ERR_UNKNOWN, "Failed to allocate new kafka queue");
+  }
+
+  queue_topics->queue = queue;
+  queue_topics->topics = NULL;
+
+  caml_queue = alloc_caml_handler(queue_topics);
+  CAMLreturn(caml_queue);
+}
+
+extern CAMLprim
+value ocaml_kafka_destroy_queue(value caml_queue_handler)
+{
+  CAMLparam1(caml_queue_handler);
+
+  queue_topics_t *queue_topics = handler_val(caml_queue_handler);
+  if (queue_topics) {
+    rd_kafka_queue_destroy(queue_topics->queue);
+    
+    chained_topic_t *chained_topic = queue_topics->topics;
+    while (chained_topic) {
+       chained_topic_t *topic = chained_topic;
+       chained_topic = topic->next;
+       free(topic);
+    }
+
+    free_caml_handler(caml_queue_handler);
+  }
+
+  CAMLreturn(Val_unit);
+}
+
+extern CAMLprim
+value ocaml_kafka_consume_start_queue(value caml_kafka_queue, value caml_kafka_topic, value caml_kafka_partition, value caml_kafka_offset)
+{
+  CAMLparam4(caml_kafka_queue,caml_kafka_topic,caml_kafka_partition,caml_kafka_offset);
+
+  queue_topics_t *queue_topics = handler_val(caml_kafka_queue);
+  rd_kafka_queue_t* queue = queue_topics->queue;
+  rd_kafka_topic_t *topic = get_handler(Field(caml_kafka_topic,0));
+
+  chained_topic_t *chained_topic = queue_topics->topics;
+  while (chained_topic && chained_topic->topic != topic) {
+     chained_topic = chained_topic->next;
+  }
+  if (! chained_topic) {
+     chained_topic = malloc(sizeof(chained_topic_t));
+     if (chained_topic) {
+        chained_topic->topic = topic;
+        chained_topic->caml_topic = caml_kafka_topic;
+        chained_topic->next = queue_topics->topics;
+        queue_topics->topics = chained_topic;
+     } else {
+        RAISE(RD_KAFKA_RESP_ERR_UNKNOWN, "Failed to register topic in queue");
+     }
+  }
+
+  int32 partition = Int_val(caml_kafka_partition);
+  int64 offset = Int64_val(caml_kafka_offset);
+  int err = rd_kafka_consume_start_queue(topic, partition, offset, queue);
+  if (err) {
+     rd_kafka_resp_err_t rd_errno = rd_kafka_errno2err(errno);
+     RAISE(rd_errno, "Failed to start consuming & queue messages (%s)", rd_kafka_err2str(rd_errno));
+  }
+
+  CAMLreturn(Val_unit);
+}
+
+extern CAMLprim
+value ocaml_kafka_consume_queue(value caml_kafka_queue, value caml_kafka_timeout)
+{
+  CAMLparam2(caml_kafka_queue,caml_kafka_timeout);
+  CAMLlocal2(caml_msg, caml_msg_payload);
+
+  queue_topics_t *queue_topics = handler_val(caml_kafka_queue);
+  rd_kafka_queue_t* queue = queue_topics->queue;
+  int timeout = Int_val(caml_kafka_timeout);
+  rd_kafka_message_t* message = rd_kafka_consume_queue(queue, timeout);
+
+  if (message == NULL) {
+     rd_kafka_resp_err_t rd_errno = rd_kafka_errno2err(errno);
+     RAISE(rd_errno, "Failed to consume message from queue (%s)", rd_kafka_err2str(rd_errno));
+  }
+  else {
+     rd_kafka_topic_t *topic = message->rkt;
+     chained_topic_t *chained_topic = queue_topics->topics;
+     while (chained_topic && chained_topic->topic != topic) {
+       chained_topic = chained_topic->next;
+     }
+
+     if (chained_topic && !message->err) {
+        caml_msg_payload = caml_alloc_string(message->len);
+        memcpy(String_val(caml_msg_payload), message->payload, message->len);
+   
+        caml_msg = caml_alloc(4, 0);
+        Store_field( caml_msg, 0, chained_topic->caml_topic );
+        Store_field( caml_msg, 1, Val_int(message->partition) );
+        Store_field( caml_msg, 2, caml_copy_int64(message->offset) );
+        Store_field( caml_msg, 3, caml_msg_payload );
+     }
+     else if (chained_topic && message->err == RD_KAFKA_RESP_ERR__PARTITION_EOF) {
+        caml_msg = caml_alloc(3, 1);
+        Store_field( caml_msg, 0, chained_topic->caml_topic );
+        Store_field( caml_msg, 1, Val_int(message->partition) );
+        Store_field( caml_msg, 2, caml_copy_int64(message->offset) );
+     }
+     else if (chained_topic) {
+        if (message->payload) {
+           RAISE(message->err, "Consumed message from queue with error (%s)", (const char *)message->payload);
+        } else {
+           RAISE(message->err, "Consumed message from queue with error (%s)", rd_kafka_err2str(message->err));
+        }
+     }
+     else {
+        RAISE(RD_KAFKA_RESP_ERR__UNKNOWN_TOPIC, "Message received from un-registred topic");
+     }
+  }
+
+  if (message) {
+     rd_kafka_message_destroy(message);
+  }
+  CAMLreturn(caml_msg);
+}

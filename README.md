@@ -54,7 +54,7 @@ Usage
     (* Stop collecting messages. *)
     Kafka.consume_stop consumer_topic partition;;
 
-    (* Topics and producers must be released. *)
+    (* Topics, consumers and producers must be released. *)
     Kafka.destroy_topic producer_topic;;
     Kafka.destroy_handler producer;;
     Kafka.destroy_topic consumer_topic;;
