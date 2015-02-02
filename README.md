@@ -15,12 +15,13 @@ Install
 -------
     $ make
     $ make test       # assuming kakfa is running at localhost:9092 with a 'test' topic.
-    $ make install
+    $ make install    # use ocamlfind
 
 Usage
 -----
 
-    #load "okafka.cma";;
+    #use "topfind";;
+    #require "okafka";;
 
     (* Prepare a producer handler. *)
     let producer = Kafka.new_producer ["metadata.broker.list","localhost:9092"];;
