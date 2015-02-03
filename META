@@ -4,6 +4,6 @@ description="OCaml bindings for Kafka"
 requires=""
 archive(byte) = "okafka.cma"
 archive(byte,plugin) = "okafka.cma"
-archive(native) = "okafka.cmx"
+archive(native) = "okafka.cmxa"
 archive(native,plugin) = "okafka.cmxs"
 

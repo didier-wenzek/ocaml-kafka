@@ -1,4 +1,4 @@
-TARGETS = okafka.cma okafka.cmxa okafka.cmxs dllocamlkafka.so kafka.cmi kafka.cma kafka.cmx
+TARGETS = okafka.cma okafka.cmxa okafka.cmxs okafka.a libocamlkafka.a dllocamlkafka.so kafka.cmi kafka.cma kafka.cmx
 LIB = $(addprefix _build/, $(TARGETS))
 
 all:
@@ -10,9 +10,11 @@ install:
 uninstall:
 	ocamlfind remove okafka
 
-tests: tests.ml
-	ocamlbuild -libs okafka tests.native
+tests: tests.native
 	_build/tests.native
+
+tests.native: tests.ml
+	ocamlbuild -libs okafka tests.native
 
 kafkatail.native: kafkatail.ml
 	ocamlbuild -libs okafka kafkatail.native

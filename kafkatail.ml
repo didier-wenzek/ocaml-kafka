@@ -1,3 +1,5 @@
+open Kafka.Metadata
+
 let main () =
   let brokers = Sys.argv.(1) in
   let topic = Sys.argv.(2) in
@@ -18,7 +20,7 @@ let main () =
      try ([int_of_string partition],[offset])
      with e -> (
         let meta = Kafka.topic_metadata consumer topic in
-        (meta.Kafka.Metadata.topic_partitions, List.map (fun _ -> offset) meta.Kafka.Metadata.topic_partitions)
+        (meta.topic_partitions, List.map (fun _ -> offset) meta.data.topic_partitions)
      )
   in
 
@@ -35,6 +37,7 @@ let main () =
   List.iter (Kafka.consume_stop topic) partitions;
 
   Kafka.destroy_topic topic;
+  Kafka.destroy_queue queue;
   Kafka.destroy_handler consumer
  
 in 
