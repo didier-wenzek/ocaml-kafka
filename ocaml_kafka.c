@@ -224,7 +224,7 @@ extern CAMLprim
 value ocaml_kafka_new_topic(value caml_kafka_handler, value caml_topic_name, value caml_topic_options)
 {
   CAMLparam3(caml_kafka_handler, caml_topic_name, caml_topic_options);
-  CAMLlocal1(caml_topic);
+  CAMLlocal2(caml_topic, caml_kafka_topic_handler);
 
   rd_kafka_t *handler = get_handler(caml_kafka_handler);
   const char* name = String_val(caml_topic_name);
@@ -244,9 +244,10 @@ value ocaml_kafka_new_topic(value caml_kafka_handler, value caml_topic_name, val
   }
 
   // The handler is wrapped with its name.
-  caml_topic = caml_alloc(2,0);
-  Store_field(caml_topic, 0, alloc_caml_handler(topic));
-  Store_field(caml_topic, 1, caml_topic_name);
+  caml_kafka_topic_handler = alloc_caml_handler(topic);
+  caml_topic = caml_alloc_small(2,0);
+  Field(caml_topic, 0) = caml_kafka_topic_handler;
+  Field(caml_topic, 1) = caml_topic_name;
   CAMLreturn(caml_topic);
 }
 
@@ -257,7 +258,7 @@ value ocaml_kafka_destroy_topic(value caml_kafka_topic)
 
   rd_kafka_topic_t *topic = handler_val(Field(caml_kafka_topic,0));
   if (topic) {
-    free_caml_handler(caml_kafka_topic);
+    free_caml_handler(Field(caml_kafka_topic,0));
     rd_kafka_topic_destroy(topic);
   }
 
@@ -327,7 +328,7 @@ extern CAMLprim
 value ocaml_kafka_consume(value caml_kafka_topic, value caml_kafka_partition, value caml_kafka_timeout)
 {
   CAMLparam3(caml_kafka_topic,caml_kafka_partition,caml_kafka_timeout);
-  CAMLlocal2(caml_msg, caml_msg_payload);
+  CAMLlocal3(caml_msg, caml_msg_payload, caml_msg_offset);
 
   rd_kafka_topic_t *topic = get_handler(Field(caml_kafka_topic,0));
   int32 partition = Int_val(caml_kafka_partition);
@@ -342,17 +343,19 @@ value ocaml_kafka_consume(value caml_kafka_topic, value caml_kafka_partition, va
      caml_msg_payload = caml_alloc_string(message->len);
      memcpy(String_val(caml_msg_payload), message->payload, message->len);
 
-     caml_msg = caml_alloc(4, 0);
-     Store_field( caml_msg, 0, caml_kafka_topic );
-     Store_field( caml_msg, 1, caml_kafka_partition );
-     Store_field( caml_msg, 2, caml_copy_int64(message->offset) );
-     Store_field( caml_msg, 3, caml_msg_payload );
+     caml_msg_offset = caml_copy_int64(message->offset);
+     caml_msg = caml_alloc_small(4, 0);
+     Field( caml_msg, 0) = caml_kafka_topic;
+     Field( caml_msg, 1) = caml_kafka_partition;
+     Field( caml_msg, 2) = caml_msg_offset;
+     Field( caml_msg, 3) = caml_msg_payload;
   }
   else if (message->err == RD_KAFKA_RESP_ERR__PARTITION_EOF) {
-     caml_msg = caml_alloc(3, 1);
-     Store_field( caml_msg, 0, caml_kafka_topic );
-     Store_field( caml_msg, 1, caml_kafka_partition );
-     Store_field( caml_msg, 2, caml_copy_int64(message->offset) );
+     caml_msg_offset = caml_copy_int64(message->offset);
+     caml_msg = caml_alloc_small(3, 1);
+     Field( caml_msg, 0) = caml_kafka_topic;
+     Field( caml_msg, 1) = caml_kafka_partition;
+     Field( caml_msg, 2) = caml_msg_offset;
   }
   else {
      if (message->payload) {
@@ -407,23 +410,19 @@ value ocaml_kafka_store_offset(value caml_kafka_topic, value caml_kafka_partitio
 /**
   A rdkafka queue handler is wrapped with a list of OCaml topics,
   so on message consuption we can return a plain OCaml topic handler.
-**/
-typedef struct chained_topic {
-   rd_kafka_topic_t     *topic;
-   struct chained_topic *next;
-   value                caml_topic;
-} chained_topic_t;
 
-typedef struct queue_topics {
-   rd_kafka_queue_t  *queue;
-   chained_topic_t   *topics;
-} queue_topics_t;
+  caml_queue = block {
+     field 0 : rd_kafka_queue = abstract tag
+     field 1 : topics = caml list of topics
+  }
+          
+**/
 
 extern CAMLprim
 value ocaml_kafka_new_queue(value caml_kafka_handler)
 {
   CAMLparam1(caml_kafka_handler);
-  CAMLlocal1(caml_queue);
+  CAMLlocal2(caml_queue, caml_kafka_queue_handler);
 
   rd_kafka_t *handler = get_handler(caml_kafka_handler);
 
@@ -433,15 +432,11 @@ value ocaml_kafka_new_queue(value caml_kafka_handler)
      RAISE(rd_errno, "Failed to create new kafka queue (%s)", rd_kafka_err2str(rd_errno));
   }
 
-  queue_topics_t *queue_topics = malloc(sizeof(queue_topics_t));
-  if (!queue_topics) {
-     RAISE(RD_KAFKA_RESP_ERR_UNKNOWN, "Failed to allocate new kafka queue");
-  }
+  caml_kafka_queue_handler = alloc_caml_handler(queue);
+  caml_queue = caml_alloc_small(2,0);
+  Field(caml_queue, 0) = caml_kafka_queue_handler;
+  Field(caml_queue, 1) = Val_emptylist;
 
-  queue_topics->queue = queue;
-  queue_topics->topics = NULL;
-
-  caml_queue = alloc_caml_handler(queue_topics);
   CAMLreturn(caml_queue);
 }
 
@@ -450,18 +445,10 @@ value ocaml_kafka_destroy_queue(value caml_queue_handler)
 {
   CAMLparam1(caml_queue_handler);
 
-  queue_topics_t *queue_topics = handler_val(caml_queue_handler);
-  if (queue_topics) {
-    rd_kafka_queue_destroy(queue_topics->queue);
-    
-    chained_topic_t *chained_topic = queue_topics->topics;
-    while (chained_topic) {
-       chained_topic_t *topic = chained_topic;
-       chained_topic = topic->next;
-       free(topic);
-    }
-
-    free_caml_handler(caml_queue_handler);
+  rd_kafka_queue_t *queue = handler_val(Field(caml_queue_handler,0));
+  if (queue) {
+    rd_kafka_queue_destroy(queue);
+    free_caml_handler(Field(caml_queue_handler,0));
   }
 
   CAMLreturn(Val_unit);
@@ -471,25 +458,26 @@ extern CAMLprim
 value ocaml_kafka_consume_start_queue(value caml_kafka_queue, value caml_kafka_topic, value caml_kafka_partition, value caml_kafka_offset)
 {
   CAMLparam4(caml_kafka_queue,caml_kafka_topic,caml_kafka_partition,caml_kafka_offset);
+  CAMLlocal3(caml_topics, caml_topic, caml_cons);
 
-  queue_topics_t *queue_topics = handler_val(caml_kafka_queue);
-  rd_kafka_queue_t* queue = queue_topics->queue;
+  rd_kafka_queue_t *queue = get_handler(Field(caml_kafka_queue,0));
   rd_kafka_topic_t *topic = get_handler(Field(caml_kafka_topic,0));
 
-  chained_topic_t *chained_topic = queue_topics->topics;
-  while (chained_topic && chained_topic->topic != topic) {
-     chained_topic = chained_topic->next;
-  }
-  if (! chained_topic) {
-     chained_topic = malloc(sizeof(chained_topic_t));
-     if (chained_topic) {
-        chained_topic->topic = topic;
-        chained_topic->caml_topic = caml_kafka_topic;
-        chained_topic->next = queue_topics->topics;
-        queue_topics->topics = chained_topic;
-     } else {
-        RAISE(RD_KAFKA_RESP_ERR_UNKNOWN, "Failed to register topic in queue");
+  rd_kafka_topic_t *found_topic = NULL;
+  caml_topics = Field(caml_kafka_queue,1);
+  while (found_topic == NULL && caml_topics != Val_emptylist) {
+     caml_topic = Field(caml_topics,0);
+     caml_topics = Field(caml_topics,1);
+     rd_kafka_topic_t *handler = get_handler(Field(caml_topic,0));
+     if (handler == topic) {
+       found_topic = handler;
      }
+  }
+  if (! found_topic) {
+     caml_cons = caml_alloc_small(2,0);
+     Field(caml_cons, 0) = caml_kafka_topic;
+     Field(caml_cons, 1) = Field(caml_kafka_queue,1);
+     Store_field(caml_kafka_queue,1,caml_cons);
   }
 
   int32 partition = Int_val(caml_kafka_partition);
@@ -507,10 +495,9 @@ extern CAMLprim
 value ocaml_kafka_consume_queue(value caml_kafka_queue, value caml_kafka_timeout)
 {
   CAMLparam2(caml_kafka_queue,caml_kafka_timeout);
-  CAMLlocal2(caml_msg, caml_msg_payload);
+  CAMLlocal5(caml_topics, caml_topic, caml_msg, caml_msg_payload, caml_msg_offset);
 
-  queue_topics_t *queue_topics = handler_val(caml_kafka_queue);
-  rd_kafka_queue_t* queue = queue_topics->queue;
+  rd_kafka_queue_t *queue = get_handler(Field(caml_kafka_queue,0));
   int timeout = Int_val(caml_kafka_timeout);
   rd_kafka_message_t* message = rd_kafka_consume_queue(queue, timeout);
 
@@ -520,35 +507,44 @@ value ocaml_kafka_consume_queue(value caml_kafka_queue, value caml_kafka_timeout
   }
   else {
      rd_kafka_topic_t *topic = message->rkt;
-     chained_topic_t *chained_topic = queue_topics->topics;
-     while (chained_topic && chained_topic->topic != topic) {
-       chained_topic = chained_topic->next;
+     rd_kafka_topic_t *found_topic = NULL;
+     caml_topics = Field(caml_kafka_queue,1);
+     while (found_topic == NULL && caml_topics != Val_emptylist) {
+       caml_topic = Field(caml_topics,0);
+       caml_topics = Field(caml_topics,1);
+       rd_kafka_topic_t *handler = get_handler(Field(caml_topic,0));
+       if (handler == topic) {
+         found_topic = handler;
+       }
      }
 
-     if (chained_topic && !message->err) {
-        caml_msg_payload = caml_alloc_string(message->len);
-        memcpy(String_val(caml_msg_payload), message->payload, message->len);
+     if (found_topic) {
+        if (!message->err) {
+           caml_msg_payload = caml_alloc_string(message->len);
+           memcpy(String_val(caml_msg_payload), message->payload, message->len);
+           caml_msg_offset = caml_copy_int64(message->offset) ;
    
-        caml_msg = caml_alloc(4, 0);
-        Store_field( caml_msg, 0, chained_topic->caml_topic );
-        Store_field( caml_msg, 1, Val_int(message->partition) );
-        Store_field( caml_msg, 2, caml_copy_int64(message->offset) );
-        Store_field( caml_msg, 3, caml_msg_payload );
-     }
-     else if (chained_topic && message->err == RD_KAFKA_RESP_ERR__PARTITION_EOF) {
-        caml_msg = caml_alloc(3, 1);
-        Store_field( caml_msg, 0, chained_topic->caml_topic );
-        Store_field( caml_msg, 1, Val_int(message->partition) );
-        Store_field( caml_msg, 2, caml_copy_int64(message->offset) );
-     }
-     else if (chained_topic) {
-        if (message->payload) {
-           RAISE(message->err, "Consumed message from queue with error (%s)", (const char *)message->payload);
-        } else {
-           RAISE(message->err, "Consumed message from queue with error (%s)", rd_kafka_err2str(message->err));
+           caml_msg = caml_alloc_small(4, 0);
+           Field( caml_msg, 0) = caml_topic;
+           Field( caml_msg, 1) = Val_int(message->partition);
+           Field( caml_msg, 2) = caml_msg_offset;
+           Field( caml_msg, 3) = caml_msg_payload;
         }
-     }
-     else {
+        else if (message->err == RD_KAFKA_RESP_ERR__PARTITION_EOF) {
+           caml_msg_offset = caml_copy_int64(message->offset) ;
+           caml_msg = caml_alloc_small(3, 1);
+           Field( caml_msg, 0) = caml_topic;
+           Field( caml_msg, 1) = Val_int(message->partition);
+           Field( caml_msg, 2) = caml_msg_offset;
+        }
+        else {
+           if (message->payload) {
+              RAISE(message->err, "Consumed message from queue with error (%s)", (const char *)message->payload);
+           } else {
+              RAISE(message->err, "Consumed message from queue with error (%s)", rd_kafka_err2str(message->err));
+           }
+        }
+     } else {
         RAISE(RD_KAFKA_RESP_ERR__UNKNOWN_TOPIC, "Message received from un-registred topic");
      }
   }
@@ -562,22 +558,23 @@ value ocaml_kafka_consume_queue(value caml_kafka_queue, value caml_kafka_timeout
 static
 value make_topic_metadata(rd_kafka_metadata_topic_t *topic)
 {
-  CAMLlocal3(caml_topic_metadata,caml_partitions,caml_cons);
+  CAMLlocal4(caml_topic_metadata,caml_topic_name,caml_partitions,caml_cons);
 
   caml_partitions = Val_emptylist;
   int i,n;
   n = topic->partition_cnt;
   rd_kafka_metadata_partition_t *partition = topic->partitions;
   for(i=0;i<n;++i,++partition) {
-     caml_cons = caml_alloc(2,0);
-     Store_field(caml_cons, 0, Val_int(partition->id));
-     Store_field(caml_cons, 1, caml_partitions);
+     caml_cons = caml_alloc_small(2,0);
+     Field(caml_cons, 0) = Val_int(partition->id);
+     Field(caml_cons, 1) = caml_partitions;
      caml_partitions = caml_cons;
   }
 
-  caml_topic_metadata = caml_alloc(2, 0);
-  Store_field(caml_topic_metadata, 0, caml_copy_string(topic->topic));
-  Store_field(caml_topic_metadata, 1, caml_partitions );
+  caml_topic_name = caml_copy_string(topic->topic);
+  caml_topic_metadata = caml_alloc_small(2, 0);
+  Field(caml_topic_metadata, 0) = caml_topic_name;
+  Field(caml_topic_metadata, 1) = caml_partitions;
 
   return caml_topic_metadata;
 }
@@ -634,9 +631,9 @@ value ocaml_kafka_get_topics_metadata(value caml_handler, value caml_all_topics,
      for(i=0;i<n;++i,++topic) {
         caml_topic_metadata = make_topic_metadata(topic);
 
-        caml_cons = caml_alloc(2,0);
-        Store_field(caml_cons, 0, caml_topic_metadata);
-        Store_field(caml_cons, 1, caml_topics_metadata);
+        caml_cons = caml_alloc_small(2,0);
+        Field(caml_cons, 0) = caml_topic_metadata;
+        Field(caml_cons, 1) = caml_topics_metadata;
         caml_topics_metadata = caml_cons;
      }
      rd_kafka_metadata_destroy(metadata);
