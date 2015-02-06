@@ -1,4 +1,4 @@
-TARGETS = okafka.cma okafka.cmxa okafka.cmxs okafka.a libocamlkafka.a dllocamlkafka.so kafka.cmi kafka.cma kafka.cmx
+TARGETS = okafka.cma okafka.cmxa okafka.cmxs okafka.a libocamlkafka.a dllocamlkafka.so kafka.cmi kafka.cma kafka.cmx kafkaConsumer.cmi kafkaProducer.cmi
 LIB = $(addprefix _build/, $(TARGETS))
 
 all:

@@ -6,15 +6,16 @@
  - (X) Free messages once consumed using rd_kafka_message_destroy.
  - ( ) Support for delivery report, error, log, stats callbacks.
  - (X) Support for topic properties.
- - ( ) Support for partitionner callback.
+ - ( ) Support for keys and partitionner callback.
  - (X) Specific offsets: Kafka.offset_stored, Kafka.offset_tail(n).
  - (X) Wrap messages in message enveloppes with topic,partition,offset,payload,key.
  - ( ) Support to consume batch of messages.
  - ( ) Support to consume messages through a callback.
  - (X) Support for stored offsets.
- - ( ) Support for keys.
  - ( ) Support to produce batch of messages.
  - (/) Support for meta-data API.
  - ( ) Function: Kafka.version: unit -> string.
  - ( ) Function: Kafka.wait_destroyed.
  - ( ) Function: Kafka.outq_len.
+ - ( ) Do we have to distinguish types: consumer vs producer.
+ - ( ) Introduce a Kafka.Timeout exception.
