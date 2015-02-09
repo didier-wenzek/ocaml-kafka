@@ -13,7 +13,7 @@ uninstall:
 tests: tests.native
 	_build/tests.native
 
-tests.native: tests.ml
+tests.native: all tests.ml
 	ocamlbuild -libs okafka tests.native
 
 kafkatail.native: kafkatail.ml

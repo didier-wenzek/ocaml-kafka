@@ -1,53 +1,5 @@
 type handler
 
-external new_consumer : (string*string) list -> handler = "ocaml_kafka_new_consumer"
-external new_producer : (string*string) list -> handler = "ocaml_kafka_new_producer"
-
-external destroy_handler : handler -> unit = "ocaml_kafka_destroy_handler"
-external handler_name : handler -> string = "ocaml_kafka_handler_name"
-
-type topic
-external new_topic : handler -> string -> (string*string) list -> topic = "ocaml_kafka_new_topic"
-external destroy_topic : topic -> unit = "ocaml_kafka_destroy_topic"
-external topic_name : topic -> string = "ocaml_kafka_topic_name"
-external topic_partition_available: topic -> int -> bool = "ocaml_kafka_topic_partition_available"
-
-external produce: topic -> int -> string -> unit = "ocaml_kafka_produce"
-external consume_start : topic -> int -> int64 -> unit = "ocaml_kafka_consume_start"
-external consume_stop : topic -> int -> unit = "ocaml_kafka_consume_stop"
-
-let partition_unassigned = -1
-let offset_beginning = -2L
-let offset_end = -1L
-let offset_stored = -1000L
-let offset_tail n = Int64.sub (-2000L) (Int64.of_int n)
-
-type message =
-  | Message of topic * int * int64 * string              (* topic, partition, offset, payload *)
-  | PartitionEnd of topic * int * int64                  (* topic, partition, offset *)
-
-external consume : topic -> int -> int -> message = "ocaml_kafka_consume"
-external store_offset : topic -> int -> int64 -> unit = "ocaml_kafka_store_offset"
-
-type queue
-external new_queue : handler -> queue = "ocaml_kafka_new_queue"
-external destroy_queue : queue -> unit = "ocaml_kafka_destroy_queue"
-external consume_start_queue : queue -> topic -> int -> int64 -> unit = "ocaml_kafka_consume_start_queue"
-external consume_queue : queue -> int -> message = "ocaml_kafka_consume_queue"
-
-module Metadata = struct
-  type topic_metadata = {
-    topic_name: string;
-    topic_partitions: int list;
-  }
-end
-
-external get_topic_metadata: handler -> topic -> int -> Metadata.topic_metadata = "ocaml_kafka_get_topic_metadata"
-external get_topics_metadata: handler -> bool -> int -> Metadata.topic_metadata list = "ocaml_kafka_get_topics_metadata"
-let topic_metadata ?(timeout_ms = 1000) handler topic = get_topic_metadata handler topic timeout_ms
-let local_topics_metadata ?(timeout_ms = 1000) handler = get_topics_metadata handler false timeout_ms
-let all_topics_metadata ?(timeout_ms = 1000) handler = get_topics_metadata handler true timeout_ms
-
 type error =
   (* Internal errors to rdkafka: *)
   | BAD_MSG                             (* Received message is incorrect *)
@@ -90,4 +42,60 @@ exception Error of error * string
 
 let _ = 
   Callback.register_exception "kafka.error" (Error(UNKNOWN,"msg string"));
+
+external new_consumer : (string*string) list -> handler = "ocaml_kafka_new_consumer"
+external new_producer :
+     ?delivery_callback:(string -> error option -> unit)
+  -> (string*string) list
+  -> handler
+  = "ocaml_kafka_new_producer"
+
+external destroy_handler : handler -> unit = "ocaml_kafka_destroy_handler"
+external handler_name : handler -> string = "ocaml_kafka_handler_name"
+
+type topic
+external new_topic : handler -> string -> (string*string) list -> topic = "ocaml_kafka_new_topic"
+external destroy_topic : topic -> unit = "ocaml_kafka_destroy_topic"
+external topic_name : topic -> string = "ocaml_kafka_topic_name"
+external topic_partition_available: topic -> int -> bool = "ocaml_kafka_topic_partition_available"
+
+external produce: topic -> int -> string -> unit = "ocaml_kafka_produce"
+external outq_len : handler -> int = "ocaml_kafka_outq_len"
+external poll: handler -> int -> int = "ocaml_kafka_poll"
+let poll_events ?(timeout_ms = 1000) handler = poll handler timeout_ms
+
+external consume_start : topic -> int -> int64 -> unit = "ocaml_kafka_consume_start"
+external consume_stop : topic -> int -> unit = "ocaml_kafka_consume_stop"
+
+let partition_unassigned = -1
+let offset_beginning = -2L
+let offset_end = -1L
+let offset_stored = -1000L
+let offset_tail n = Int64.sub (-2000L) (Int64.of_int n)
+
+type message =
+  | Message of topic * int * int64 * string              (* topic, partition, offset, payload *)
+  | PartitionEnd of topic * int * int64                  (* topic, partition, offset *)
+
+external consume : topic -> int -> int -> message = "ocaml_kafka_consume"
+external store_offset : topic -> int -> int64 -> unit = "ocaml_kafka_store_offset"
+
+type queue
+external new_queue : handler -> queue = "ocaml_kafka_new_queue"
+external destroy_queue : queue -> unit = "ocaml_kafka_destroy_queue"
+external consume_start_queue : queue -> topic -> int -> int64 -> unit = "ocaml_kafka_consume_start_queue"
+external consume_queue : queue -> int -> message = "ocaml_kafka_consume_queue"
+
+module Metadata = struct
+  type topic_metadata = {
+    topic_name: string;
+    topic_partitions: int list;
+  }
+end
+
+external get_topic_metadata: handler -> topic -> int -> Metadata.topic_metadata = "ocaml_kafka_get_topic_metadata"
+external get_topics_metadata: handler -> bool -> int -> Metadata.topic_metadata list = "ocaml_kafka_get_topics_metadata"
+let topic_metadata ?(timeout_ms = 1000) handler topic = get_topic_metadata handler topic timeout_ms
+let local_topics_metadata ?(timeout_ms = 1000) handler = get_topics_metadata handler false timeout_ms
+let all_topics_metadata ?(timeout_ms = 1000) handler = get_topics_metadata handler true timeout_ms
 

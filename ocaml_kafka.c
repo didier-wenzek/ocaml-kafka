@@ -54,6 +54,18 @@ static int const ERROR_CODES[] = {
 
 static int const EUNKNOWN = (sizeof ERROR_CODES) / (sizeof ERROR_CODES[0]);
 
+inline static value caml_error_value(rd_kafka_resp_err_t rd_errno)
+{
+  int i;
+  for (i = 0; i < EUNKNOWN; i++) {
+    if (rd_errno == ERROR_CODES[i]) {
+      return Val_int(i);
+    }
+  }
+
+  return Val_int(RD_KAFKA_RESP_ERR_UNKNOWN);
+}
+
 static
 void RAISE(rd_kafka_resp_err_t rd_errno, const char *error, ...)
 {
@@ -72,16 +84,7 @@ void RAISE(rd_kafka_resp_err_t rd_errno, const char *error, ...)
     }
   }
 
-  int caml_errno = RD_KAFKA_RESP_ERR_UNKNOWN;
-  int i;
-  for (i = 0; i < EUNKNOWN; i++) {
-    if (rd_errno == ERROR_CODES[i]) {
-      caml_errno = i;
-      break;
-    }
-  }
-
-  error_parameters[0] = Val_int(caml_errno);
+  error_parameters[0] = caml_error_value(rd_errno);
   error_parameters[1] = caml_copy_string(error_msg);
   caml_raise_with_args(*exception_handler, 2, error_parameters);
 }
@@ -168,10 +171,31 @@ value ocaml_kafka_new_consumer(value caml_consumer_options)
   CAMLreturn(caml_handler);
 }
 
-extern CAMLprim
-value ocaml_kafka_new_producer(value caml_producer_options)
+static
+void ocaml_kafka_delivery_callback(rd_kafka_t *producer, void *payload, size_t len, rd_kafka_resp_err_t err, void *opaque, void *msg_opaque)
 {
-  CAMLparam1(caml_producer_options);
+  CAMLlocal3(caml_callback, caml_msg_payload, caml_error);
+
+  caml_callback = (value) opaque;
+
+  caml_msg_payload = caml_alloc_string(len);
+  memcpy(String_val(caml_msg_payload), payload, len);
+
+  if (! err) {
+    caml_error = Val_int(0);            // None
+  } else {
+    caml_error = caml_alloc_small(1,0); // Some(error)
+    Field(caml_error, 0) = caml_error_value(err);
+  }
+
+  caml_callback2(caml_callback, caml_msg_payload, caml_error);
+}
+
+extern CAMLprim
+value ocaml_kafka_new_producer(value caml_delivery_callback, value caml_producer_options)
+{
+  CAMLparam2(caml_delivery_callback, caml_producer_options);
+  CAMLlocal1(caml_callback);
 
   char error_msg[160];
   rd_kafka_conf_t *conf = rd_kafka_conf_new();
@@ -180,6 +204,12 @@ value ocaml_kafka_new_producer(value caml_producer_options)
      rd_kafka_conf_destroy(conf);
      RAISE(RD_KAFKA_CONF_RES(conf_err), "Failed to configure new kafka producer (%s)", error_msg);
   }
+
+  if (Is_block(caml_delivery_callback)) {
+     caml_callback = Field(caml_delivery_callback, 0);
+     rd_kafka_conf_set_opaque(conf, (void*) caml_callback);
+     rd_kafka_conf_set_dr_cb(conf, ocaml_kafka_delivery_callback);
+  } 
 
   rd_kafka_t *handler = rd_kafka_new(RD_KAFKA_PRODUCER, conf, error_msg, sizeof(error_msg));
   if (handler == NULL) {
@@ -388,6 +418,33 @@ value ocaml_kafka_produce(value caml_kafka_topic, value caml_kafka_partition, va
   }
 
   CAMLreturn(Val_unit);
+}
+
+extern CAMLprim
+value ocaml_kafka_outq_len(value caml_kafka_handler)
+{
+  CAMLparam1(caml_kafka_handler);
+  CAMLlocal1(caml_len);
+
+  rd_kafka_t *handler = get_handler(caml_kafka_handler);
+  int len = rd_kafka_outq_len(handler);
+
+  caml_len = Val_int(len);
+  CAMLreturn(caml_len);
+}
+
+extern CAMLprim
+value ocaml_kafka_poll(value caml_kafka_handler, value caml_kafka_timeout)
+{
+  CAMLparam2(caml_kafka_handler, caml_kafka_timeout);
+  CAMLlocal1(caml_count);
+
+  rd_kafka_t *handler = get_handler(caml_kafka_handler);
+  int timeout = Int_val(caml_kafka_timeout);
+  int count = rd_kafka_poll(handler, timeout);
+
+  caml_count = Val_int(count);
+  CAMLreturn(caml_count);
 }
 
 extern CAMLprim

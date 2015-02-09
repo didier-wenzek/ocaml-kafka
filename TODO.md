@@ -4,7 +4,8 @@
  - (X) Support for queues.
  - (X) Improve error handling on consume : PartitionEnd vs timeout or error.
  - (X) Free messages once consumed using rd_kafka_message_destroy.
- - ( ) Support for delivery report, error, log, stats callbacks.
+ - (X) Support for delivery report callback.
+ - ( ) Support for error, log, stats callbacks.
  - (X) Support for topic properties.
  - ( ) Support for keys and partitionner callback.
  - (X) Specific offsets: Kafka.offset_stored, Kafka.offset_tail(n).
@@ -16,6 +17,6 @@
  - (/) Support for meta-data API.
  - ( ) Function: Kafka.version: unit -> string.
  - ( ) Function: Kafka.wait_destroyed.
- - ( ) Function: Kafka.outq_len.
+ - (X) Function: Kafka.outq_len.
  - ( ) Do we have to distinguish types: consumer vs producer.
  - ( ) Introduce a Kafka.Timeout exception.

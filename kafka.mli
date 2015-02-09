@@ -1,6 +1,46 @@
 (* Handler to a cluster of kafka brokers. *)
 type handler
 
+type error =
+  (* Internal errors to rdkafka *)
+  | BAD_MSG                             (* Received message is incorrect *)
+  | BAD_COMPRESSION                     (* Bad/unknown compression *)
+  | DESTROY                             (* Broker is going away *)
+  | FAIL                                (* Generic failure *)
+  | TRANSPORT                           (* Broker transport error *)
+  | CRIT_SYS_RESOURCE                   (* Critical system resource failure *)
+  | RESOLVE                             (* Failed to resolve broker.  *)
+  | MSG_TIMED_OUT                       (* Produced message timed out. *)
+  | UNKNOWN_PARTITION                   (* Permanent: Partition does not exist in cluster. *)
+  | FS                                  (* File or filesystem error *)
+  | UNKNOWN_TOPIC                       (* Permanent: Topic does not exist  in cluster. *)
+  | ALL_BROKERS_DOWN                    (* All broker connections  are down. *)
+  | INVALID_ARG                         (* Invalid argument, or invalid configuration *)
+  | TIMED_OUT                           (* Operation timed out *)
+  | QUEUE_FULL                          (* Queue is full *)
+  | ISR_INSUFF                          (* ISR count < required.acks *)
+
+  (* Standard Kafka errors *)
+  | UNKNOWN
+  | OFFSET_OUT_OF_RANGE
+  | INVALID_MSG
+  | UNKNOWN_TOPIC_OR_PART
+  | INVALID_MSG_SIZE
+  | LEADER_NOT_AVAILABLE
+  | NOT_LEADER_FOR_PARTITION
+  | REQUEST_TIMED_OUT
+  | BROKER_NOT_AVAILABLE
+  | REPLICA_NOT_AVAILABLE
+  | MSG_SIZE_TOO_LARGE
+  | STALE_CTRL_EPOCH
+  | OFFSET_METADATA_TOO_LARGE
+
+  (* Configuration errors *)
+  | CONF_UNKNOWN                        (* Unknown configuration name. *)
+  | CONF_INVALID                        (* Invalid configuration value. *)
+
+exception Error of error * string
+
 (* Create a kafka handler aimed to consume messages.
 
  - A single option is required : "metadata.broker.list", which is a comma sepated list of "host:port".
@@ -17,8 +57,12 @@ val new_consumer : (string*string) list -> handler
    see https://github.com/edenhill/librdkafka/blob/master/CONFIGURATION.md
    and https://kafka.apache.org/documentation.html#configuration
 *)
-val new_producer : (string*string) list -> handler
+val new_producer :
+     ?delivery_callback:(string -> error option -> unit)
+  -> (string*string) list
+  -> handler
 
+val poll_events: ?timeout_ms:int -> handler -> int
 (* Destroy Kafka handle *)
 val destroy_handler : handler -> unit
 
@@ -49,6 +93,27 @@ val topic_name : topic -> string
 *)
 val produce: topic -> int -> string -> unit
 val partition_unassigned: int
+
+(* Returns the current out queue length: messages waiting to be sent to, or acknowledged by, the broker. *)
+val outq_len : handler -> int
+
+(* Polls the provided kafka handle for events.
+
+  Events will cause application provided callbacks to be called.
+
+  The 'timeout_ms' argument specifies the minimum amount of time
+  (in milliseconds) that the call will block waiting for events.
+  For non-blocking calls, provide 0 as 'timeout_ms'.
+  To wait indefinately for an event, provide -1.
+
+  Events:
+  - delivery report callbacks (if dr_cb is configured) [producer]
+  - error callbacks (if error_cb is configured) [producer & consumer]
+  - stats callbacks (if stats_cb is configured) [producer & consumer]
+
+  Returns the number of events served.
+*)
+val poll_events: ?timeout_ms:int -> handler -> int
 
 (* [consume_start topic partition offset]
   starts consuming messages for topic [topic] and [partition] at [offset].
@@ -143,42 +208,3 @@ val local_topics_metadata: ?timeout_ms:int -> handler -> Metadata.topic_metadata
 (* Information of all topics known by the brokers. *)
 val all_topics_metadata: ?timeout_ms:int -> handler -> Metadata.topic_metadata list
 
-type error =
-  (* Internal errors to rdkafka *)
-  | BAD_MSG                             (* Received message is incorrect *)
-  | BAD_COMPRESSION                     (* Bad/unknown compression *)
-  | DESTROY                             (* Broker is going away *)
-  | FAIL                                (* Generic failure *)
-  | TRANSPORT                           (* Broker transport error *)
-  | CRIT_SYS_RESOURCE                   (* Critical system resource failure *)
-  | RESOLVE                             (* Failed to resolve broker.  *)
-  | MSG_TIMED_OUT                       (* Produced message timed out. *)
-  | UNKNOWN_PARTITION                   (* Permanent: Partition does not exist in cluster. *)
-  | FS                                  (* File or filesystem error *)
-  | UNKNOWN_TOPIC                       (* Permanent: Topic does not exist  in cluster. *)
-  | ALL_BROKERS_DOWN                    (* All broker connections  are down. *)
-  | INVALID_ARG                         (* Invalid argument, or invalid configuration *)
-  | TIMED_OUT                           (* Operation timed out *)
-  | QUEUE_FULL                          (* Queue is full *)
-  | ISR_INSUFF                          (* ISR count < required.acks *)
-
-  (* Standard Kafka errors *)
-  | UNKNOWN
-  | OFFSET_OUT_OF_RANGE
-  | INVALID_MSG
-  | UNKNOWN_TOPIC_OR_PART
-  | INVALID_MSG_SIZE
-  | LEADER_NOT_AVAILABLE
-  | NOT_LEADER_FOR_PARTITION
-  | REQUEST_TIMED_OUT
-  | BROKER_NOT_AVAILABLE
-  | REPLICA_NOT_AVAILABLE
-  | MSG_SIZE_TOO_LARGE
-  | STALE_CTRL_EPOCH
-  | OFFSET_METADATA_TOO_LARGE
-
-  (* Configuration errors *)
-  | CONF_UNKNOWN                        (* Unknown configuration name. *)
-  | CONF_INVALID                        (* Invalid configuration value. *)
-
-exception Error of error * string
