@@ -136,7 +136,12 @@ let main =
    let offsets = [0,Kafka.offset_tail 3; 1,Kafka.offset_tail 3] in
    
    ["message 123"; "message 124"; "message 125"] |> iterable_of_list |> KafkaProducer.stream_to sink;
-   src (fun _ (p,o) -> Printf.printf "%d.%Ld: %s\n%!" p o) offsets ()
+   let messages = src (fun acc _ msg -> msg::acc) offsets [] in
+   assert (List.length messages = 6);
+   assert (List.exists (fun msg -> msg = "message 123") messages);
+   assert (List.exists (fun msg -> msg = "message 124") messages);
+   assert (List.exists (fun msg -> msg = "message 125") messages)
+
 
    
    

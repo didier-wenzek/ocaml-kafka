@@ -38,6 +38,12 @@ let fold_partition
   start_consuming ();
   loop seed
 
+module Partition = struct
+  type t = int
+  let compare a b = a - b
+end
+module PartitionSet : Set.S with type elt = int = Set.Make(Partition)
+
 let find_offset partition_offsets partition =
   try List.assoc partition partition_offsets
   with Not_found -> 0L
@@ -67,22 +73,24 @@ let fold_topic
     Kafka.destroy_handler consumer;
     result
   in
-  let rec loop acc =
+  let rec loop (partition_set,acc) =
     match Kafka.consume_queue queue timeout_ms with
     | Kafka.Message (_,partition,offset,msg) ->
-      loop (update acc (partition,offset) msg)
-    | Kafka.PartitionEnd (_,_,_) ->
-      if stop_at_end
+      let partition_set = PartitionSet.add partition partition_set in
+      loop (partition_set, update acc (partition,offset) msg)
+    | Kafka.PartitionEnd (_,partition,_) ->
+      let partition_set = PartitionSet.remove partition partition_set in
+      if stop_at_end && (PartitionSet.is_empty partition_set)
       then stop_consuming acc
-      else loop acc
+      else loop (partition_set,acc)
     | exception Kafka.Error(Kafka.TIMED_OUT,_) ->
       if stop_at_end
       then stop_consuming acc
-      else loop acc
+      else loop (partition_set,acc)
     | exception e -> (
       stop_consuming acc;
       raise e
     )
     in
     start_consuming ();
-    loop seed
+    loop (PartitionSet.of_list partitions,seed)
