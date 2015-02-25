@@ -1,9 +1,15 @@
+let usage () =
+  Printf.fprintf stderr "This tests require a 'test' topic to be created with 2 partitions on local broker.\n";
+  Printf.fprintf stderr " => abort tests\n%!";
+  exit 1 |> ignore
+
 open Kafka.Metadata
 let timeout_ms = 1000
 let skip_all_message consume = 
   let rec loop () = match consume (3*timeout_ms) with
   | Kafka.Message _ -> loop ()
   | Kafka.PartitionEnd _ -> ()
+  | exception Kafka.Error(Kafka.TIMED_OUT,_) -> ()
   in loop ()
 
 let main =
@@ -12,10 +18,16 @@ let main =
    let producer = Kafka.new_producer ["metadata.broker.list","localhost:9092"] in
 
    (* Check that there is a test topic with two partitions. *)
-   let topics = Kafka.all_topics_metadata producer in
-   let test = List.find (fun tm -> tm.topic_name = "test") topics in
-   assert (List.sort compare test.topic_partitions = [0;1]);
+   let () =
+     try 
+       let topics = Kafka.all_topics_metadata producer in
+       let test = List.find (fun tm -> tm.topic_name = "test") topics in
+       let partitions = List.sort compare test.topic_partitions in
+       if partitions = [0;1] then () else usage ()
+     with Not_found -> usage ()
+   in
 
+   (* Prepare a producer topic *)
    let producer_topic = Kafka.new_topic producer "test" ["message.timeout.ms","10000"] in
    let test = Kafka.topic_metadata producer producer_topic in
    assert (List.sort compare test.topic_partitions = [0;1]);
@@ -106,7 +118,7 @@ let main =
    let producer_with_delivery_callback = Kafka.new_producer ~delivery_callback ["metadata.broker.list","localhost:9092"] in
    let topic_with_delivery_callback = Kafka.new_topic producer_with_delivery_callback "test" ["message.timeout.ms","10000"] in
    Kafka.produce topic_with_delivery_callback Kafka.partition_unassigned "message 6"; 
-   Kafka.poll_events producer_with_delivery_callback;
+   Kafka.poll_events producer_with_delivery_callback |> ignore;
    assert (!last_message_produced = "message 6");
    assert (!last_error = None);
 
@@ -116,5 +128,3 @@ let main =
    Kafka.destroy_topic consumer_topic;
    Kafka.destroy_handler producer;
    Kafka.destroy_handler consumer
-
-
