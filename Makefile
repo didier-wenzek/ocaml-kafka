@@ -14,7 +14,7 @@ tests: tests.native
 	_build/tests.native
 
 tests.native: all tests.ml
-	ocamlbuild -libs okafka tests.native
+	ocamlbuild -libs okafka,unix tests.native
 
 kafkatail.native: kafkatail.ml
 	ocamlbuild -libs okafka kafkatail.native

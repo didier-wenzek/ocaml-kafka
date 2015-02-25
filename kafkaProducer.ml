@@ -6,13 +6,28 @@ let stream_to open_sink iterable =
   try iterable push ; close ()
   with error -> close (); raise error 
   
+type 'a push_error_handler = ('a -> unit) -> 'a -> exn -> unit
+let retry_on_error push msg error = push msg
+let raise_on_error push msg error = raise error
+
 let partition_sink
   ?(producer_props = ["metadata.broker.list","localhost:9092"])
   ?(topic_props = [])
+  ?(delivery_error_handler = raise_on_error)
   topic_name partition
 = fun () ->
   let producer = Kafka.new_producer producer_props in
   let topic = Kafka.new_topic producer topic_name topic_props in
-  let push msg = Kafka.produce topic partition msg in
-  let term () = (Kafka.destroy_topic topic; Kafka.destroy_handler producer) in
+  let rec push msg =
+    let wait_and_push msg =
+       let max_outq_len = ((Kafka.outq_len producer) * 4)/5 in
+       Kafka.wait_delivery ~max_outq_len producer;
+       push msg
+    in
+    try Kafka.produce topic partition msg
+    with error -> delivery_error_handler wait_and_push msg error
+  in
+  let term () = (Kafka.wait_delivery producer; Kafka.destroy_topic topic; Kafka.destroy_handler producer) in
   (push,term)
+
+  

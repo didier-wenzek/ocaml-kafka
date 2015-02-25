@@ -127,4 +127,18 @@ let main =
    Kafka.destroy_topic producer_topic;
    Kafka.destroy_topic consumer_topic;
    Kafka.destroy_handler producer;
-   Kafka.destroy_handler consumer
+   Kafka.destroy_handler consumer;
+
+   (* KafkaConsumer / KafkaProducer API *)
+   let iterable_of_list xs f = List.iter f xs in
+   let sink = KafkaProducer.partition_sink "test" Kafka.partition_unassigned in
+   let src = KafkaConsumer.fold_topic "test" [] in
+   let offsets = [0,Kafka.offset_tail 3; 1,Kafka.offset_tail 3] in
+   
+   ["message 123"; "message 124"; "message 125"] |> iterable_of_list |> KafkaProducer.stream_to sink;
+   src (fun _ (p,o) -> Printf.printf "%d.%Ld: %s\n%!" p o) offsets ()
+
+   
+   
+   
+

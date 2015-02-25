@@ -62,7 +62,15 @@ val new_producer :
   -> (string*string) list
   -> handler
 
+(* Trigger callback registred with [new_producer ~delivery_callback].
+
+   Returns the count of events processes.
+*)
 val poll_events: ?timeout_ms:int -> handler -> int
+
+(** Wait that messages are delivered. *)
+val wait_delivery: ?timeout_ms:int -> ?max_outq_len:int -> handler -> unit
+
 (* Destroy Kafka handle *)
 val destroy_handler : handler -> unit
 

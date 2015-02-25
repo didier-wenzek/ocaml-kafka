@@ -64,6 +64,13 @@ external outq_len : handler -> int = "ocaml_kafka_outq_len"
 external poll: handler -> int -> int = "ocaml_kafka_poll"
 let poll_events ?(timeout_ms = 1000) handler = poll handler timeout_ms
 
+let wait_delivery ?(timeout_ms = 100) ?(max_outq_len = 0) handler =
+  let rec loop () =
+    if outq_len handler > max_outq_len
+    then (ignore (poll_events ~timeout_ms handler); loop ()) 
+    else ()
+  in loop ()
+
 external consume_start : topic -> int -> int64 -> unit = "ocaml_kafka_consume_start"
 external consume_stop : topic -> int -> unit = "ocaml_kafka_consume_stop"
 
