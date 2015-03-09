@@ -1,5 +1,5 @@
 let usage () =
-  Printf.fprintf stderr "This tests require a 'test' topic to be created with 2 partitions on local broker.\n";
+  Printf.fprintf stderr "These tests require a 'test' topic to be created with 2 partitions on local broker.\n";
   Printf.fprintf stderr " => abort tests\n%!";
   exit 1 |> ignore
 

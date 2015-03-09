@@ -1,22 +1,22 @@
- - (X) Consumer,Producer,Topic CRUD.
- - (X) Produce and consume messages.
- - (X) Support for topic properties.
- - (X) Support for queues.
- - (X) Improve error handling on consume : PartitionEnd vs timeout or error.
- - (X) Free messages once consumed using rd_kafka_message_destroy.
- - (X) Support for delivery report callback.
- - ( ) Support for error, log, stats callbacks.
- - (X) Support for topic properties.
- - ( ) Support for keys and partitionner callback.
- - (X) Specific offsets: Kafka.offset_stored, Kafka.offset_tail(n).
- - (X) Wrap messages in message enveloppes with topic,partition,offset,payload,key.
- - ( ) Support to consume batch of messages.
- - ( ) Support to consume messages through a callback.
- - (X) Support for stored offsets.
- - ( ) Support to produce batch of messages.
- - (/) Support for meta-data API.
- - ( ) Function: Kafka.version: unit -> string.
- - ( ) Function: Kafka.wait_destroyed.
- - (X) Function: Kafka.outq_len.
- - ( ) Do we have to distinguish types: consumer vs producer.
- - ( ) Introduce a Kafka.Timeout exception.
+ - [x] Consumer,Producer,Topic CRUD.
+ - [x] Produce and consume messages.
+ - [x] Support for topic properties.
+ - [x] Support for queues.
+ - [x] Improve error handling on consume : PartitionEnd vs timeout or error.
+ - [x] Free messages once consumed using rd_kafka_message_destroy.
+ - [x] Support for delivery report callback.
+ - [ ] Support for error, log, stats callbacks.
+ - [x] Support for topic properties.
+ - [ ] Support for keys and partitionner callback.
+ - [x] Specific offsets: Kafka.offset_stored, Kafka.offset_tail(n).
+ - [x] Wrap messages in message enveloppes with topic,partition,offset,payload,key.
+ - [ ] Support to consume batch of messages.
+ - [ ] Support to consume messages through a callback.
+ - [x] Support for stored offsets.
+ - [ ] Support to produce batch of messages.
+ - [/] Support for meta-data API.
+ - [ ] Function: Kafka.version: unit -> string.
+ - [ ] Function: Kafka.wait_destroyed.
+ - [x] Function: Kafka.outq_len.
+ - [ ] Do we have to distinguish types: consumer vs producer.
+ - [ ] Introduce a Kafka.Timeout exception.

@@ -50,7 +50,7 @@ exception Error of error * string
 *)
 val new_consumer : (string*string) list -> handler
 
-(* Create a kafka handler aimed to consume messages.
+(* Create a kafka handler aimed to produce messages.
 
  - A single option is required : "metadata.broker.list", which is a comma sepated list of "host:port".
  - For a list of options,
@@ -62,16 +62,7 @@ val new_producer :
   -> (string*string) list
   -> handler
 
-(* Trigger callback registred with [new_producer ~delivery_callback].
-
-   Returns the count of events processes.
-*)
-val poll_events: ?timeout_ms:int -> handler -> int
-
-(** Wait that messages are delivered. *)
-val wait_delivery: ?timeout_ms:int -> ?max_outq_len:int -> handler -> unit
-
-(* Destroy Kafka handle *)
+(* Destroy Kafka handle (either a consumer or a producer) *)
 val destroy_handler : handler -> unit
 
 (* Kafka handle name *)
@@ -122,6 +113,9 @@ val outq_len : handler -> int
   Returns the number of events served.
 *)
 val poll_events: ?timeout_ms:int -> handler -> int
+
+(** Wait that messages are delivered. *)
+val wait_delivery: ?timeout_ms:int -> ?max_outq_len:int -> handler -> unit
 
 (* [consume_start topic partition offset]
   starts consuming messages for topic [topic] and [partition] at [offset].
