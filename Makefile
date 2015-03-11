@@ -4,6 +4,8 @@ LIB = $(addprefix _build/, $(TARGETS))
 all:
 	ocamlbuild $(TARGETS)
 
+tools: kafkatail.native create_topic.native
+
 install:
 	ocamlfind install okafka META $(LIB)
 
@@ -18,6 +20,9 @@ tests.native: all tests.ml
 
 kafkatail.native: kafkatail.ml
 	ocamlbuild -libs okafka kafkatail.native
+
+create_topic.native: create_topic.ml
+	ocamlbuild -libs okafka create_topic.native
 
 clean:
 	ocamlbuild -clean

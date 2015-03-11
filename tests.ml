@@ -1,6 +1,10 @@
 let usage () =
   Printf.fprintf stderr "These tests require a 'test' topic to be created with 2 partitions on local broker.\n";
   Printf.fprintf stderr " => abort tests\n%!";
+  Printf.fprintf stderr "\n%!";
+  Printf.fprintf stderr "You may use:\n%!";
+  Printf.fprintf stderr "$ make tools\n%!";
+  Printf.fprintf stderr "$ ./create_topic.native test\n%!";
   exit 1 |> ignore
 
 open Kafka.Metadata
@@ -21,7 +25,7 @@ let main =
    let () =
      try 
        let topics = Kafka.all_topics_metadata producer in
-       let test = List.find (fun tm -> tm.topic_name = "test") topics in
+       let test = List.find (fun tm -> tm.topic_name = "testall") topics in
        let partitions = List.sort compare test.topic_partitions in
        if partitions = [0;1] then () else usage ()
      with Not_found -> usage ()

@@ -20,7 +20,7 @@ let main () =
      try ([int_of_string partition],[offset])
      with e -> (
         let meta = Kafka.topic_metadata consumer topic in
-        (meta.topic_partitions, List.map (fun _ -> offset) meta.data.topic_partitions)
+        (meta.topic_partitions, List.map (fun _ -> offset) meta.topic_partitions)
      )
   in
 
@@ -40,7 +40,7 @@ let main () =
   Kafka.destroy_queue queue;
   Kafka.destroy_handler consumer
  
-in 
+let () = 
   if Array.length Sys.argv != 5
   then (
     Printf.printf "usage: %s brokers topic partition offset\n%!" Sys.argv.(0);
