@@ -7,14 +7,16 @@
  - [x] Support for delivery report callback.
  - [ ] Support for error, log, stats callbacks.
  - [x] Support for topic properties.
- - [ ] Support for keys and partitionner callback.
+ - [x] Support for keys.
+ - [ ] Support for partitionner callback.
  - [x] Specific offsets: Kafka.offset_stored, Kafka.offset_tail(n).
  - [x] Wrap messages in message enveloppes with topic,partition,offset,payload,key.
  - [ ] Support to consume batch of messages.
  - [ ] Support to consume messages through a callback.
  - [x] Support for stored offsets.
  - [ ] Support to produce batch of messages.
- - [/] Support for meta-data API.
+ - [x] Meta-data: topic list, partition list.
+ - [ ] Meta-data: server list, list of replica.
  - [ ] Function: Kafka.version: unit -> string.
  - [ ] Function: Kafka.wait_destroyed.
  - [x] Function: Kafka.outq_len.

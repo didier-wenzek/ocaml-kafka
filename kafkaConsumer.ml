@@ -20,7 +20,7 @@ let fold_partition
   in
   let rec loop acc =
     match Kafka.consume topic partition timeout_ms with
-    | Kafka.Message (_,_,offset,msg) ->
+    | Kafka.Message (_,_,offset,msg,_) ->
       loop (update acc offset msg)
     | Kafka.PartitionEnd (_,_,_) ->
       if stop_at_end
@@ -75,7 +75,7 @@ let fold_topic
   in
   let rec loop (partition_set,acc) =
     match Kafka.consume_queue queue timeout_ms with
-    | Kafka.Message (_,partition,offset,msg) ->
+    | Kafka.Message (_,partition,offset,msg,_) ->
       let partition_set = PartitionSet.add partition partition_set in
       loop (partition_set, update acc (partition,offset) msg)
     | Kafka.PartitionEnd (_,partition,_) ->

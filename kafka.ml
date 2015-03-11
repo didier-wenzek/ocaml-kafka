@@ -60,6 +60,7 @@ external topic_name : topic -> string = "ocaml_kafka_topic_name"
 external topic_partition_available: topic -> int -> bool = "ocaml_kafka_topic_partition_available"
 
 external produce: topic -> int -> string -> unit = "ocaml_kafka_produce"
+external produce_key_msg: topic -> int -> string -> string -> unit = "ocaml_kafka_produce_key_msg"
 external outq_len : handler -> int = "ocaml_kafka_outq_len"
 external poll: handler -> int -> int = "ocaml_kafka_poll"
 let poll_events ?(timeout_ms = 1000) handler = poll handler timeout_ms
@@ -81,8 +82,8 @@ let offset_stored = -1000L
 let offset_tail n = Int64.sub (-2000L) (Int64.of_int n)
 
 type message =
-  | Message of topic * int * int64 * string              (* topic, partition, offset, payload *)
-  | PartitionEnd of topic * int * int64                  (* topic, partition, offset *)
+  | Message of topic * int * int64 * string * string option (* topic, partition, offset, payload, optional key *)
+  | PartitionEnd of topic * int * int64                     (* topic, partition, offset *)
 
 external consume : topic -> int -> int -> message = "ocaml_kafka_consume"
 external store_offset : topic -> int -> int64 -> unit = "ocaml_kafka_store_offset"

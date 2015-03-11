@@ -85,13 +85,19 @@ val destroy_topic : topic -> unit
 val topic_name : topic -> string
 
 (* [produce topic partition message]
-  produces and sends a single message to broker.
+  produces and sends a single message to the broker.
 
-  Partition may either be a proper partition (0..N)
-  or [Kafka.partition_unassigned].
+  The [partition] may be
+  - either a proper partition (0..N-1)
+  - or [Kafka.partition_unassigned].
 *)
 val produce: topic -> int -> string -> unit
 val partition_unassigned: int
+
+(* [produce_key_msg topic partition key message]
+  produces and sends a (key,message) pair to the broker.
+*)
+val produce_key_msg: topic -> int -> string -> string -> unit
 
 (* Returns the current out queue length: messages waiting to be sent to, or acknowledged by, the broker. *)
 val outq_len : handler -> int
@@ -144,8 +150,8 @@ val offset_tail: int -> int64
 val consume_stop : topic -> int -> unit
 
 type message =
-  | Message of topic * int * int64 * string              (* topic, partition, offset, payload *)
-  | PartitionEnd of topic * int * int64                  (* topic, partition, offset *)
+  | Message of topic * int * int64 * string * string option (* topic, partition, offset, payload, optional key *)
+  | PartitionEnd of topic * int * int64                     (* topic, partition, offset *)
 
 (* [consume topic partition timeout_ms]
    consumes a single message from topic [topic] and [partition],

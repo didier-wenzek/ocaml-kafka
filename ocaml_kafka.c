@@ -359,6 +359,7 @@ value ocaml_kafka_consume(value caml_kafka_topic, value caml_kafka_partition, va
 {
   CAMLparam3(caml_kafka_topic,caml_kafka_partition,caml_kafka_timeout);
   CAMLlocal3(caml_msg, caml_msg_payload, caml_msg_offset);
+  CAMLlocal2(caml_key, caml_key_payload);
 
   rd_kafka_topic_t *topic = get_handler(Field(caml_kafka_topic,0));
   int32 partition = Int_val(caml_kafka_partition);
@@ -373,12 +374,24 @@ value ocaml_kafka_consume(value caml_kafka_topic, value caml_kafka_partition, va
      caml_msg_payload = caml_alloc_string(message->len);
      memcpy(String_val(caml_msg_payload), message->payload, message->len);
 
-     caml_msg_offset = caml_copy_int64(message->offset);
-     caml_msg = caml_alloc_small(4, 0);
+     caml_msg_offset = caml_copy_int64(message->offset) ;
+
+     if (message->key) {
+       caml_key_payload = caml_alloc_string(message->key_len);
+       memcpy(String_val(caml_key_payload), message->key, message->key_len);
+
+       caml_key = caml_alloc_small(1,0); // Some(key)
+       Field(caml_key, 0) = caml_key_payload; 
+     } else {
+       caml_key = Val_int(0); // None
+     }
+
+     caml_msg = caml_alloc_small(5, 0);
      Field( caml_msg, 0) = caml_kafka_topic;
      Field( caml_msg, 1) = caml_kafka_partition;
      Field( caml_msg, 2) = caml_msg_offset;
      Field( caml_msg, 3) = caml_msg_payload;
+     Field( caml_msg, 4) = caml_key;
   }
   else if (message->err == RD_KAFKA_RESP_ERR__PARTITION_EOF) {
      caml_msg_offset = caml_copy_int64(message->offset);
@@ -412,6 +425,27 @@ value ocaml_kafka_produce(value caml_kafka_topic, value caml_kafka_partition, va
   size_t len = caml_string_length(caml_msg);
 
   int err = rd_kafka_produce(topic, partition, RD_KAFKA_MSG_F_COPY, payload, len, NULL, 0, NULL);
+  if (err) {
+     rd_kafka_resp_err_t rd_errno = rd_kafka_errno2err(errno);
+     RAISE(rd_errno, "Failed to produce message (%s)", rd_kafka_err2str(rd_errno));
+  }
+
+  CAMLreturn(Val_unit);
+}
+
+extern CAMLprim
+value ocaml_kafka_produce_key_msg(value caml_kafka_topic, value caml_kafka_partition, value caml_key, value caml_msg)
+{
+  CAMLparam4(caml_kafka_topic,caml_kafka_partition,caml_key,caml_msg);
+
+  rd_kafka_topic_t *topic = get_handler(Field(caml_kafka_topic,0));
+  int32 partition = Int_val(caml_kafka_partition);
+  void* payload = String_val(caml_msg);
+  size_t len = caml_string_length(caml_msg);
+  void* key = String_val(caml_key);
+  size_t key_len = caml_string_length(caml_key);
+
+  int err = rd_kafka_produce(topic, partition, RD_KAFKA_MSG_F_COPY, payload, len, key, key_len, NULL);
   if (err) {
      rd_kafka_resp_err_t rd_errno = rd_kafka_errno2err(errno);
      RAISE(rd_errno, "Failed to produce message (%s)", rd_kafka_err2str(rd_errno));
@@ -553,6 +587,7 @@ value ocaml_kafka_consume_queue(value caml_kafka_queue, value caml_kafka_timeout
 {
   CAMLparam2(caml_kafka_queue,caml_kafka_timeout);
   CAMLlocal5(caml_topics, caml_topic, caml_msg, caml_msg_payload, caml_msg_offset);
+  CAMLlocal2(caml_key, caml_key_payload);
 
   rd_kafka_queue_t *queue = get_handler(Field(caml_kafka_queue,0));
   int timeout = Int_val(caml_kafka_timeout);
@@ -580,12 +615,23 @@ value ocaml_kafka_consume_queue(value caml_kafka_queue, value caml_kafka_timeout
            caml_msg_payload = caml_alloc_string(message->len);
            memcpy(String_val(caml_msg_payload), message->payload, message->len);
            caml_msg_offset = caml_copy_int64(message->offset) ;
+
+           if (message->key) {
+             caml_key_payload = caml_alloc_string(message->key_len);
+             memcpy(String_val(caml_key_payload), message->key, message->key_len);
+
+             caml_key = caml_alloc_small(1,0); // Some(key)
+             Field(caml_key, 0) = caml_key_payload; 
+           } else {
+             caml_key = Val_int(0); // None
+           }
    
-           caml_msg = caml_alloc_small(4, 0);
+           caml_msg = caml_alloc_small(5, 0);
            Field( caml_msg, 0) = caml_topic;
            Field( caml_msg, 1) = Val_int(message->partition);
            Field( caml_msg, 2) = caml_msg_offset;
            Field( caml_msg, 3) = caml_msg_payload;
+           Field( caml_msg, 4) = caml_key;
         }
         else if (message->err == RD_KAFKA_RESP_ERR__PARTITION_EOF) {
            caml_msg_offset = caml_copy_int64(message->offset) ;
