@@ -159,13 +159,14 @@ let main =
    Kafka.destroy_handler consumer;
 
    (* KafkaConsumer / KafkaProducer API *)
+   let stop_at_end = true in
    let iterable_of_list xs f = List.iter f xs in
    let sink = KafkaProducer.partition_sink "test" Kafka.partition_unassigned in
-   let src = KafkaConsumer.fold_topic "test" [] in
+   let src = KafkaConsumer.fold_topic ~stop_at_end "test" [] in
    let offsets = [0,Kafka.offset_tail 3; 1,Kafka.offset_tail 3] in
    
    ["message 123"; "message 124"; "message 125"] |> iterable_of_list |> KafkaProducer.stream_to sink;
-   let messages = src (fun acc _ msg -> msg::acc) offsets [] in
+   let messages = src (fun acc -> function Kafka.Message(_,_,_,msg,_) -> msg::acc | _ -> acc) offsets [] in
    assert (List.length messages = 6);
    assert (List.exists (fun msg -> msg = "message 123") messages);
    assert (List.exists (fun msg -> msg = "message 124") messages);
