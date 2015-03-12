@@ -26,7 +26,8 @@ let main () =
 
   let rec loop () = 
     match Kafka.consume_queue queue timout with
-    | Kafka.Message (topic,partition,offset,msg) -> (Printf.printf "%s,%d,%Ld: %s\n%!" (Kafka.topic_name topic) partition offset msg;loop ())
+    | Kafka.Message (topic,partition,offset,msg,None) -> (Printf.printf "%s,%d,%Ld: %s\n%!" (Kafka.topic_name topic) partition offset msg;loop ())
+    | Kafka.Message (topic,partition,offset,msg,Some(key)) -> (Printf.printf "%s,%d,%Ld: %s->%s\n%!" (Kafka.topic_name topic) partition offset key msg;loop ())
     | Kafka.PartitionEnd (topic,partition,offset) -> (Printf.printf "%s,%d,%Ld\n%!" (Kafka.topic_name topic) partition offset; loop())
     | exception Kafka.Error(Kafka.TIMED_OUT,_) -> (Printf.fprintf stderr "Timeout after: %d ms\n%!" timout; loop ())
     | exception Kafka.Error(_,msg) -> Printf.fprintf stderr "Error: %s\n%!" msg

@@ -9,6 +9,7 @@ let usage () =
 
 open Kafka.Metadata
 let timeout_ms = 1000
+
 let skip_all_message consume = 
   let rec loop () = match consume (3*timeout_ms) with
   | Kafka.Message _ -> loop ()
@@ -25,7 +26,7 @@ let main =
    let () =
      try 
        let topics = Kafka.all_topics_metadata producer in
-       let test = List.find (fun tm -> tm.topic_name = "testall") topics in
+       let test = List.find (fun tm -> tm.topic_name = "test") topics in
        let partitions = List.sort compare test.topic_partitions in
        if partitions = [0;1] then () else usage ()
      with Not_found -> usage ()
@@ -84,7 +85,7 @@ let main =
    let rec consume t p = match Kafka.consume t p timeout_ms with
       | Kafka.Message(_,_,_,msg,key) -> key,msg
       | Kafka.PartitionEnd(_,_,_) -> (
-          Printf.fprintf stderr "No message for now\n%!";
+          Printf.fprintf stderr "No keyed message for now\n%!";
           consume t p
       )
       | exception Kafka.Error(Kafka.TIMED_OUT,_) -> (
@@ -119,11 +120,11 @@ let main =
           else (n,m+1)
       )
       | Kafka.PartitionEnd(_,_,_) -> (
-          Printf.fprintf stderr "No message for now\n%!";
+          Printf.fprintf stderr "No queued message for now\n%!";
           consume_queue (n,m)
       )
       | exception Kafka.Error(Kafka.TIMED_OUT,_) -> (
-          Printf.fprintf stderr "Timeout after: %d ms\n%!" timeout_ms;
+          Printf.fprintf stderr "Queue timeout after: %d ms\n%!" timeout_ms;
           consume_queue (n,m)
       )
    in
