@@ -250,17 +250,37 @@ value ocaml_kafka_handler_name(value caml_kafka_handler)
   CAMLreturn(caml_name);
 }
 
-extern CAMLprim
-value ocaml_kafka_new_topic(value caml_kafka_handler, value caml_topic_name, value caml_topic_options)
+static
+int32_t ocaml_kafka_partitioner_callback(const rd_kafka_topic_t *topic, const void *key, size_t keylen, int32_t partition_cnt, void *opaque, void *msg_opaque)
 {
-  CAMLparam3(caml_kafka_handler, caml_topic_name, caml_topic_options);
-  CAMLlocal2(caml_topic, caml_kafka_topic_handler);
+  CAMLlocal4(caml_callback, caml_key, caml_partition_cnt, caml_partition);
+
+  caml_callback = (value) opaque;
+  caml_partition_cnt = Val_int(partition_cnt);
+  caml_key = caml_alloc_string(keylen);
+  memcpy(String_val(caml_key), key, keylen);
+
+  caml_partition = caml_callback2(caml_callback, caml_partition_cnt, caml_key);
+  return Int_val(caml_partition);
+}
+
+extern CAMLprim
+value ocaml_kafka_new_topic(value caml_partitioner_callback, value caml_kafka_handler, value caml_topic_name, value caml_topic_options)
+{
+  CAMLparam4(caml_partitioner_callback, caml_kafka_handler, caml_topic_name, caml_topic_options);
+  CAMLlocal3(caml_callback, caml_topic, caml_kafka_topic_handler);
 
   rd_kafka_t *handler = get_handler(caml_kafka_handler);
   const char* name = String_val(caml_topic_name);
 
-  char error_msg[160];
   rd_kafka_topic_conf_t *conf = rd_kafka_topic_conf_new();
+  if (Is_block(caml_partitioner_callback)) {
+     caml_callback = Field(caml_partitioner_callback, 0);
+     rd_kafka_topic_conf_set_opaque(conf, (void*) caml_callback);
+     rd_kafka_topic_conf_set_partitioner_cb(conf, ocaml_kafka_partitioner_callback);
+  } 
+
+  char error_msg[160];
   rd_kafka_conf_res_t conf_err = configure_topic(conf, caml_topic_options, error_msg, sizeof(error_msg));
   if (conf_err) {
      rd_kafka_topic_conf_destroy(conf);

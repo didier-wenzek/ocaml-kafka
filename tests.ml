@@ -33,7 +33,7 @@ let main =
    in
 
    (* Prepare a producer topic *)
-   let producer_topic = Kafka.new_topic producer "test" ["message.timeout.ms","10000"] in
+   let producer_topic = Kafka.new_topic producer "test" ["message.timeout.ms","1000"] in
    let test = Kafka.topic_metadata producer producer_topic in
    assert (List.sort compare test.topic_partitions = [0;1]);
 
@@ -76,28 +76,6 @@ let main =
      | _ -> assert false
    );
 
-   (* Produce some keyed messages *)
-   Kafka.produce_key_msg producer_topic partition "key 0" "key-message 0";
-   Kafka.produce_key_msg producer_topic partition "key 1" "key-message 1";
-   Kafka.produce_key_msg producer_topic partition "key 2" "key-message 2";
-   
-   (* Consume messages *)
-   let rec consume t p = match Kafka.consume t p timeout_ms with
-      | Kafka.Message(_,_,_,msg,key) -> key,msg
-      | Kafka.PartitionEnd(_,_,_) -> (
-          Printf.fprintf stderr "No keyed message for now\n%!";
-          consume t p
-      )
-      | exception Kafka.Error(Kafka.TIMED_OUT,_) -> (
-          Printf.fprintf stderr "Timeout after: %d ms\n%!" timeout_ms;
-          consume t p
-      )
-   in
-   let key,msg = consume consumer_topic partition in assert (msg = "key-message 0" && key = Some "key 0");
-   let key,msg = consume consumer_topic partition in assert (msg = "key-message 1" && key = Some "key 1");
-   let key,msg = consume consumer_topic partition in assert (msg = "key-message 2" && key = Some "key 2");
-
-
    (* Stop collecting messages. *)
    Kafka.consume_stop consumer_topic partition;
 
@@ -134,6 +112,29 @@ let main =
    
    assert (n+m = 3);
 
+   (* Produce some keyed messages *)
+   let partitioner_callback partition_cnt key = Printf.printf "xoxox %s \n%!" key;(Hashtbl.hash key) mod partition_cnt in
+   let key_producer_topic = Kafka.new_topic ~partitioner_callback producer "test" ["message.timeout.ms","1000"] in
+   Kafka.produce_key_msg key_producer_topic Kafka.partition_unassigned "key 0" "key-message 0";
+   Kafka.produce_key_msg key_producer_topic Kafka.partition_unassigned "key 1" "key-message 1";
+   Kafka.produce_key_msg key_producer_topic Kafka.partition_unassigned "key 2" "key-message 2";
+   
+   (* Consume keyed messages *)
+   let rec consume_k t = match Kafka.consume_queue t timeout_ms with
+      | Kafka.Message(_,_,_,msg,key) -> key,msg
+      | Kafka.PartitionEnd(_,_,_) -> (
+          Printf.fprintf stderr "No keyed message for now\n%!";
+          consume_k t
+      )
+      | exception Kafka.Error(Kafka.TIMED_OUT,_) -> (
+          Printf.fprintf stderr "Timeout after: %d ms\n%!" timeout_ms;
+          consume_k t
+      )
+   in
+   let key_msg_pairs = [ consume_k queue; consume_k queue; consume_k queue ] in
+   let key_msg_pairs = List.sort (fun p1 p2 -> compare (snd p1) (snd p2)) key_msg_pairs in
+   assert (key_msg_pairs = [Some "key 0","key-message 0"; Some "key 1","key-message 1"; Some "key 2","key-message 2"]);
+
    Kafka.consume_stop consumer_topic 0;
    Kafka.consume_stop consumer_topic 1;
 
@@ -152,6 +153,7 @@ let main =
    (* Consumers, producers, topics and queues, all handles must be released. *)
    Kafka.destroy_queue queue;
    Kafka.destroy_topic producer_topic;
+   Kafka.destroy_topic key_producer_topic;
    Kafka.destroy_topic consumer_topic;
    Kafka.destroy_handler producer;
    Kafka.destroy_handler consumer;

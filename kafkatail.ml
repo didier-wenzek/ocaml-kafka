@@ -24,17 +24,18 @@ let main () =
      )
   in
 
-  let rec loop () = 
+  let rec loop newline = 
+    let pnl () = if newline then Printf.fprintf stderr "\n%!" in
     match Kafka.consume_queue queue timout with
-    | Kafka.Message (topic,partition,offset,msg,None) -> (Printf.printf "%s,%d,%Ld: %s\n%!" (Kafka.topic_name topic) partition offset msg;loop ())
-    | Kafka.Message (topic,partition,offset,msg,Some(key)) -> (Printf.printf "%s,%d,%Ld: %s->%s\n%!" (Kafka.topic_name topic) partition offset key msg;loop ())
-    | Kafka.PartitionEnd (topic,partition,offset) -> (Printf.printf "%s,%d,%Ld\n%!" (Kafka.topic_name topic) partition offset; loop())
-    | exception Kafka.Error(Kafka.TIMED_OUT,_) -> (Printf.fprintf stderr "Timeout after: %d ms\n%!" timout; loop ())
-    | exception Kafka.Error(_,msg) -> Printf.fprintf stderr "Error: %s\n%!" msg
+    | Kafka.Message (topic,partition,offset,msg,None) -> (pnl ();Printf.printf "%s,%d,%Ld: %s\n%!" (Kafka.topic_name topic) partition offset msg;loop false)
+    | Kafka.Message (topic,partition,offset,msg,Some(key)) -> (pnl ();Printf.printf "%s,%d,%Ld: %s->%s\n%!" (Kafka.topic_name topic) partition offset key msg;loop false)
+    | Kafka.PartitionEnd (topic,partition,offset) -> (pnl (); Printf.printf "%s,%d,%Ld (EOP)\n%!" (Kafka.topic_name topic) partition offset; loop false)
+    | exception Kafka.Error(Kafka.TIMED_OUT,_) -> (Printf.fprintf stderr "*%!"; loop true)
+    | exception Kafka.Error(_,msg) -> (pnl ();Printf.fprintf stderr "Error: %s\n%!" msg)
   in
 
   List.iter2 (Kafka.consume_start_queue queue topic) partitions offsets;
-  loop ();
+  loop false;
   List.iter (Kafka.consume_stop topic) partitions;
 
   Kafka.destroy_topic topic;

@@ -75,8 +75,16 @@ type topic
 
  - For a list of options,
    see https://github.com/edenhill/librdkafka/blob/master/CONFIGURATION.md
+
+ - For a producer, a partition_callback may be provided
+   to assign a partition after the key provided by [produce_key_msg].
  *)
-val new_topic : handler -> string -> (string*string) list -> topic
+val new_topic :
+    ?partitioner_callback:(int -> string-> int)  (* [partitioner partition_count key] assigns a partition for a key in [0..partition_count-1] *)
+  -> handler                                     (* consumer or producer *)
+  -> string                                      (* topic name *)
+  -> (string*string) list                        (* topic option *)
+  -> topic
 
 (* Destroy topic handle *)
 val destroy_topic : topic -> unit
