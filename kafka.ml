@@ -1,4 +1,14 @@
 type handler
+type topic
+type queue
+type partition = int
+type offset = int64
+
+type message =
+  | Message of topic * partition * offset * string * string option (* topic, partition, offset, payload, optional key *)
+  | PartitionEnd of topic * partition * offset                     (* topic, partition, offset *)
+
+type msg_id = int64
 
 type error =
   (* Internal errors to rdkafka: *)
@@ -40,8 +50,6 @@ type error =
 
 exception Error of error * string
 
-type msg_id = int64
-
 let _ = 
   Callback.register_exception "kafka.error" (Error(UNKNOWN,"msg string"));
 
@@ -55,9 +63,8 @@ external new_producer :
 external destroy_handler : handler -> unit = "ocaml_kafka_destroy_handler"
 external handler_name : handler -> string = "ocaml_kafka_handler_name"
 
-type topic
 external new_topic :
-     ?partitioner_callback:(int -> string-> int)
+     ?partitioner_callback:(int -> string-> partition)
   -> handler
   -> string
   -> (string*string) list
@@ -72,7 +79,7 @@ external topic_partition_available: topic -> int -> bool = "ocaml_kafka_topic_pa
   While the underlying library, librdkafka, allows any void* msg_opaque data.
   This is to avoid issues with the garbage collector
 *)
-external produce: topic -> int -> ?key:string -> ?msg_id:msg_id -> string -> unit = "ocaml_kafka_produce"
+external produce: topic -> partition -> ?key:string -> ?msg_id:msg_id -> string -> unit = "ocaml_kafka_produce"
 external outq_len : handler -> int = "ocaml_kafka_outq_len"
 external poll: handler -> int -> int = "ocaml_kafka_poll"
 let poll_events ?(timeout_ms = 1000) handler = poll handler timeout_ms
@@ -84,8 +91,8 @@ let wait_delivery ?(timeout_ms = 100) ?(max_outq_len = 0) handler =
     else ()
   in loop ()
 
-external consume_start : topic -> int -> int64 -> unit = "ocaml_kafka_consume_start"
-external consume_stop : topic -> int -> unit = "ocaml_kafka_consume_stop"
+external consume_start : topic -> partition -> offset -> unit = "ocaml_kafka_consume_start"
+external consume_stop : topic -> partition -> unit = "ocaml_kafka_consume_stop"
 
 let partition_unassigned = -1
 let offset_beginning = -2L
@@ -93,23 +100,18 @@ let offset_end = -1L
 let offset_stored = -1000L
 let offset_tail n = Int64.sub (-2000L) (Int64.of_int n)
 
-type message =
-  | Message of topic * int * int64 * string * string option (* topic, partition, offset, payload, optional key *)
-  | PartitionEnd of topic * int * int64                     (* topic, partition, offset *)
+external consume : topic -> partition -> int -> message = "ocaml_kafka_consume"
+external store_offset : topic -> partition -> offset -> unit = "ocaml_kafka_store_offset"
 
-external consume : topic -> int -> int -> message = "ocaml_kafka_consume"
-external store_offset : topic -> int -> int64 -> unit = "ocaml_kafka_store_offset"
-
-type queue
 external new_queue : handler -> queue = "ocaml_kafka_new_queue"
 external destroy_queue : queue -> unit = "ocaml_kafka_destroy_queue"
-external consume_start_queue : queue -> topic -> int -> int64 -> unit = "ocaml_kafka_consume_start_queue"
+external consume_start_queue : queue -> topic -> partition -> offset -> unit = "ocaml_kafka_consume_start_queue"
 external consume_queue : queue -> int -> message = "ocaml_kafka_consume_queue"
 
 module Metadata = struct
   type topic_metadata = {
     topic_name: string;
-    topic_partitions: int list;
+    topic_partitions: partition list;
   }
 end
 

@@ -16,6 +16,6 @@ val partition_sink:
      ?producer_props:(string*string) list
   -> ?topic_props:(string*string) list
   -> ?delivery_error_handler:string push_error_handler
-  -> string -> int                                      (* topic name and partition to stream into *)
+  -> string -> Kafka.partition                             (* topic name and partition to stream into *)
   -> (string,unit) sink  
 

@@ -1,5 +1,26 @@
-(* Handler to a cluster of kafka brokers. *)
+(* Handler to a cluster of kafka brokers. Either a producer or a consumer. *)
 type handler
+
+(* A handler to a kafka topic. *)
+type topic
+
+(* A message queue allows the application to re-route consumed messages
+   from multiple topics and partitions into one single queue point. *)
+type queue
+
+(* Partition id, from 0 to topic partition count -1 *)
+type partition = int
+
+(* Offset in a partition *)
+type offset = int64
+
+(* A message consumed from a consumer or a queue. *)
+type message =
+  | Message of topic * partition * offset * string * string option (* topic, partition, offset, payload, optional key *)
+  | PartitionEnd of topic * partition * offset                     (* topic, partition, offset *)
+
+(* Message identifier used by producers for delivery callbacks.*)
+type msg_id = int64
 
 type error =
   (* Internal errors to rdkafka *)
@@ -41,9 +62,6 @@ type error =
 
 exception Error of error * string
 
-(* Message identifier used by producers for delivery callbacks.*)
-type msg_id = int64
-
 (* Create a kafka handler aimed to consume messages.
 
  - A single option is required : "metadata.broker.list", which is a comma sepated list of "host:port".
@@ -77,9 +95,6 @@ val destroy_handler : handler -> unit
 (* Kafka handle name *)
 val handler_name : handler -> string
 
-(* A handler to a kafka topic. *)
-type topic
-
 (* Creates a new topic handler for the kafka topic with the given name.
 
  - For a list of options,
@@ -89,10 +104,10 @@ type topic
    to assign a partition after the key provided by [produce_key_msg].
  *)
 val new_topic :
-    ?partitioner_callback:(int -> string-> int)  (* [partitioner partition_count key] assigns a partition for a key in [0..partition_count-1] *)
-  -> handler                                     (* consumer or producer *)
-  -> string                                      (* topic name *)
-  -> (string*string) list                        (* topic option *)
+    ?partitioner_callback:(int -> string-> partition)  (* [partitioner partition_count key] assigns a partition for a key in [0..partition_count-1] *)
+  -> handler                                           (* consumer or producer *)
+  -> string                                            (* topic name *)
+  -> (string*string) list                              (* topic option *)
   -> topic
 
 (* Destroy topic handle *)
@@ -116,9 +131,9 @@ val topic_name : topic -> string
   This id will be passed to the delivery callback of the producer,
   once the message delivered.
 *)
-val produce: topic -> int -> ?key:string -> ?msg_id:msg_id -> string -> unit
+val produce: topic -> partition -> ?key:string -> ?msg_id:msg_id -> string -> unit
 
-val partition_unassigned: int
+val partition_unassigned: partition
 
 (* Returns the current out queue length: messages waiting to be sent to, or acknowledged by, the broker. *)
 val outq_len : handler -> int
@@ -150,7 +165,7 @@ val wait_delivery: ?timeout_ms:int -> ?max_outq_len:int -> handler -> unit
   Offset may either be a proper offset (0..N)
   or one of the the special offsets:
   [Kafka.offset_beginning], [Kafka.offset_end], [Kafka.offset_stored]
-  of [Kafka.offset_tail n] (i.e. n messages before [Kafka.offset_end]).
+  of [Kafka.offset_tail n] (i.e. [n] messages before [Kafka.offset_end]).
   
   The system (librdkafka) will attempt to keep 'queued.min.messages' (consumer config property)
   messages in the local queue by repeatedly fetching batches of messages
@@ -158,21 +173,17 @@ val wait_delivery: ?timeout_ms:int -> ?max_outq_len:int -> handler -> unit
 
   Raise an Error of error * string on error.
 *)
-val consume_start : topic -> int -> int64 -> unit
-val offset_beginning: int64
-val offset_end: int64
-val offset_stored: int64
-val offset_tail: int -> int64
+val consume_start : topic -> partition -> offset -> unit
+val offset_beginning: offset
+val offset_end: offset
+val offset_stored: offset
+val offset_tail: int -> offset
 
 (* [consume_stop topic partition]
    stop consuming messages for topic [topic] and [partition],
    purging all messages currently in the local queue.
 *)
-val consume_stop : topic -> int -> unit
-
-type message =
-  | Message of topic * int * int64 * string * string option (* topic, partition, offset, payload, optional key *)
-  | PartitionEnd of topic * int * int64                     (* topic, partition, offset *)
+val consume_stop : topic -> partition -> unit
 
 (* [consume topic partition timeout_ms]
    consumes a single message from topic [topic] and [partition],
@@ -180,11 +191,7 @@ type message =
 
    Consumer must have been previously started with [Kafka.consume_start].
 *)
-val consume : topic -> int -> int -> message
-
-(* A message queue allows the application to re-route consumed messages
-   from multiple topics and partitions into one single queue point. *)
-type queue
+val consume : topic -> partition -> int -> message
 
 (* Create a new message queue. *)
 val new_queue : handler -> queue
@@ -200,7 +207,7 @@ val destroy_queue : queue -> unit
 
   [consume_stop] has to be called to stop consuming messages from the topic.
 *)
-val consume_start_queue : queue -> topic -> int -> int64 -> unit
+val consume_start_queue : queue -> topic -> partition -> offset -> unit
 
 (* [consume_queue queue timeout_ms]
    consumes a single message from topics and partitions
@@ -218,13 +225,13 @@ val consume_queue : queue -> int -> message
    - "offset.store.path"
    - "auto.commit.enable" : must be set to "false"
 *)
-val store_offset : topic -> int -> int64 -> unit
+val store_offset : topic -> partition -> offset -> unit
 
 module Metadata : sig
   (* Topic information *)
   type topic_metadata = {
     topic_name: string;
-    topic_partitions: int list;
+    topic_partitions: partition list;
   }
 end
 
