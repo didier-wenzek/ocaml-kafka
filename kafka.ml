@@ -40,12 +40,14 @@ type error =
 
 exception Error of error * string
 
+type msg_id = int64
+
 let _ = 
   Callback.register_exception "kafka.error" (Error(UNKNOWN,"msg string"));
 
 external new_consumer : (string*string) list -> handler = "ocaml_kafka_new_consumer"
 external new_producer :
-     ?delivery_callback:(string -> error option -> unit)
+     ?delivery_callback:(string -> msg_id option -> error option -> unit)
   -> (string*string) list
   -> handler
   = "ocaml_kafka_new_producer"
@@ -65,7 +67,12 @@ external destroy_topic : topic -> unit = "ocaml_kafka_destroy_topic"
 external topic_name : topic -> string = "ocaml_kafka_topic_name"
 external topic_partition_available: topic -> int -> bool = "ocaml_kafka_topic_partition_available"
 
-external produce: topic -> int -> ?key:string -> string -> unit = "ocaml_kafka_produce"
+(*
+  Note that the id is restricted to be some int64 value.
+  While the underlying library, librdkafka, allows any void* msg_opaque data.
+  This is to avoid issues with the garbage collector
+*)
+external produce: topic -> int -> ?key:string -> ?msg_id:msg_id -> string -> unit = "ocaml_kafka_produce"
 external outq_len : handler -> int = "ocaml_kafka_outq_len"
 external poll: handler -> int -> int = "ocaml_kafka_poll"
 let poll_events ?(timeout_ms = 1000) handler = poll handler timeout_ms

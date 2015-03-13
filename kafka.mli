@@ -41,6 +41,9 @@ type error =
 
 exception Error of error * string
 
+(* Message identifier used by producers for delivery callbacks.*)
+type msg_id = int64
+
 (* Create a kafka handler aimed to consume messages.
 
  - A single option is required : "metadata.broker.list", which is a comma sepated list of "host:port".
@@ -56,9 +59,15 @@ val new_consumer : (string*string) list -> handler
  - For a list of options,
    see https://github.com/edenhill/librdkafka/blob/master/CONFIGURATION.md
    and https://kafka.apache.org/documentation.html#configuration
+
+ - A delivery callback may be attached to the producer.
+   This callback will be call after each message delivery
+   as in [delivery_callback msg msg_id_if_any error_if_any].
+   Callbacks must be triggered by the [poll] function.
+   
 *)
 val new_producer :
-     ?delivery_callback:(string -> error option -> unit)
+     ?delivery_callback:(string -> msg_id option -> error option -> unit)
   -> (string*string) list
   -> handler
 
@@ -102,8 +111,13 @@ val topic_name : topic -> string
   An optional key may be attached to the message.
   This key will be used by the partitioner of the topic handler.
   as well as be sent with the message to the broker and passed on to the consumer.
+
+  An optional id may be attached to the message.
+  This id will be passed to the delivery callback of the producer,
+  once the message delivered.
 *)
-val produce: topic -> int -> ?key:string -> string -> unit
+val produce: topic -> int -> ?key:string -> ?msg_id:msg_id -> string -> unit
+
 val partition_unassigned: int
 
 (* Returns the current out queue length: messages waiting to be sent to, or acknowledged by, the broker. *)
@@ -119,7 +133,7 @@ val outq_len : handler -> int
   To wait indefinately for an event, provide -1.
 
   Events:
-  - delivery report callbacks (if dr_cb is configured) [producer]
+  - delivery report callbacks (if delivery_callback is configured) [producer]
   - error callbacks (if error_cb is configured) [producer & consumer]
   - stats callbacks (if stats_cb is configured) [producer & consumer]
 

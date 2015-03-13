@@ -8,7 +8,7 @@
  - [ ] Support for error, log, stats callbacks.
  - [x] Support for topic properties.
  - [x] Support for keys.
- - [ ] Support for msg_opaque data.
+ - [x] Support for msg_opaque data on produce/delivery_callback.
  - [ ] Fix: the partitionner callback is never called.
  - [x] Specific offsets: Kafka.offset_stored, Kafka.offset_tail(n).
  - [x] Wrap messages in message enveloppes with topic,partition,offset,payload,key.
