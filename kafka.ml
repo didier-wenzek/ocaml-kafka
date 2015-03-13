@@ -65,8 +65,7 @@ external destroy_topic : topic -> unit = "ocaml_kafka_destroy_topic"
 external topic_name : topic -> string = "ocaml_kafka_topic_name"
 external topic_partition_available: topic -> int -> bool = "ocaml_kafka_topic_partition_available"
 
-external produce: topic -> int -> string -> unit = "ocaml_kafka_produce"
-external produce_key_msg: topic -> int -> string -> string -> unit = "ocaml_kafka_produce_key_msg"
+external produce: topic -> int -> ?key:string -> string -> unit = "ocaml_kafka_produce"
 external outq_len : handler -> int = "ocaml_kafka_outq_len"
 external poll: handler -> int -> int = "ocaml_kafka_poll"
 let poll_events ?(timeout_ms = 1000) handler = poll handler timeout_ms

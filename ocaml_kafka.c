@@ -435,35 +435,24 @@ value ocaml_kafka_consume(value caml_kafka_topic, value caml_kafka_partition, va
 }
 
 extern CAMLprim
-value ocaml_kafka_produce(value caml_kafka_topic, value caml_kafka_partition, value caml_msg)
+value ocaml_kafka_produce(value caml_kafka_topic, value caml_kafka_partition, value caml_opt_key, value caml_msg)
 {
-  CAMLparam3(caml_kafka_topic,caml_kafka_partition,caml_msg);
+  CAMLparam4(caml_kafka_topic,caml_kafka_partition,caml_opt_key,caml_msg);
+  CAMLlocal1(caml_key);
 
   rd_kafka_topic_t *topic = get_handler(Field(caml_kafka_topic,0));
   int32 partition = Int_val(caml_kafka_partition);
+
   void* payload = String_val(caml_msg);
   size_t len = caml_string_length(caml_msg);
 
-  int err = rd_kafka_produce(topic, partition, RD_KAFKA_MSG_F_COPY, payload, len, NULL, 0, NULL);
-  if (err) {
-     rd_kafka_resp_err_t rd_errno = rd_kafka_errno2err(errno);
-     RAISE(rd_errno, "Failed to produce message (%s)", rd_kafka_err2str(rd_errno));
-  }
-
-  CAMLreturn(Val_unit);
-}
-
-extern CAMLprim
-value ocaml_kafka_produce_key_msg(value caml_kafka_topic, value caml_kafka_partition, value caml_key, value caml_msg)
-{
-  CAMLparam4(caml_kafka_topic,caml_kafka_partition,caml_key,caml_msg);
-
-  rd_kafka_topic_t *topic = get_handler(Field(caml_kafka_topic,0));
-  int32 partition = Int_val(caml_kafka_partition);
-  void* payload = String_val(caml_msg);
-  size_t len = caml_string_length(caml_msg);
-  void* key = String_val(caml_key);
-  size_t key_len = caml_string_length(caml_key);
+  void* key = NULL;
+  size_t key_len = 0;
+  if (Is_block(caml_opt_key)) {
+     caml_key = Field(caml_opt_key, 0);
+     key = String_val(caml_key);
+     key_len = caml_string_length(caml_key);
+  } 
 
   int err = rd_kafka_produce(topic, partition, RD_KAFKA_MSG_F_COPY, payload, len, key, key_len, NULL);
   if (err) {

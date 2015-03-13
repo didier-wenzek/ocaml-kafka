@@ -114,10 +114,10 @@ let main =
 
    (* Produce some keyed messages *)
    let partitioner_callback partition_cnt key = Printf.printf "xoxox %s \n%!" key;(Hashtbl.hash key) mod partition_cnt in
-   let key_producer_topic = Kafka.new_topic ~partitioner_callback producer "test" ["message.timeout.ms","1000"] in
-   Kafka.produce_key_msg key_producer_topic Kafka.partition_unassigned "key 0" "key-message 0";
-   Kafka.produce_key_msg key_producer_topic Kafka.partition_unassigned "key 1" "key-message 1";
-   Kafka.produce_key_msg key_producer_topic Kafka.partition_unassigned "key 2" "key-message 2";
+   let keyed_topic = Kafka.new_topic ~partitioner_callback producer "test" ["message.timeout.ms","1000"] in
+   Kafka.produce keyed_topic Kafka.partition_unassigned ~key:"key 0" "key-message 0";
+   Kafka.produce keyed_topic Kafka.partition_unassigned ~key:"key 1" "key-message 1";
+   Kafka.produce keyed_topic Kafka.partition_unassigned ~key:"key 2" "key-message 2";
    
    (* Consume keyed messages *)
    let rec consume_k t = match Kafka.consume_queue t timeout_ms with
@@ -153,7 +153,7 @@ let main =
    (* Consumers, producers, topics and queues, all handles must be released. *)
    Kafka.destroy_queue queue;
    Kafka.destroy_topic producer_topic;
-   Kafka.destroy_topic key_producer_topic;
+   Kafka.destroy_topic keyed_topic;
    Kafka.destroy_topic consumer_topic;
    Kafka.destroy_handler producer;
    Kafka.destroy_handler consumer;

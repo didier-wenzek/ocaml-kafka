@@ -98,14 +98,13 @@ val topic_name : topic -> string
   The [partition] may be
   - either a proper partition (0..N-1)
   - or [Kafka.partition_unassigned].
-*)
-val produce: topic -> int -> string -> unit
-val partition_unassigned: int
 
-(* [produce_key_msg topic partition key message]
-  produces and sends a (key,message) pair to the broker.
+  An optional key may be attached to the message.
+  This key will be used by the partitioner of the topic handler.
+  as well as be sent with the message to the broker and passed on to the consumer.
 *)
-val produce_key_msg: topic -> int -> string -> string -> unit
+val produce: topic -> int -> ?key:string -> string -> unit
+val partition_unassigned: int
 
 (* Returns the current out queue length: messages waiting to be sent to, or acknowledged by, the broker. *)
 val outq_len : handler -> int
