@@ -44,8 +44,8 @@ Usage
    
     (* Consume messages *)
     let rec consume t p = match Kafka.consume t p timeout_ms with
-      | Kafka.Message(_,_,_,msg) -> msg
-      | Kafka.PartitionEnd(_,_,_) -> assert false
+      | Kafka.Message(_,_,_,msg,_) -> msg
+      | Kafka.PartitionEnd(_,_,_) -> consume t p
       | exception Kafka.Error(Kafka.TIMED_OUT,_) -> (Printf.fprintf stderr "Timeout after: %d ms\n%!" timeout_ms; consume t p)
     in
     let msg = consume consumer_topic partition in assert (msg = "message 0");
@@ -61,3 +61,10 @@ Usage
     Kafka.destroy_topic consumer_topic;;
     Kafka.destroy_handler consumer;;
 
+Documentation
+-------------
+
+The API is documented in [kafka.mli](kafka.mli).
+
+Configuration options of producers, consumers and topics
+are inherited from [librdkafka/CONFIGURATION](https://github.com/edenhill/librdkafka/blob/master/CONFIGURATION.md).
