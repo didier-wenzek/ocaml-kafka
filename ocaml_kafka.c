@@ -54,21 +54,24 @@ static int const ERROR_CODES[] = {
 
 static int const EUNKNOWN = (sizeof ERROR_CODES) / (sizeof ERROR_CODES[0]);
 
-inline static value caml_error_value(rd_kafka_resp_err_t rd_errno)
+inline static
+value caml_error_value(rd_kafka_resp_err_t rd_errno)
 {
+  CAMLparam0();
   int i;
   for (i = 0; i < EUNKNOWN; i++) {
     if (rd_errno == ERROR_CODES[i]) {
-      return Val_int(i);
+      CAMLreturn(Val_int(i));
     }
   }
 
-  return Val_int(RD_KAFKA_RESP_ERR_UNKNOWN);
+  CAMLreturn(Val_int(RD_KAFKA_RESP_ERR_UNKNOWN));
 }
 
 static
 void RAISE(rd_kafka_resp_err_t rd_errno, const char *error, ...)
 {
+  CAMLparam0();
   CAMLlocalN(error_parameters, 2);
   static value *exception_handler = NULL;
   static char error_msg[160];
@@ -87,15 +90,21 @@ void RAISE(rd_kafka_resp_err_t rd_errno, const char *error, ...)
   error_parameters[0] = caml_error_value(rd_errno);
   error_parameters[1] = caml_copy_string(error_msg);
   caml_raise_with_args(*exception_handler, 2, error_parameters);
+  CAMLnoreturn;
 }
 
 #define handler_val(v) *((void **) &Field(v, 0))
 
-inline static value alloc_caml_handler(void* hdl)
+inline static
+value alloc_caml_handler(void* hdl)
 {
-  value caml_handler = alloc_small(1, Abstract_tag);
+  CAMLparam0();
+  CAMLlocal1(caml_handler);
+
+  caml_handler = alloc_small(1, Abstract_tag);
   handler_val(caml_handler) = hdl;
-  return caml_handler;
+
+  CAMLreturn(caml_handler);
 }
 
 inline static void free_caml_handler(value caml_handler)
@@ -113,9 +122,9 @@ inline static void* get_handler(value caml_handler)
   return hdl;
 }
 
-static
-rd_kafka_conf_res_t configure_handler(rd_kafka_conf_t *conf, value caml_options, char *errstr, size_t errstr_size)
+static rd_kafka_conf_res_t configure_handler(rd_kafka_conf_t *conf, value caml_options, char *errstr, size_t errstr_size)
 {
+  CAMLparam0();
   CAMLlocal3(caml_option_pair, caml_option_name, caml_option_value);
 
   rd_kafka_conf_res_t conf_err;
@@ -128,12 +137,13 @@ rd_kafka_conf_res_t configure_handler(rd_kafka_conf_t *conf, value caml_options,
     conf_err = rd_kafka_conf_set(conf, String_val(caml_option_name), String_val(caml_option_value), errstr, errstr_size);
     if (conf_err) return conf_err;
   }
-  return RD_KAFKA_CONF_OK;
+  CAMLreturn(RD_KAFKA_CONF_OK);
 };
 
 static
 rd_kafka_conf_res_t configure_topic(rd_kafka_topic_conf_t *conf, value caml_options, char *errstr, size_t errstr_size)
 {
+  CAMLparam0();
   CAMLlocal3(caml_option_pair, caml_option_name, caml_option_value);
 
   rd_kafka_conf_res_t conf_err;
@@ -146,7 +156,7 @@ rd_kafka_conf_res_t configure_topic(rd_kafka_topic_conf_t *conf, value caml_opti
     conf_err = rd_kafka_topic_conf_set(conf, String_val(caml_option_name), String_val(caml_option_value), errstr, errstr_size);
     if (conf_err) return conf_err;
   }
-  return RD_KAFKA_CONF_OK;
+  CAMLreturn(RD_KAFKA_CONF_OK);
 };
 
 extern CAMLprim
@@ -174,6 +184,7 @@ value ocaml_kafka_new_consumer(value caml_consumer_options)
 static
 void ocaml_kafka_delivery_callback(rd_kafka_t *producer, void *payload, size_t len, rd_kafka_resp_err_t err, void *opaque, void *msg_opaque)
 {
+  CAMLparam0();
   CAMLlocal4(caml_callback, caml_msg_payload, caml_msg_id, caml_error);
 
   caml_callback = (value) opaque;
@@ -198,6 +209,7 @@ void ocaml_kafka_delivery_callback(rd_kafka_t *producer, void *payload, size_t l
   }
 
   caml_callback3(caml_callback, caml_msg_payload, caml_msg_id, caml_error);
+  CAMLreturn0;
 }
 
 extern CAMLprim
@@ -262,6 +274,7 @@ value ocaml_kafka_handler_name(value caml_kafka_handler)
 static
 int32_t ocaml_kafka_partitioner_callback(const rd_kafka_topic_t *topic, const void *key, size_t keylen, int32_t partition_cnt, void *opaque, void *msg_opaque)
 {
+  CAMLparam0();
   CAMLlocal4(caml_callback, caml_key, caml_partition_cnt, caml_partition);
 
   caml_callback = (value) opaque;
@@ -270,7 +283,7 @@ int32_t ocaml_kafka_partitioner_callback(const rd_kafka_topic_t *topic, const vo
   memcpy(String_val(caml_key), key, keylen);
 
   caml_partition = caml_callback2(caml_callback, caml_partition_cnt, caml_key);
-  return Int_val(caml_partition);
+  CAMLreturn(Int_val(caml_partition));
 }
 
 extern CAMLprim
@@ -685,6 +698,7 @@ value ocaml_kafka_consume_queue(value caml_kafka_queue, value caml_kafka_timeout
 static
 value make_topic_metadata(rd_kafka_metadata_topic_t *topic)
 {
+  CAMLparam0();
   CAMLlocal4(caml_topic_metadata,caml_topic_name,caml_partitions,caml_cons);
 
   caml_partitions = Val_emptylist;
@@ -703,7 +717,7 @@ value make_topic_metadata(rd_kafka_metadata_topic_t *topic)
   Field(caml_topic_metadata, 0) = caml_topic_name;
   Field(caml_topic_metadata, 1) = caml_partitions;
 
-  return caml_topic_metadata;
+  CAMLreturn(caml_topic_metadata);
 }
 
 extern CAMLprim
