@@ -15,7 +15,13 @@ val raise_on_error: 'a push_error_handler
 val partition_sink:
      ?producer_props:(string*string) list
   -> ?topic_props:(string*string) list
-  -> ?delivery_error_handler:string push_error_handler
+  -> ?delivery_error_handler:string push_error_handler     (* The default is to raise an error *)
   -> string -> Kafka.partition                             (* topic name and partition to stream into *)
   -> (string,unit) sink  
 
+val topic_sink:
+     ?producer_props:(string*string) list
+  -> ?topic_props:(string*string) list
+  -> ?delivery_error_handler:(Kafka.partition*string) push_error_handler (* The default is to raise an error *)
+  -> string                                                              (* topic to stream into *)
+  -> (Kafka.partition*string,unit) sink                                  (* stream of (partition,message) pairs *)
