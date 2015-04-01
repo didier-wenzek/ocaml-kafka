@@ -185,13 +185,15 @@ val offset_tail: int -> offset
 *)
 val consume_stop : topic -> partition -> unit
 
-(* [consume topic partition timeout_ms]
-   consumes a single message from topic [topic] and [partition],
-   waiting at most [timeout_ms] milli-seconds for a message to be received.
+(* [consume ~timeout_ms topic partition]
+   consumes a single message from topic [topic] and [partition].
+   
+   Waits at most [timeout_ms] milli-seconds for a message to be received.
+   (The default timout is 1 second)
 
    Consumer must have been previously started with [Kafka.consume_start].
 *)
-val consume : topic -> partition -> int -> message
+val consume : ?timeout_ms:int -> topic -> partition -> message
 
 (* Create a new message queue. *)
 val new_queue : handler -> queue
@@ -209,13 +211,14 @@ val destroy_queue : queue -> unit
 *)
 val consume_start_queue : queue -> topic -> partition -> offset -> unit
 
-(* [consume_queue queue timeout_ms]
+(* [consume_queue ~timeout_ms queue]
    consumes a single message from topics and partitions
    attached to the queue using [Kafka.consume_start_queue].
 
    Waits at most [timeout_ms] milli-seconds for a message to be received.
+   The default timout is 1 second.
 *)
-val consume_queue : queue -> int -> message
+val consume_queue : ?timeout_ms:int -> queue -> message
 
 (* [store_offset topic partition offset]
    stores [offset] for given [topic] and [partition].

@@ -100,13 +100,13 @@ let offset_end = -1L
 let offset_stored = -1000L
 let offset_tail n = Int64.sub (-2000L) (Int64.of_int n)
 
-external consume : topic -> partition -> int -> message = "ocaml_kafka_consume"
+external consume : ?timeout_ms:int -> topic -> partition -> message = "ocaml_kafka_consume"
 external store_offset : topic -> partition -> offset -> unit = "ocaml_kafka_store_offset"
 
 external new_queue : handler -> queue = "ocaml_kafka_new_queue"
 external destroy_queue : queue -> unit = "ocaml_kafka_destroy_queue"
 external consume_start_queue : queue -> topic -> partition -> offset -> unit = "ocaml_kafka_consume_start_queue"
-external consume_queue : queue -> int -> message = "ocaml_kafka_consume_queue"
+external consume_queue : ?timeout_ms:int -> queue -> message = "ocaml_kafka_consume_queue"
 
 module Metadata = struct
   type topic_metadata = {

@@ -30,7 +30,7 @@ let fold_partition
     Kafka.destroy_handler consumer;
   in
   let rec loop acc =
-    match Kafka.consume topic partition timeout_ms with
+    match Kafka.consume ~timeout_ms topic partition with
     | Kafka.Message _ as msg ->
       loop (update acc msg)
     | Kafka.PartitionEnd _ as msg ->
@@ -51,7 +51,7 @@ let fold_partition
 let fold_queue_for_ever queue timeout_ms update seed
 =
   let rec loop acc =
-    match Kafka.consume_queue queue timeout_ms with
+    match Kafka.consume_queue ~timeout_ms queue with
     | Kafka.Message _ as msg ->
       loop (update acc msg)
     | Kafka.PartitionEnd _ as msg ->
@@ -72,7 +72,7 @@ module PartitionSet : Set.S with type elt = int = Set.Make(Partition)
 let fold_queue_upto_end queue timeout_ms update partitions seed
 =
   let rec loop (partition_set,acc) =
-    match Kafka.consume_queue queue timeout_ms with
+    match Kafka.consume_queue ~timeout_ms queue with
     | Kafka.Message (_,partition,_,_,_) as msg ->
       let partition_set = PartitionSet.add partition partition_set in
       loop (partition_set, update acc msg)

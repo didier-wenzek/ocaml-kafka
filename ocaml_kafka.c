@@ -9,6 +9,9 @@
 #include <stdarg.h>
 #include <librdkafka/rdkafka.h>
 
+/* Default consumer timeout. */
+#define DEFAULT_TIMEOUT_MS 1000
+
 /* Configuration results (of type rd_kafka_conf_res_t) are merge with errors (of type rd_kafka_resp_err_t).
    So we have a single Error type ocaml side. */
 #define RD_KAFKA_CONF_RES(kafka_conf_res) (RD_KAFKA_RESP_ERR__END + kafka_conf_res)
@@ -397,7 +400,7 @@ value ocaml_kafka_consume_stop(value caml_kafka_topic, value caml_kafka_partitio
 }
 
 extern CAMLprim
-value ocaml_kafka_consume(value caml_kafka_topic, value caml_kafka_partition, value caml_kafka_timeout)
+value ocaml_kafka_consume(value caml_kafka_timeout, value caml_kafka_topic, value caml_kafka_partition)
 {
   CAMLparam3(caml_kafka_topic,caml_kafka_partition,caml_kafka_timeout);
   CAMLlocal3(caml_msg, caml_msg_payload, caml_msg_offset);
@@ -405,7 +408,11 @@ value ocaml_kafka_consume(value caml_kafka_topic, value caml_kafka_partition, va
 
   rd_kafka_topic_t *topic = get_handler(Field(caml_kafka_topic,0));
   int32 partition = Int_val(caml_kafka_partition);
-  int timeout = Int_val(caml_kafka_timeout);
+  int timeout = DEFAULT_TIMEOUT_MS;
+  if (Is_block(caml_kafka_timeout)) {
+    timeout = Int_val(Field(caml_kafka_timeout, 0));
+  }
+
   rd_kafka_message_t* message = rd_kafka_consume(topic, partition, timeout);
 
   if (message == NULL) {
@@ -620,14 +627,18 @@ value ocaml_kafka_consume_start_queue(value caml_kafka_queue, value caml_kafka_t
 }
 
 extern CAMLprim
-value ocaml_kafka_consume_queue(value caml_kafka_queue, value caml_kafka_timeout)
+value ocaml_kafka_consume_queue(value caml_kafka_timeout, value caml_kafka_queue)
 {
   CAMLparam2(caml_kafka_queue,caml_kafka_timeout);
   CAMLlocal5(caml_topics, caml_topic, caml_msg, caml_msg_payload, caml_msg_offset);
   CAMLlocal2(caml_key, caml_key_payload);
 
   rd_kafka_queue_t *queue = get_handler(Field(caml_kafka_queue,0));
-  int timeout = Int_val(caml_kafka_timeout);
+  int timeout = DEFAULT_TIMEOUT_MS;
+  if (Is_block(caml_kafka_timeout)) {
+    timeout = Int_val(Field(caml_kafka_timeout, 0));
+  }
+
   rd_kafka_message_t* message = rd_kafka_consume_queue(queue, timeout);
 
   if (message == NULL) {

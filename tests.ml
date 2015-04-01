@@ -10,8 +10,8 @@ let usage () =
 open Kafka.Metadata
 let timeout_ms = 1000
 
-let skip_all_message consume = 
-  let rec loop () = match consume (3*timeout_ms) with
+let skip_all_message consume partition = 
+  let rec loop () = match consume partition with
   | Kafka.Message _ -> loop ()
   | Kafka.PartitionEnd _ -> ()
   | exception Kafka.Error(Kafka.TIMED_OUT,_) -> ()
@@ -45,7 +45,7 @@ let main =
    (* Start collecting messages *)
    (* Here we start from offset_end, i.e. we will consume only messages produced from now. *)
    Kafka.consume_start consumer_topic partition Kafka.offset_end;
-   skip_all_message (Kafka.consume consumer_topic partition);
+   skip_all_message (Kafka.consume ~timeout_ms consumer_topic) partition;
 
    (* Produce some messages *)
    Kafka.produce producer_topic partition "message 0";
@@ -53,7 +53,7 @@ let main =
    Kafka.produce producer_topic partition "message 2";
    
    (* Consume messages *)
-   let rec consume t p = match Kafka.consume t p timeout_ms with
+   let rec consume t p = match Kafka.consume ~timeout_ms t p with
       | Kafka.Message(_,_,_,msg,_) -> msg
       | Kafka.PartitionEnd(_,_,_) -> (
           Printf.fprintf stderr "No message for now\n%!";
@@ -68,7 +68,7 @@ let main =
    let msg = consume consumer_topic partition in assert (msg = "message 1");
    let msg = consume consumer_topic partition in assert (msg = "message 2");
 
-   (match Kafka.consume consumer_topic partition timeout_ms with
+   (match Kafka.consume ~timeout_ms consumer_topic partition with
      | Kafka.PartitionEnd (t,p,o) -> (
         assert (Kafka.topic_name t = "test");
         assert (p = partition)
@@ -83,13 +83,13 @@ let main =
    let queue = Kafka.new_queue consumer in
    Kafka.consume_start_queue queue consumer_topic 0 Kafka.offset_end;
    Kafka.consume_start_queue queue consumer_topic 1 Kafka.offset_end;
-   skip_all_message (Kafka.consume_queue queue);
+   skip_all_message Kafka.consume_queue queue;
 
    Kafka.produce producer_topic Kafka.partition_unassigned "message 3";
    Kafka.produce producer_topic Kafka.partition_unassigned "message 4";
    Kafka.produce producer_topic Kafka.partition_unassigned "message 5";
 
-   let rec consume_queue (n,m) = match Kafka.consume_queue queue timeout_ms with
+   let rec consume_queue (n,m) = match Kafka.consume_queue ~timeout_ms queue with
       | Kafka.Message(topic,partition,offset,msg,_) -> (
           assert (topic == consumer_topic);
           assert (partition = 0 || partition = 1);
@@ -120,7 +120,7 @@ let main =
    Kafka.produce keyed_topic Kafka.partition_unassigned ~key:"key 2" "key-message 2";
    
    (* Consume keyed messages *)
-   let rec consume_k t = match Kafka.consume_queue t timeout_ms with
+   let rec consume_k t = match Kafka.consume_queue t with
       | Kafka.Message(_,_,_,msg,key) -> key,msg
       | Kafka.PartitionEnd(_,_,_) -> (
           Printf.fprintf stderr "No keyed message for now\n%!";

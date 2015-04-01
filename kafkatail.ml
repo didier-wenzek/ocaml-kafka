@@ -5,7 +5,7 @@ let main () =
   let topic = Sys.argv.(2) in
   let partition = Sys.argv.(3) in
   let offset = Int64.of_string Sys.argv.(4) in
-  let timout = 1000 in
+  let timeout_ms = 1000 in
 
   let consumer = Kafka.new_consumer ["metadata.broker.list",brokers] in
   let topic = Kafka.new_topic consumer topic [
@@ -26,7 +26,7 @@ let main () =
 
   let rec loop newline = 
     let pnl () = if newline then Printf.fprintf stderr "\n%!" in
-    match Kafka.consume_queue queue timout with
+    match Kafka.consume_queue ~timeout_ms queue with
     | Kafka.Message (topic,partition,offset,msg,None) -> (pnl ();Printf.printf "%s,%d,%Ld: %s\n%!" (Kafka.topic_name topic) partition offset msg;loop false)
     | Kafka.Message (topic,partition,offset,msg,Some(key)) -> (pnl ();Printf.printf "%s,%d,%Ld: %s->%s\n%!" (Kafka.topic_name topic) partition offset key msg;loop false)
     | Kafka.PartitionEnd (topic,partition,offset) -> (pnl (); Printf.printf "%s,%d,%Ld (EOP)\n%!" (Kafka.topic_name topic) partition offset; loop false)
