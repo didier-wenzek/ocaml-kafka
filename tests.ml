@@ -75,6 +75,15 @@ let main =
      | _ -> assert false
    );
 
+   (* Message may be consumed by batch too *)
+   Kafka.produce producer_topic partition "message 0 bis";
+   Kafka.produce producer_topic partition "message 1 bis";
+   Kafka.produce producer_topic partition "message 2 bis";
+
+   let messages = Kafka.consume_batch ~timeout_ms:2000 ~msg_count:3 consumer_topic partition in
+   assert (List.map (function | Kafka.Message(_,_,_,msg,_) -> msg | _ -> "") messages
+        = ["message 0 bis"; "message 1 bis"; "message 2 bis"]);
+
    (* Stop collecting messages. *)
    Kafka.consume_stop consumer_topic partition;
 

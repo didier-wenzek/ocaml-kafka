@@ -12,6 +12,9 @@
 /* Default consumer timeout. */
 #define DEFAULT_TIMEOUT_MS 1000
 
+/* Default batch size. */
+#define DEFAULT_MSG_COUNT 1024
+
 /* Configuration results (of type rd_kafka_conf_res_t) are merge with errors (of type rd_kafka_resp_err_t).
    So we have a single Error type ocaml side. */
 #define RD_KAFKA_CONF_RES(kafka_conf_res) (RD_KAFKA_RESP_ERR__END + kafka_conf_res)
@@ -445,6 +448,30 @@ value ocaml_kafka_extract_topic_message(value caml_kafka_topic, rd_kafka_message
   CAMLreturn(caml_msg);
 }
 
+extern
+value ocaml_kafka_extract_topic_message_list(value caml_kafka_topic, rd_kafka_message_t** messages, size_t msg_count)
+{
+  CAMLparam1(caml_kafka_topic);
+  CAMLlocal4(caml_msg_list, caml_new_cons, caml_last_cons, caml_msg);
+
+  size_t i;
+  caml_msg_list = Val_emptylist;
+  for (i = 0; i<msg_count; ++i) {
+    caml_msg = ocaml_kafka_extract_topic_message(caml_kafka_topic, messages[i]);
+    caml_new_cons = caml_alloc(2,0);
+    Store_field(caml_new_cons, 0, caml_msg);
+    Store_field(caml_new_cons, 1, Val_emptylist);
+    if (i == 0) {
+       caml_msg_list = caml_new_cons;
+    } else {
+       Store_field(caml_last_cons, 1, caml_new_cons);
+    }
+    caml_last_cons = caml_new_cons;
+  }
+
+  CAMLreturn(caml_msg_list);
+}
+
 extern CAMLprim
 value ocaml_kafka_consume(value caml_kafka_timeout, value caml_kafka_topic, value caml_kafka_partition)
 {
@@ -455,7 +482,8 @@ value ocaml_kafka_consume(value caml_kafka_timeout, value caml_kafka_topic, valu
   int32 partition = Int_val(caml_kafka_partition);
   int timeout = DEFAULT_TIMEOUT_MS;
   if (Is_block(caml_kafka_timeout)) {
-    timeout = Int_val(Field(caml_kafka_timeout, 0));
+    int t = Int_val(Field(caml_kafka_timeout, 0));
+    timeout = t>=0 ? t : DEFAULT_TIMEOUT_MS;
   }
 
   rd_kafka_message_t* message = rd_kafka_consume(topic, partition, timeout);
@@ -469,6 +497,43 @@ value ocaml_kafka_consume(value caml_kafka_timeout, value caml_kafka_topic, valu
   }
 
   CAMLreturn(caml_msg);
+}
+
+extern CAMLprim
+value ocaml_kafka_consume_batch(value caml_kafka_timeout, value caml_msg_count, value caml_kafka_topic, value caml_kafka_partition)
+{
+  CAMLparam4(caml_kafka_topic,caml_kafka_partition,caml_kafka_timeout, caml_msg_count);
+  CAMLlocal1(caml_msg_list);
+
+  rd_kafka_topic_t *topic = get_handler(Field(caml_kafka_topic,0));
+  int32 partition = Int_val(caml_kafka_partition);
+  int timeout = DEFAULT_TIMEOUT_MS;
+  if (Is_block(caml_kafka_timeout)) {
+    int t = Int_val(Field(caml_kafka_timeout, 0));
+    timeout = t>=0 ? t : DEFAULT_TIMEOUT_MS;
+  }
+  size_t msg_count = DEFAULT_MSG_COUNT;
+  if (Is_block(caml_msg_count)) {
+    int n = Int_val(Field(caml_msg_count, 0));
+    msg_count = n>=0 ? n : 0;
+  }
+
+  rd_kafka_message_t* messages[msg_count];
+
+  ssize_t actual_msg_count = rd_kafka_consume_batch(topic, partition, timeout, &messages, msg_count);
+
+  if (actual_msg_count >= 0) {
+    caml_msg_list = ocaml_kafka_extract_topic_message_list(caml_kafka_topic, &messages, actual_msg_count);
+    size_t i;
+    for (i = 0; i<actual_msg_count; ++i) {
+      rd_kafka_message_destroy(messages[i]);
+    }
+  } else {
+    rd_kafka_resp_err_t rd_errno = rd_kafka_errno2err(errno);
+    RAISE(rd_errno, "Failed to consume messages (%s)", rd_kafka_err2str(rd_errno));
+  }
+
+  CAMLreturn(caml_msg_list);
 }
 
 extern CAMLprim
@@ -673,7 +738,8 @@ value ocaml_kafka_consume_queue(value caml_kafka_timeout, value caml_kafka_queue
   rd_kafka_queue_t *queue = get_handler(Field(caml_kafka_queue,0));
   int timeout = DEFAULT_TIMEOUT_MS;
   if (Is_block(caml_kafka_timeout)) {
-    timeout = Int_val(Field(caml_kafka_timeout, 0));
+    int t = Int_val(Field(caml_kafka_timeout, 0));
+    timeout = t>=0 ? t : DEFAULT_TIMEOUT_MS;
   }
 
   rd_kafka_message_t* message = rd_kafka_consume_queue(queue, timeout);

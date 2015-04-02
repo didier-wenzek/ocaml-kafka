@@ -189,11 +189,21 @@ val consume_stop : topic -> partition -> unit
    consumes a single message from topic [topic] and [partition].
    
    Waits at most [timeout_ms] milli-seconds for a message to be received.
-   (The default timout is 1 second)
+   The default timout is 1 second.
 
    Consumer must have been previously started with [Kafka.consume_start].
 *)
 val consume : ?timeout_ms:int -> topic -> partition -> message
+
+(* [consume_batch ~timeout_ms ~msg_count topic partition]
+   consumes up to [msg_count] messages from [topic] and [partition],
+   taking at most [timeout_ms] to collect the messages
+   (hence, it may return less messages than requested).
+
+   The default timout is 1 second.
+   The default count of messages is 1k.
+*)
+val consume_batch : ?timeout_ms:int -> ?msg_count:int -> topic -> partition -> message list
 
 (* Create a new message queue. *)
 val new_queue : handler -> queue

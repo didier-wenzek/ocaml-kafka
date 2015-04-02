@@ -101,6 +101,7 @@ let offset_stored = -1000L
 let offset_tail n = Int64.sub (-2000L) (Int64.of_int n)
 
 external consume : ?timeout_ms:int -> topic -> partition -> message = "ocaml_kafka_consume"
+external consume_batch : ?timeout_ms:int -> ?msg_count:int -> topic -> partition -> message list = "ocaml_kafka_consume_batch"
 external store_offset : topic -> partition -> offset -> unit = "ocaml_kafka_store_offset"
 
 external new_queue : handler -> queue = "ocaml_kafka_new_queue"
