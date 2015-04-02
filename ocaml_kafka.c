@@ -399,12 +399,57 @@ value ocaml_kafka_consume_stop(value caml_kafka_topic, value caml_kafka_partitio
   CAMLreturn(Val_unit);
 }
 
+extern
+value ocaml_kafka_extract_topic_message(value caml_kafka_topic, rd_kafka_message_t* message)
+{
+  CAMLparam1(caml_kafka_topic);
+  CAMLlocal5(caml_msg, caml_msg_payload, caml_msg_offset, caml_key, caml_key_payload);
+
+  if (!message->err) {
+    caml_msg_payload = caml_alloc_string(message->len);
+    memcpy(String_val(caml_msg_payload), message->payload, message->len);
+    caml_msg_offset = caml_copy_int64(message->offset) ;
+
+    if (message->key) {
+      caml_key_payload = caml_alloc_string(message->key_len);
+      memcpy(String_val(caml_key_payload), message->key, message->key_len);
+
+      caml_key = caml_alloc_small(1,0); // Some(key)
+      Field(caml_key, 0) = caml_key_payload; 
+    } else {
+      caml_key = Val_int(0); // None
+    }
+
+    caml_msg = caml_alloc_small(5, 0);
+    Field( caml_msg, 0) = caml_kafka_topic;
+    Field( caml_msg, 1) = Val_int(message->partition);
+    Field( caml_msg, 2) = caml_msg_offset;
+    Field( caml_msg, 3) = caml_msg_payload;
+    Field( caml_msg, 4) = caml_key;
+  }
+  else if (message->err == RD_KAFKA_RESP_ERR__PARTITION_EOF) {
+    caml_msg_offset = caml_copy_int64(message->offset) ;
+    caml_msg = caml_alloc_small(3, 1);
+    Field( caml_msg, 0) = caml_kafka_topic;
+    Field( caml_msg, 1) = Val_int(message->partition);
+    Field( caml_msg, 2) = caml_msg_offset;
+  }
+  else {
+    if (message->payload) {
+       RAISE(message->err, "Consumed message with error (%s)", (const char *)message->payload);
+    } else {
+       RAISE(message->err, "Consumed message with error (%s)", rd_kafka_err2str(message->err));
+    }
+  }
+
+  CAMLreturn(caml_msg);
+}
+
 extern CAMLprim
 value ocaml_kafka_consume(value caml_kafka_timeout, value caml_kafka_topic, value caml_kafka_partition)
 {
   CAMLparam3(caml_kafka_topic,caml_kafka_partition,caml_kafka_timeout);
-  CAMLlocal3(caml_msg, caml_msg_payload, caml_msg_offset);
-  CAMLlocal2(caml_key, caml_key_payload);
+  CAMLlocal1(caml_msg);
 
   rd_kafka_topic_t *topic = get_handler(Field(caml_kafka_topic,0));
   int32 partition = Int_val(caml_kafka_partition);
@@ -415,51 +460,14 @@ value ocaml_kafka_consume(value caml_kafka_timeout, value caml_kafka_topic, valu
 
   rd_kafka_message_t* message = rd_kafka_consume(topic, partition, timeout);
 
-  if (message == NULL) {
-     rd_kafka_resp_err_t rd_errno = rd_kafka_errno2err(errno);
-     RAISE(rd_errno, "Failed to consume message (%s)", rd_kafka_err2str(rd_errno));
-  }
-  else if (!message->err) {
-     caml_msg_payload = caml_alloc_string(message->len);
-     memcpy(String_val(caml_msg_payload), message->payload, message->len);
-
-     caml_msg_offset = caml_copy_int64(message->offset) ;
-
-     if (message->key) {
-       caml_key_payload = caml_alloc_string(message->key_len);
-       memcpy(String_val(caml_key_payload), message->key, message->key_len);
-
-       caml_key = caml_alloc_small(1,0); // Some(key)
-       Field(caml_key, 0) = caml_key_payload; 
-     } else {
-       caml_key = Val_int(0); // None
-     }
-
-     caml_msg = caml_alloc_small(5, 0);
-     Field( caml_msg, 0) = caml_kafka_topic;
-     Field( caml_msg, 1) = caml_kafka_partition;
-     Field( caml_msg, 2) = caml_msg_offset;
-     Field( caml_msg, 3) = caml_msg_payload;
-     Field( caml_msg, 4) = caml_key;
-  }
-  else if (message->err == RD_KAFKA_RESP_ERR__PARTITION_EOF) {
-     caml_msg_offset = caml_copy_int64(message->offset);
-     caml_msg = caml_alloc_small(3, 1);
-     Field( caml_msg, 0) = caml_kafka_topic;
-     Field( caml_msg, 1) = caml_kafka_partition;
-     Field( caml_msg, 2) = caml_msg_offset;
-  }
-  else {
-     if (message->payload) {
-        RAISE(message->err, "Consumed message with error (%s)", (const char *)message->payload);
-     } else {
-        RAISE(message->err, "Consumed message with error (%s)", rd_kafka_err2str(message->err));
-     }
-  }
-
   if (message) {
-     rd_kafka_message_destroy(message);
+    caml_msg = ocaml_kafka_extract_topic_message(caml_kafka_topic, message);
+    rd_kafka_message_destroy(message);
+  } else {
+    rd_kafka_resp_err_t rd_errno = rd_kafka_errno2err(errno);
+    RAISE(rd_errno, "Failed to consume message (%s)", rd_kafka_err2str(rd_errno));
   }
+
   CAMLreturn(caml_msg);
 }
 
@@ -626,6 +634,35 @@ value ocaml_kafka_consume_start_queue(value caml_kafka_queue, value caml_kafka_t
   CAMLreturn(Val_unit);
 }
 
+extern
+value ocaml_kafka_extract_queue_message(value caml_kafka_queue, rd_kafka_message_t* message)
+{
+  CAMLparam1(caml_kafka_queue);
+  CAMLlocal5(caml_topics, caml_topic, caml_msg, caml_msg_payload, caml_msg_offset);
+  CAMLlocal2(caml_key, caml_key_payload);
+
+  /** Search the producer topic among registered topics. */
+  rd_kafka_topic_t *topic = message->rkt;
+  rd_kafka_topic_t *found_topic = NULL;
+  caml_topics = Field(caml_kafka_queue,1);
+  while (found_topic == NULL && caml_topics != Val_emptylist) {
+    caml_topic = Field(caml_topics,0);
+    caml_topics = Field(caml_topics,1);
+    rd_kafka_topic_t *handler = get_handler(Field(caml_topic,0));
+    if (handler == topic) {
+      found_topic = handler;
+    }
+  }
+
+  if (found_topic) {
+    caml_msg = ocaml_kafka_extract_topic_message(caml_topic, message);
+  } else {
+    RAISE(RD_KAFKA_RESP_ERR__UNKNOWN_TOPIC, "Message received from un-registred topic");
+  }
+
+  CAMLreturn(caml_msg);
+}
+
 extern CAMLprim
 value ocaml_kafka_consume_queue(value caml_kafka_timeout, value caml_kafka_queue)
 {
@@ -641,68 +678,14 @@ value ocaml_kafka_consume_queue(value caml_kafka_timeout, value caml_kafka_queue
 
   rd_kafka_message_t* message = rd_kafka_consume_queue(queue, timeout);
 
-  if (message == NULL) {
+  if (message) {
+     caml_msg = ocaml_kafka_extract_queue_message(caml_kafka_queue, message);
+     rd_kafka_message_destroy(message);
+  } else {
      rd_kafka_resp_err_t rd_errno = rd_kafka_errno2err(errno);
      RAISE(rd_errno, "Failed to consume message from queue (%s)", rd_kafka_err2str(rd_errno));
   }
-  else {
-     rd_kafka_topic_t *topic = message->rkt;
-     rd_kafka_topic_t *found_topic = NULL;
-     caml_topics = Field(caml_kafka_queue,1);
-     while (found_topic == NULL && caml_topics != Val_emptylist) {
-       caml_topic = Field(caml_topics,0);
-       caml_topics = Field(caml_topics,1);
-       rd_kafka_topic_t *handler = get_handler(Field(caml_topic,0));
-       if (handler == topic) {
-         found_topic = handler;
-       }
-     }
 
-     if (found_topic) {
-        if (!message->err) {
-           caml_msg_payload = caml_alloc_string(message->len);
-           memcpy(String_val(caml_msg_payload), message->payload, message->len);
-           caml_msg_offset = caml_copy_int64(message->offset) ;
-
-           if (message->key) {
-             caml_key_payload = caml_alloc_string(message->key_len);
-             memcpy(String_val(caml_key_payload), message->key, message->key_len);
-
-             caml_key = caml_alloc_small(1,0); // Some(key)
-             Field(caml_key, 0) = caml_key_payload; 
-           } else {
-             caml_key = Val_int(0); // None
-           }
-   
-           caml_msg = caml_alloc_small(5, 0);
-           Field( caml_msg, 0) = caml_topic;
-           Field( caml_msg, 1) = Val_int(message->partition);
-           Field( caml_msg, 2) = caml_msg_offset;
-           Field( caml_msg, 3) = caml_msg_payload;
-           Field( caml_msg, 4) = caml_key;
-        }
-        else if (message->err == RD_KAFKA_RESP_ERR__PARTITION_EOF) {
-           caml_msg_offset = caml_copy_int64(message->offset) ;
-           caml_msg = caml_alloc_small(3, 1);
-           Field( caml_msg, 0) = caml_topic;
-           Field( caml_msg, 1) = Val_int(message->partition);
-           Field( caml_msg, 2) = caml_msg_offset;
-        }
-        else {
-           if (message->payload) {
-              RAISE(message->err, "Consumed message from queue with error (%s)", (const char *)message->payload);
-           } else {
-              RAISE(message->err, "Consumed message from queue with error (%s)", rd_kafka_err2str(message->err));
-           }
-        }
-     } else {
-        RAISE(RD_KAFKA_RESP_ERR__UNKNOWN_TOPIC, "Message received from un-registred topic");
-     }
-  }
-
-  if (message) {
-     rd_kafka_message_destroy(message);
-  }
   CAMLreturn(caml_msg);
 }
 
