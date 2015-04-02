@@ -1,0 +1,2 @@
+ocaml_kafka.o
+ocaml_lwt_kafka.o

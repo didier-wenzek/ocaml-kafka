@@ -3,7 +3,6 @@ let usage () =
   Printf.fprintf stderr " => abort tests\n%!";
   Printf.fprintf stderr "\n%!";
   Printf.fprintf stderr "You may use:\n%!";
-  Printf.fprintf stderr "$ make tools\n%!";
   Printf.fprintf stderr "$ ./create_topic.native test\n%!";
   exit 1 |> ignore
 

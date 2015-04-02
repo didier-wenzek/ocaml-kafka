@@ -71,8 +71,8 @@ value caml_error_value(rd_kafka_resp_err_t rd_errno)
   CAMLreturn(Val_int(RD_KAFKA_RESP_ERR_UNKNOWN));
 }
 
-static
-void RAISE(rd_kafka_resp_err_t rd_errno, const char *error, ...)
+#define RAISE ocaml_kafka_raise
+void ocaml_kafka_raise(rd_kafka_resp_err_t rd_errno, const char *error, ...)
 {
   CAMLparam0();
   CAMLlocalN(error_parameters, 2);

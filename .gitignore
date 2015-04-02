@@ -9,3 +9,6 @@
 *.cmxa
 _build/
 *.native
+libocamlkafka.clib
+okafka.mllib
+META
