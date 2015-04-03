@@ -17,6 +17,12 @@ Install
     $ make test       # assuming kakfa is running at localhost:9092 with a 'test' topic.
     $ make install    # use ocamlfind
 
+To enable Lwt support:
+
+    $ make lwt
+    $ make test
+    $ make install
+
 Usage
 -----
 
@@ -64,7 +70,8 @@ Usage
 Documentation
 -------------
 
-The API is documented in [kafka.mli](kafka.mli).
+The API is documented in [kafka.mli](kafka.mli),
+and the Lwt extension is documented in [kafka_lwt.mli](kafka_lwt.mli),
 
 Configuration options of producers, consumers and topics
 are inherited from [librdkafka/CONFIGURATION](https://github.com/edenhill/librdkafka/blob/master/CONFIGURATION.md).

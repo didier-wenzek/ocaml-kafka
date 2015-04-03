@@ -23,4 +23,4 @@
  - [x] Function: Kafka.outq_len.
  - [ ] Do we have to distinguish types: consumer vs producer.
  - [ ] Introduce a Kafka.Timeout exception.
- - [ ] Lwt support.
+ - [x] Lwt support.

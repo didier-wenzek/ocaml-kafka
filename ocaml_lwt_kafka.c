@@ -9,6 +9,8 @@
 extern void ocaml_kafka_raise(rd_kafka_resp_err_t rd_errno, const char *error, ...);
 extern value ocaml_kafka_extract_topic_message(value caml_kafka_topic, rd_kafka_message_t* message);
 extern value ocaml_kafka_extract_queue_message(value caml_kafka_queue, rd_kafka_message_t* message);
+extern value ocaml_kafka_extract_topic_message_list(value caml_kafka_topic, rd_kafka_message_t** messages, size_t msg_count);
+extern value ocaml_kafka_extract_queue_message_list(value caml_kafka_queue, rd_kafka_message_t** messages, size_t msg_count);
 
 #define handler_val(v) *((void **) &Field(v, 0))
 inline static void* get_handler(value caml_handler)
@@ -62,7 +64,6 @@ static value result_consume(struct job_consume* job)
   }
 
   lwt_unix_free_job(&job->job);
-
   CAMLreturn(caml_msg);
 }
 
@@ -124,7 +125,6 @@ static value result_consume_queue(struct job_consume_queue* job)
   }
 
   lwt_unix_free_job(&job->job);
-
   CAMLreturn(caml_msg);
 }
 
@@ -140,6 +140,146 @@ value ocaml_kafka_consume_queue_job(value caml_kafka_queue, value caml_kafka_tim
 
   job->job.worker = (lwt_unix_job_worker)worker_consume_queue;
   job->job.result = (lwt_unix_job_result)result_consume_queue;
+
+  return lwt_unix_alloc_job(&job->job);
+}
+
+/****************************************
+ * Kafka_lwt.consume_batch
+ ***************************************/
+
+/* Structure holding informations for calling [consume_batch]. */
+struct job_consume_batch {
+  struct lwt_unix_job job;
+
+  rd_kafka_topic_t *topic;
+  int32 partition;
+  int timeout;
+  size_t msg_count;
+
+  value caml_kafka_topic;         // We hide the topic in the job, so we can attach it to messages.
+
+  ssize_t actual_msg_count;
+  rd_kafka_resp_err_t rd_errno;
+  rd_kafka_message_t* messages[]; // Buffer for messages.
+};
+
+/* The function calling [consume_batch]. */
+static void worker_consume_batch(struct job_consume_batch* job)
+{
+  job->actual_msg_count = rd_kafka_consume_batch(job->topic, job->partition, job->timeout, job->messages, job->msg_count);
+  job->rd_errno = (job->actual_msg_count>=0)?RD_KAFKA_RESP_ERR_NO_ERROR:rd_kafka_errno2err(errno);
+}
+
+/* The function building the caml [consume_batch] result. */
+static value result_consume_batch(struct job_consume_batch* job)
+{
+  CAMLparam0();
+  CAMLlocal1(caml_msg_list);
+
+  ssize_t actual_msg_count = job->actual_msg_count;
+  if (actual_msg_count >= 0) {
+    caml_msg_list = ocaml_kafka_extract_topic_message_list(job->caml_kafka_topic, job->messages, actual_msg_count);
+    size_t i;
+    for (i = 0; i<actual_msg_count; ++i) {
+      rd_kafka_message_destroy(job->messages[i]);
+    }
+  } else {
+    rd_kafka_resp_err_t rd_errno = job->rd_errno;
+    RAISE(rd_errno, "Failed to consume messages (%s)", rd_kafka_err2str(rd_errno));
+  }
+
+  lwt_unix_free_job(&job->job);
+  CAMLreturn(caml_msg_list);
+}
+
+/* The stub creating the [consume_batch] job structure. */
+extern CAMLprim
+value ocaml_kafka_consume_batch_job(value caml_kafka_topic, value caml_kafka_partition, value caml_kafka_timeout, value caml_msg_count)
+{
+  int msg_count = Int_val(caml_msg_count);
+  if (msg_count < 0) msg_count = 0;
+
+  struct job_consume_batch* job = (struct job_consume_batch*)
+    lwt_unix_new_plus(struct job_consume_batch, msg_count * sizeof (rd_kafka_message_t*));
+
+  job->caml_kafka_topic = caml_kafka_topic;
+  job->topic = get_handler(Field(caml_kafka_topic,0));
+  job->partition = Int_val(caml_kafka_partition);
+  job->timeout = Int_val(caml_kafka_timeout);
+  job->msg_count = msg_count;
+
+  job->job.worker = (lwt_unix_job_worker)worker_consume_batch;
+  job->job.result = (lwt_unix_job_result)result_consume_batch;
+
+  return lwt_unix_alloc_job(&job->job);
+}
+
+/****************************************
+ * Kafka_lwt.consume_batch_queue
+ ***************************************/
+
+/* Structure holding informations for calling [consume_batch_queue]. */
+struct job_consume_batch_queue {
+  struct lwt_unix_job job;
+
+  rd_kafka_queue_t *queue;
+  int timeout;
+  size_t msg_count;
+
+  value caml_kafka_queue;         // We hide the queue in the job, so we can search caml handler of topics.
+
+  ssize_t actual_msg_count;
+  rd_kafka_resp_err_t rd_errno;
+  rd_kafka_message_t* messages[]; // Buffer for messages.
+};
+
+/* The function calling [consume_batch_queue]. */
+static void worker_consume_batch_queue(struct job_consume_batch_queue* job)
+{
+  job->actual_msg_count = rd_kafka_consume_batch_queue(job->queue, job->timeout, job->messages, job->msg_count);
+  job->rd_errno = (job->actual_msg_count>=0)?RD_KAFKA_RESP_ERR_NO_ERROR:rd_kafka_errno2err(errno);
+}
+
+/* The function building the caml [consume_batch_queue] result. */
+static value result_consume_batch_queue(struct job_consume_batch_queue* job)
+{
+  CAMLparam0();
+  CAMLlocal1(caml_msg_list);
+
+  ssize_t actual_msg_count = job->actual_msg_count;
+  if (actual_msg_count >= 0) {
+    caml_msg_list = ocaml_kafka_extract_queue_message_list(job->caml_kafka_queue, job->messages, actual_msg_count);
+    size_t i;
+    for (i = 0; i<actual_msg_count; ++i) {
+      rd_kafka_message_destroy(job->messages[i]);
+    }
+  } else {
+    rd_kafka_resp_err_t rd_errno = job->rd_errno;
+    RAISE(rd_errno, "Failed to consume messages (%s)", rd_kafka_err2str(rd_errno));
+  }
+
+  lwt_unix_free_job(&job->job);
+  CAMLreturn(caml_msg_list);
+}
+
+/* The stub creating the [consume_batch_queue] job structure. */
+extern CAMLprim
+value ocaml_kafka_consume_batch_queue_job(value caml_kafka_queue, value caml_kafka_timeout, value caml_msg_count)
+{
+  int msg_count = Int_val(caml_msg_count);
+  if (msg_count < 0) msg_count = 0;
+
+  struct job_consume_batch_queue* job = (struct job_consume_batch_queue*)
+    lwt_unix_new_plus(struct job_consume_batch_queue, msg_count * sizeof (rd_kafka_message_t*));
+
+  job->caml_kafka_queue = caml_kafka_queue;
+  job->queue = get_handler(Field(caml_kafka_queue,0));
+  job->timeout = Int_val(caml_kafka_timeout);
+  job->msg_count = msg_count;
+
+  job->job.worker = (lwt_unix_job_worker)worker_consume_batch_queue;
+  job->job.result = (lwt_unix_job_result)result_consume_batch_queue;
 
   return lwt_unix_alloc_job(&job->job);
 }
