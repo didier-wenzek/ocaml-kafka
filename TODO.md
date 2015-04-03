@@ -12,7 +12,7 @@
  - [ ] Fix: the partitionner callback is never called.
  - [x] Specific offsets: Kafka.offset_stored, Kafka.offset_tail(n).
  - [x] Wrap messages in message enveloppes with topic,partition,offset,payload,key.
- - [ ] Support to consume batch of messages.
+ - [x] Support to consume batch of messages.
  - [ ] Support to consume messages through a callback.
  - [x] Support for stored offsets.
  - [ ] Support to produce batch of messages.
@@ -23,3 +23,4 @@
  - [x] Function: Kafka.outq_len.
  - [ ] Do we have to distinguish types: consumer vs producer.
  - [ ] Introduce a Kafka.Timeout exception.
+ - [ ] Lwt support.

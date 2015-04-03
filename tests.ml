@@ -11,7 +11,7 @@ let timeout_ms = 1000
 
 let skip_all_message consume partition = 
   let rec loop () = match consume partition with
-  | Kafka.Message _ -> loop ()
+  | Kafka.Message _ -> print_endline "garbage removed!";loop ()
   | Kafka.PartitionEnd _ -> ()
   | exception Kafka.Error(Kafka.TIMED_OUT,_) -> ()
   in loop ()
@@ -80,8 +80,8 @@ let main =
    Kafka.produce producer_topic partition "message 1 bis";
    Kafka.produce producer_topic partition "message 2 bis";
 
-   let messages = Kafka.consume_batch ~timeout_ms:2000 ~msg_count:3 consumer_topic partition in
-   assert (List.map (function | Kafka.Message(_,_,_,msg,_) -> msg | _ -> "") messages
+   let messages = Kafka.consume_batch ~timeout_ms:3000 ~msg_count:4 consumer_topic partition in
+   assert (List.fold_left (fun acc -> function | Kafka.Message(_,_,_,msg,_) -> acc @ [msg] | _ -> acc) [] messages
         = ["message 0 bis"; "message 1 bis"; "message 2 bis"]);
 
    (* Stop collecting messages. *)
@@ -119,6 +119,15 @@ let main =
    let (n,m) = consume_queue (n,m) in
    
    assert (n+m = 3);
+
+   (* Consuming batches of a queue. *)
+   Kafka.produce producer_topic Kafka.partition_unassigned "message 0 ter";
+   Kafka.produce producer_topic Kafka.partition_unassigned "message 1 ter";
+   Kafka.produce producer_topic Kafka.partition_unassigned "message 2 ter";
+
+   let messages = Kafka.consume_batch_queue ~timeout_ms:3000 ~msg_count:5 queue in
+   assert (List.sort compare (List.fold_left (fun acc -> function | Kafka.Message(_,_,_,msg,_) -> acc @ [msg] | _ -> acc) [] messages)
+        = ["message 0 ter"; "message 1 ter"; "message 2 ter"]);
 
    (* Produce some keyed messages *)
    let partitioner_callback partition_cnt key = Printf.printf "xoxox %s \n%!" key;(Hashtbl.hash key) mod partition_cnt in

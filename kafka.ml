@@ -108,6 +108,7 @@ external new_queue : handler -> queue = "ocaml_kafka_new_queue"
 external destroy_queue : queue -> unit = "ocaml_kafka_destroy_queue"
 external consume_start_queue : queue -> topic -> partition -> offset -> unit = "ocaml_kafka_consume_start_queue"
 external consume_queue : ?timeout_ms:int -> queue -> message = "ocaml_kafka_consume_queue"
+external consume_batch_queue : ?timeout_ms:int -> ?msg_count:int -> queue -> message list = "ocaml_kafka_consume_batch_queue"
 
 module Metadata = struct
   type topic_metadata = {

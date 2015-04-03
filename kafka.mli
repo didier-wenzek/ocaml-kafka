@@ -230,6 +230,16 @@ val consume_start_queue : queue -> topic -> partition -> offset -> unit
 *)
 val consume_queue : ?timeout_ms:int -> queue -> message
 
+(* [consume_batch_queue ~timeout_ms ~msg_count queue]
+   consumes up to [msg_count] messages from the [queue],
+   taking at most [timeout_ms] to collect the messages
+   (hence, it may return less messages than requested).
+
+   The default timout is 1 second.
+   The default count of messages is 1k.
+*)
+val consume_batch_queue : ?timeout_ms:int -> ?msg_count:int -> queue -> message list
+
 (* [store_offset topic partition offset]
    stores [offset] for given [topic] and [partition].
 
