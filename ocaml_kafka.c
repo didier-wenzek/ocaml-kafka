@@ -520,10 +520,10 @@ value ocaml_kafka_consume_batch(value caml_kafka_timeout, value caml_msg_count, 
 
   rd_kafka_message_t* messages[msg_count];
 
-  ssize_t actual_msg_count = rd_kafka_consume_batch(topic, partition, timeout, (rd_kafka_message_t**) &messages, msg_count);
+  ssize_t actual_msg_count = rd_kafka_consume_batch(topic, partition, timeout, messages, msg_count);
 
   if (actual_msg_count >= 0) {
-    caml_msg_list = ocaml_kafka_extract_topic_message_list(caml_kafka_topic, (rd_kafka_message_t**) &messages, actual_msg_count);
+    caml_msg_list = ocaml_kafka_extract_topic_message_list(caml_kafka_topic, messages, actual_msg_count);
     size_t i;
     for (i = 0; i<actual_msg_count; ++i) {
       rd_kafka_message_destroy(messages[i]);
@@ -808,10 +808,10 @@ value ocaml_kafka_consume_batch_queue(value caml_kafka_timeout, value caml_msg_c
 
   rd_kafka_message_t* messages[msg_count];
 
-  ssize_t actual_msg_count = rd_kafka_consume_batch_queue(queue, timeout, (rd_kafka_message_t**) &messages, msg_count);
+  ssize_t actual_msg_count = rd_kafka_consume_batch_queue(queue, timeout, messages, msg_count);
 
   if (actual_msg_count >= 0) {
-    caml_msg_list = ocaml_kafka_extract_queue_message_list(caml_kafka_queue, (rd_kafka_message_t**) &messages, actual_msg_count);
+    caml_msg_list = ocaml_kafka_extract_queue_message_list(caml_kafka_queue, messages, actual_msg_count);
     size_t i;
     for (i = 0; i<actual_msg_count; ++i) {
       rd_kafka_message_destroy(messages[i]);
