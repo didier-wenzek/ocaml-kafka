@@ -71,7 +71,7 @@ Documentation
 -------------
 
 The API is documented in [kafka.mli](kafka.mli),
-and the Lwt extension is documented in [kafka_lwt.mli](kafka_lwt.mli),
+and the Lwt extension is documented in [kafka_lwt.mli](kafka_lwt.mli).
 
 See [tail_kafka_topic.ml](tail_kafka_topic.ml) for an example consumer using queues, batches and lwt.
 
