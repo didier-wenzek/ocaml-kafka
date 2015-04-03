@@ -28,6 +28,9 @@ install:
 uninstall:
 	ocamlfind remove okafka
 
+tools: lwt
+	ocamlbuild -use-ocamlfind $(LWT_OPT) -pkgs lwt,lwt.unix,cmdliner -libs okafka tail_kafka_topic.native
+
 tests:
 	_build/tests.native
 
