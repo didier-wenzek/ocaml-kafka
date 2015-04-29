@@ -20,7 +20,7 @@ type message =
   | PartitionEnd of topic * partition * offset                     (* topic, partition, offset *)
 
 (* Message identifier used by producers for delivery callbacks.*)
-type msg_id = int64
+type msg_id = int
 
 type error =
   (* Internal errors to rdkafka *)
@@ -82,7 +82,8 @@ val new_consumer : (string*string) list -> handler
    This callback will be call after each message delivery
    as in [delivery_callback msg msg_id_if_any error_if_any].
    Callbacks must be triggered by the [poll] function.
-   
+
+   The producer option 'delivery.report.only.error' may be set to true to report only errors.
 *)
 val new_producer :
      ?delivery_callback:(string -> msg_id option -> error option -> unit)

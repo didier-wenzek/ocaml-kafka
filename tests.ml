@@ -163,10 +163,10 @@ let main =
 
    let producer_with_delivery_callback = Kafka.new_producer ~delivery_callback ["metadata.broker.list","localhost:9092"] in
    let topic_with_delivery_callback = Kafka.new_topic producer_with_delivery_callback "test" ["message.timeout.ms","10000"] in
-   Kafka.produce topic_with_delivery_callback Kafka.partition_unassigned ~msg_id:156L "message 6"; 
+   Kafka.produce topic_with_delivery_callback Kafka.partition_unassigned ~msg_id:156 "message 6"; 
    Kafka.poll_events producer_with_delivery_callback |> ignore;
    assert (!last_message_produced = "message 6");
-   assert (!last_msg_id = Some 156L);
+   assert (!last_msg_id = Some 156);
    assert (!last_error = None);
 
    (* Consumers, producers, topics and queues, all handles must be released. *)

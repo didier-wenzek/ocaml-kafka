@@ -199,10 +199,9 @@ void ocaml_kafka_delivery_callback(rd_kafka_t *producer, void *payload, size_t l
   memcpy(String_val(caml_msg_payload), payload, len);
 
   if (msg_opaque) {
-    int64* msg_id = msg_opaque;
+    int msg_id = (int) msg_opaque;                    // has been set by ocaml_kafka_produce
     caml_msg_id = caml_alloc_small(1,0);              // Some(msg_id)
-    Field(caml_msg_id, 0) = caml_copy_int64(*msg_id);
-    free(msg_opaque);                                 // has been allocated by ocaml_kafka_produce
+    Field(caml_msg_id, 0) = Val_int(msg_id);
   } else {
     caml_msg_id = Val_int(0);                         // None
   }
@@ -538,13 +537,12 @@ value ocaml_kafka_produce(value caml_kafka_topic, value caml_kafka_partition, va
      key_len = caml_string_length(caml_key);
   } 
 
-  int64* msg_id = NULL;
+  int msg_id = 0;
   if (Is_block(caml_opt_id)) {
-    msg_id = malloc(sizeof(int64));
-    *msg_id = Int64_val(Field(caml_opt_id, 0));
+    msg_id = Int_val(Field(caml_opt_id, 0));
   }
 
-  int err = rd_kafka_produce(topic, partition, RD_KAFKA_MSG_F_COPY, payload, len, key, key_len, msg_id);
+  int err = rd_kafka_produce(topic, partition, RD_KAFKA_MSG_F_COPY, payload, len, key, key_len, (void *)msg_id);
   if (err) {
      rd_kafka_resp_err_t rd_errno = rd_kafka_errno2err(errno);
      RAISE(rd_errno, "Failed to produce message (%s)", rd_kafka_err2str(rd_errno));

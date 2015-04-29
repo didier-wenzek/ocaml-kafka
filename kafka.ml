@@ -8,7 +8,7 @@ type message =
   | Message of topic * partition * offset * string * string option (* topic, partition, offset, payload, optional key *)
   | PartitionEnd of topic * partition * offset                     (* topic, partition, offset *)
 
-type msg_id = int64
+type msg_id = int
 
 type error =
   (* Internal errors to rdkafka: *)
@@ -74,7 +74,7 @@ external destroy_topic : topic -> unit = "ocaml_kafka_destroy_topic"
 external topic_name : topic -> string = "ocaml_kafka_topic_name" "noalloc"
 
 (*
-  Note that the id is restricted to be some int64 value.
+  Note that the id is restricted to be some int value.
   While the underlying library, librdkafka, allows any void* msg_opaque data.
   This is to avoid issues with the garbage collector
 *)
