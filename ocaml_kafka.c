@@ -191,19 +191,15 @@ static
 void ocaml_kafka_delivery_callback(rd_kafka_t *producer, void *payload, size_t len, rd_kafka_resp_err_t err, void *opaque, void *msg_opaque)
 {
   CAMLparam0();
-  CAMLlocal4(caml_callback, caml_msg_payload, caml_msg_id, caml_error);
+  CAMLlocal3(caml_callback, caml_msg_id, caml_error);
 
   caml_callback = (value) opaque;
 
-  caml_msg_payload = caml_alloc_string(len);
-  memcpy(String_val(caml_msg_payload), payload, len);
-
   if (msg_opaque) {
-    int msg_id = (int) msg_opaque;                    // has been set by ocaml_kafka_produce
-    caml_msg_id = caml_alloc_small(1,0);              // Some(msg_id)
-    Field(caml_msg_id, 0) = Val_int(msg_id);
+    int msg_id = (int) msg_opaque;      // has been set by ocaml_kafka_produce
+    caml_msg_id = Val_int(msg_id);
   } else {
-    caml_msg_id = Val_int(0);                         // None
+    caml_msg_id = Val_int(0);           // None
   }
 
   if (! err) {
@@ -213,7 +209,7 @@ void ocaml_kafka_delivery_callback(rd_kafka_t *producer, void *payload, size_t l
     Field(caml_error, 0) = caml_error_value(err);
   }
 
-  caml_callback3(caml_callback, caml_msg_payload, caml_msg_id, caml_error);
+  caml_callback2(caml_callback, caml_msg_id, caml_error);
   CAMLreturn0;
 }
 
@@ -518,9 +514,9 @@ value ocaml_kafka_consume_batch(value caml_kafka_timeout, value caml_msg_count, 
 }
 
 extern CAMLprim
-value ocaml_kafka_produce(value caml_kafka_topic, value caml_kafka_partition, value caml_opt_key, value caml_opt_id, value caml_msg)
+value ocaml_kafka_produce(value caml_kafka_topic, value caml_kafka_partition, value caml_opt_key, value caml_msgid, value caml_msg)
 {
-  CAMLparam5(caml_kafka_topic,caml_kafka_partition,caml_opt_key,caml_opt_id,caml_msg);
+  CAMLparam5(caml_kafka_topic,caml_kafka_partition,caml_opt_key,caml_msgid,caml_msg);
   CAMLlocal1(caml_key);
 
   rd_kafka_topic_t *topic = get_handler(Field(caml_kafka_topic,0));
@@ -537,10 +533,7 @@ value ocaml_kafka_produce(value caml_kafka_topic, value caml_kafka_partition, va
      key_len = caml_string_length(caml_key);
   } 
 
-  int msg_id = 0;
-  if (Is_block(caml_opt_id)) {
-    msg_id = Int_val(Field(caml_opt_id, 0));
-  }
+  int msg_id = Int_val(caml_msgid);
 
   int err = rd_kafka_produce(topic, partition, RD_KAFKA_MSG_F_COPY, payload, len, key, key_len, (void *)msg_id);
   if (err) {

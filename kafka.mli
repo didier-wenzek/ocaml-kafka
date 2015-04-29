@@ -80,13 +80,15 @@ val new_consumer : (string*string) list -> handler
 
  - A delivery callback may be attached to the producer.
    This callback will be call after each message delivery
-   as in [delivery_callback msg msg_id_if_any error_if_any].
+   as in [delivery_callback msg_id error_if_any].
+   Note that on contrary librdkafka, such a callback do not return the message but only its id.
+
    Callbacks must be triggered by the [poll] function.
 
    The producer option 'delivery.report.only.error' may be set to true to report only errors.
 *)
 val new_producer :
-     ?delivery_callback:(string -> msg_id option -> error option -> unit)
+     ?delivery_callback:(msg_id -> error option -> unit)
   -> (string*string) list
   -> handler
 

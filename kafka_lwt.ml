@@ -29,10 +29,10 @@ let produce topic partition ?key msg =
   let waiter, wakener = Lwt.wait () in
 
   Hashtbl.add pending_msg msg_id wakener;
-  Kafka.produce topic partition ?key ~msg_id:msg_id msg;
+  Kafka.produce topic partition ?key ~msg_id msg;
   waiter
 
-let report_msg_delivery msg_id error =
+let delivery_callback msg_id error =
   try
     let wakener = Hashtbl.find pending_msg msg_id in
     Hashtbl.remove pending_msg msg_id;
@@ -40,10 +40,6 @@ let report_msg_delivery msg_id error =
     | None -> Lwt.wakeup wakener ()
     | Some error -> Lwt.wakeup_exn wakener (Kafka.Error (error,"Failed to produce message"))
   with Not_found -> ()
-
-let delivery_callback _ msg_id error = match msg_id with
-  | None        -> ()
-  | Some msg_id -> report_msg_delivery msg_id error
 
 let poll_delivery period_ms producer =
   let timeout_s = (float_of_int period_ms) /. 1000.0 in

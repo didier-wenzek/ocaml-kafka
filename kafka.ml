@@ -55,7 +55,7 @@ let _ =
 
 external new_consumer : (string*string) list -> handler = "ocaml_kafka_new_consumer"
 external new_producer :
-     ?delivery_callback:(string -> msg_id option -> error option -> unit)
+     ?delivery_callback:(msg_id -> error option -> unit)
   -> (string*string) list
   -> handler
   = "ocaml_kafka_new_producer"
@@ -78,7 +78,8 @@ external topic_name : topic -> string = "ocaml_kafka_topic_name" "noalloc"
   While the underlying library, librdkafka, allows any void* msg_opaque data.
   This is to avoid issues with the garbage collector
 *)
-external produce: topic -> partition -> ?key:string -> ?msg_id:msg_id -> string -> unit = "ocaml_kafka_produce"
+external produce_idmsg: topic -> partition -> ?key:string -> msg_id -> string -> unit = "ocaml_kafka_produce"
+     let produce topic partition ?key ?(msg_id = 0) msg = produce_idmsg topic partition ?key msg_id msg
 external outq_len : handler -> int = "ocaml_kafka_outq_len"
 external poll: handler -> int -> int = "ocaml_kafka_poll"
 let poll_events ?(timeout_ms = 1000) handler = poll handler timeout_ms
