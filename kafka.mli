@@ -157,7 +157,7 @@ val outq_len : handler -> int
 *)
 val poll_events: ?timeout_ms:int -> handler -> int
 
-(** Wait that messages are delivered. *)
+(** Wait that messages are delivered (waiting that less than max_outq_len messages are pending). *)
 val wait_delivery: ?timeout_ms:int -> ?max_outq_len:int -> handler -> unit
 
 (* [consume_start topic partition offset]

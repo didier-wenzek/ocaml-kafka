@@ -2,6 +2,7 @@ MODULES = kafka.cmi kafkaConsumer.cmi kafkaProducer.cmi
 TARGETS = okafka.cma okafka.cmxa okafka.cmxs okafka.a dllocamlkafka.so libocamlkafka.a $(MODULES)
 LIB = $(addprefix _build/, $(TARGETS))
 BIN = kafkatail.native create_topic.native tests.native
+TOOLS = tail_kafka_topic.native sendto_kafka_topic.native
 
 all:
 	rm -f libocamlkafka.clib okafka.mllib META
@@ -29,7 +30,7 @@ uninstall:
 	ocamlfind remove okafka
 
 tools: lwt
-	ocamlbuild -use-ocamlfind $(LWT_OPT) -pkgs lwt,lwt.unix,cmdliner -libs okafka tail_kafka_topic.native
+	ocamlbuild -use-ocamlfind $(LWT_OPT) -pkgs lwt,lwt.unix,cmdliner -libs okafka $(TOOLS)
 
 tests:
 	_build/tests.native
