@@ -72,7 +72,6 @@ external new_topic :
   = "ocaml_kafka_new_topic"
 external destroy_topic : topic -> unit = "ocaml_kafka_destroy_topic"
 external topic_name : topic -> string = "ocaml_kafka_topic_name" "noalloc"
-external topic_partition_available: topic -> int -> bool = "ocaml_kafka_topic_partition_available"
 
 (*
   Note that the id is restricted to be some int64 value.

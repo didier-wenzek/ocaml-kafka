@@ -352,21 +352,6 @@ value ocaml_kafka_topic_name(value caml_kafka_topic)
 }
 
 extern CAMLprim
-value ocaml_kafka_topic_partition_available(value caml_kafka_topic, value caml_kafka_partition)
-{
-  CAMLparam2(caml_kafka_topic, caml_kafka_partition);
-
-  rd_kafka_topic_t *topic = get_handler(caml_kafka_topic);
-  int32 partition = Int_val(caml_kafka_partition);
-  
-  if (rd_kafka_topic_partition_available(topic, partition)) {
-     CAMLreturn(Val_true);
-  } else {
-     CAMLreturn(Val_false);
-  }
-}
-
-extern CAMLprim
 value ocaml_kafka_consume_start(value caml_kafka_topic, value caml_kafka_partition, value caml_kafka_offset)
 {
   CAMLparam3(caml_kafka_topic,caml_kafka_partition,caml_kafka_offset);
