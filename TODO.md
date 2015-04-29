@@ -24,3 +24,4 @@
  - [ ] Do we have to distinguish types: consumer vs producer.
  - [ ] Introduce a Kafka.Timeout exception.
  - [x] Lwt support.
+ - [ ] Eval impacts of "noalloc" on Kafka.produce function.

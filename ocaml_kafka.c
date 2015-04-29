@@ -346,12 +346,9 @@ value ocaml_kafka_destroy_topic(value caml_kafka_topic)
 extern CAMLprim
 value ocaml_kafka_topic_name(value caml_kafka_topic)
 {
-  CAMLparam1(caml_kafka_topic);
-  CAMLlocal1(caml_name);
-
-  caml_name = Field(caml_kafka_topic,1);
-
-  CAMLreturn(caml_name);
+  // use "noalloc" : https://blogs.janestreet.com/faster-ocaml-to-c-calls/
+  // => must be declared "noalloc" ml side.
+  return Field(caml_kafka_topic,1);
 }
 
 extern CAMLprim
