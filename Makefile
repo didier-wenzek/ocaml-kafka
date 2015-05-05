@@ -9,8 +9,8 @@ all:
 	ln -s libocamlkafka.clib.sync libocamlkafka.clib
 	ln -s okafka.mllib.sync okafka.mllib
 	ln -s META.sync META
-	ocamlbuild $(TARGETS)
-	ocamlbuild -libs okafka,unix $(BIN)
+	ocamlbuild -cflag -safe-string $(TARGETS)
+	ocamlbuild -libs okafka,unix -cflag -safe-string $(BIN)
 
 LWT_TARGETS = $(TARGETS) kafka_lwt.cmi
 LWT_LIB = $(addprefix _build/, $(LWT_TARGETS))
@@ -20,8 +20,8 @@ lwt:
 	ln -s libocamlkafka.clib.lwt libocamlkafka.clib
 	ln -s okafka.mllib.lwt okafka.mllib
 	ln -s META.lwt META
-	ocamlbuild -use-ocamlfind $(LWT_OPT) -pkgs lwt,lwt.unix $(LWT_TARGETS)
-	ocamlbuild -use-ocamlfind $(LWT_OPT) -pkgs lwt,lwt.unix -libs okafka $(BIN)
+	ocamlbuild -use-ocamlfind $(LWT_OPT) -pkgs lwt,lwt.unix -cflag -safe-string $(LWT_TARGETS)
+	ocamlbuild -use-ocamlfind $(LWT_OPT) -pkgs lwt,lwt.unix -libs okafka -cflag -safe-string $(BIN)
 
 install:
 	ocamlfind install okafka META $(LIB) _build/kafka*.cmi
@@ -30,7 +30,7 @@ uninstall:
 	ocamlfind remove okafka
 
 tools: lwt
-	ocamlbuild -use-ocamlfind $(LWT_OPT) -pkgs lwt,lwt.unix,cmdliner -libs okafka $(TOOLS)
+	ocamlbuild -use-ocamlfind $(LWT_OPT) -pkgs lwt,lwt.unix,cmdliner -libs okafka -cflag -safe-string $(TOOLS)
 
 tests:
 	_build/tests.native
