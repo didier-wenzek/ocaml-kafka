@@ -1,4 +1,3 @@
-MODULES = kafka.cmi kafkaConsumer.cmi kafkaProducer.cmi
 TARGETS = okafka.cma okafka.cmxa okafka.cmxs okafka.a dllocamlkafka.so libocamlkafka.a
 LIB = $(addprefix _build/, $(TARGETS))
 BIN = create_topic.native tests.native
@@ -14,15 +13,13 @@ all:
 	ocamlbuild $(CFLAGS) $(TARGETS)
 	ocamlbuild -libs okafka,unix $(CFLAGS) $(BIN)
 
-LWT_TARGETS = $(TARGETS) kafka_lwt.cmi
-LWT_LIB = $(addprefix _build/, $(LWT_TARGETS))
 LWT_OPT = -cflags -ccopt,-I,-ccopt,$(shell ocamlfind query lwt.unix)
 lwt:
 	rm -f libocamlkafka.clib okafka.mllib META
 	ln -s libocamlkafka.clib.lwt libocamlkafka.clib
 	ln -s okafka.mllib.lwt okafka.mllib
 	ln -s META.lwt META
-	ocamlbuild -use-ocamlfind $(LWT_OPT) -pkgs lwt,lwt.unix $(CFLAGS) $(LWT_TARGETS)
+	ocamlbuild -use-ocamlfind $(LWT_OPT) -pkgs lwt,lwt.unix $(CFLAGS) $(TARGETS)
 	ocamlbuild -use-ocamlfind $(LWT_OPT) -pkgs lwt,lwt.unix -libs okafka $(CFLAGS) $(BIN)
 
 install:
