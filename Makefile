@@ -1,7 +1,7 @@
 MODULES = kafka.cmi kafkaConsumer.cmi kafkaProducer.cmi
 TARGETS = okafka.cma okafka.cmxa okafka.cmxs okafka.a dllocamlkafka.so libocamlkafka.a
 LIB = $(addprefix _build/, $(TARGETS))
-BIN = kafkatail.native create_topic.native tests.native
+BIN = create_topic.native tests.native
 TOOLS = tail_kafka_topic.native sendto_kafka_topic.native
 
 CFLAGS = -cflag -safe-string -cflag -bin-annot
