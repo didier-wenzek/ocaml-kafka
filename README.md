@@ -13,13 +13,14 @@ MIT License
 
 Install
 -------
-``̀`sh
+
+```sh
 $ opam install kafka
 ```
 
 From source:
 
-``̀`sh
+```sh
 $ make
 $ make test       # assuming kakfa is running at localhost:9092 with a 'test' topic.
 $ make install    # use ocamlfind
@@ -27,7 +28,7 @@ $ make install    # use ocamlfind
 
 To enable Lwt support:
 
-``̀`sh
+```sh
 $ make lwt
 $ make test
 $ make install
