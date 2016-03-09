@@ -71,6 +71,7 @@ static value result_consume(struct job_consume* job)
 extern CAMLprim
 value ocaml_kafka_consume_job(value caml_kafka_topic, value caml_kafka_partition, value caml_kafka_timeout)
 {
+  CAMLparam3(caml_kafka_topic, caml_kafka_partition, caml_kafka_timeout);
   struct job_consume* job = (struct job_consume*)lwt_unix_new(struct job_consume);
 
   job->caml_kafka_topic = caml_kafka_topic;
@@ -81,7 +82,7 @@ value ocaml_kafka_consume_job(value caml_kafka_topic, value caml_kafka_partition
   job->job.worker = (lwt_unix_job_worker)worker_consume;
   job->job.result = (lwt_unix_job_result)result_consume;
 
-  return lwt_unix_alloc_job(&job->job);
+  CAMLreturn(lwt_unix_alloc_job(&job->job));
 }
 
 /****************************************
@@ -132,6 +133,7 @@ static value result_consume_queue(struct job_consume_queue* job)
 extern CAMLprim
 value ocaml_kafka_consume_queue_job(value caml_kafka_queue, value caml_kafka_timeout)
 {
+  CAMLparam2(caml_kafka_queue, caml_kafka_timeout);
   struct job_consume_queue* job = (struct job_consume_queue*)lwt_unix_new(struct job_consume_queue);
 
   job->queue = get_handler(Field(caml_kafka_queue,0));
@@ -141,7 +143,7 @@ value ocaml_kafka_consume_queue_job(value caml_kafka_queue, value caml_kafka_tim
   job->job.worker = (lwt_unix_job_worker)worker_consume_queue;
   job->job.result = (lwt_unix_job_result)result_consume_queue;
 
-  return lwt_unix_alloc_job(&job->job);
+  CAMLreturn(lwt_unix_alloc_job(&job->job));
 }
 
 /****************************************
@@ -197,6 +199,7 @@ static value result_consume_batch(struct job_consume_batch* job)
 extern CAMLprim
 value ocaml_kafka_consume_batch_job(value caml_kafka_topic, value caml_kafka_partition, value caml_kafka_timeout, value caml_msg_count)
 {
+  CAMLparam4(caml_kafka_topic, caml_kafka_partition, caml_kafka_timeout, caml_msg_count);
   int msg_count = Int_val(caml_msg_count);
   if (msg_count < 0) msg_count = 0;
 
@@ -212,7 +215,7 @@ value ocaml_kafka_consume_batch_job(value caml_kafka_topic, value caml_kafka_par
   job->job.worker = (lwt_unix_job_worker)worker_consume_batch;
   job->job.result = (lwt_unix_job_result)result_consume_batch;
 
-  return lwt_unix_alloc_job(&job->job);
+  CAMLreturn(lwt_unix_alloc_job(&job->job));
 }
 
 /****************************************
@@ -267,6 +270,7 @@ static value result_consume_batch_queue(struct job_consume_batch_queue* job)
 extern CAMLprim
 value ocaml_kafka_consume_batch_queue_job(value caml_kafka_queue, value caml_kafka_timeout, value caml_msg_count)
 {
+  CAMLparam3(caml_kafka_queue, caml_kafka_timeout, caml_msg_count);
   int msg_count = Int_val(caml_msg_count);
   if (msg_count < 0) msg_count = 0;
 
@@ -281,5 +285,5 @@ value ocaml_kafka_consume_batch_queue_job(value caml_kafka_queue, value caml_kaf
   job->job.worker = (lwt_unix_job_worker)worker_consume_batch_queue;
   job->job.result = (lwt_unix_job_result)result_consume_batch_queue;
 
-  return lwt_unix_alloc_job(&job->job);
+  CAMLreturn(lwt_unix_alloc_job(&job->job));
 }

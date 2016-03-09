@@ -31,6 +31,9 @@ uninstall:
 tools: lwt
 	ocamlbuild -use-ocamlfind $(LWT_OPT) -pkgs lwt,lwt.unix,cmdliner -libs okafka $(CFLAGS) $(TOOLS)
 
+issues: lwt
+	ocamlbuild -use-ocamlfind $(LWT_OPT) -pkgs lwt,lwt.unix,cmdliner -libs okafka $(CFLAGS) issue3.native
+
 tests:
 	_build/tests.native
 
