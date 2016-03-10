@@ -63,6 +63,7 @@ static value result_consume(struct job_consume* job)
     RAISE(rd_errno, "Failed to consume message (%s)", rd_kafka_err2str(rd_errno));
   }
 
+  caml_remove_generational_global_root(&(job->caml_kafka_topic));
   lwt_unix_free_job(&job->job);
   CAMLreturn(caml_msg);
 }
@@ -75,6 +76,7 @@ value ocaml_kafka_consume_job(value caml_kafka_topic, value caml_kafka_partition
   struct job_consume* job = (struct job_consume*)lwt_unix_new(struct job_consume);
 
   job->caml_kafka_topic = caml_kafka_topic;
+  caml_register_generational_global_root(&(job->caml_kafka_topic));
   job->topic = get_handler(Field(caml_kafka_topic,0));
   job->partition = Int_val(caml_kafka_partition);
   job->timeout = Int_val(caml_kafka_timeout);
@@ -125,6 +127,7 @@ static value result_consume_queue(struct job_consume_queue* job)
      RAISE(rd_errno, "Failed to consume message from queue (%s)", rd_kafka_err2str(rd_errno));
   }
 
+  caml_remove_generational_global_root(&(job->caml_kafka_queue));
   lwt_unix_free_job(&job->job);
   CAMLreturn(caml_msg);
 }
@@ -139,6 +142,7 @@ value ocaml_kafka_consume_queue_job(value caml_kafka_queue, value caml_kafka_tim
   job->queue = get_handler(Field(caml_kafka_queue,0));
   job->timeout = Int_val(caml_kafka_timeout);
   job->caml_kafka_queue = caml_kafka_queue;
+  caml_register_generational_global_root(&(job->caml_kafka_queue));
 
   job->job.worker = (lwt_unix_job_worker)worker_consume_queue;
   job->job.result = (lwt_unix_job_result)result_consume_queue;
@@ -191,6 +195,7 @@ static value result_consume_batch(struct job_consume_batch* job)
     RAISE(rd_errno, "Failed to consume messages (%s)", rd_kafka_err2str(rd_errno));
   }
 
+  caml_remove_generational_global_root(&(job->caml_kafka_topic));
   lwt_unix_free_job(&job->job);
   CAMLreturn(caml_msg_list);
 }
@@ -207,6 +212,7 @@ value ocaml_kafka_consume_batch_job(value caml_kafka_topic, value caml_kafka_par
     lwt_unix_new_plus(struct job_consume_batch, msg_count * sizeof (rd_kafka_message_t*));
 
   job->caml_kafka_topic = caml_kafka_topic;
+  caml_register_generational_global_root(&(job->caml_kafka_topic));
   job->topic = get_handler(Field(caml_kafka_topic,0));
   job->partition = Int_val(caml_kafka_partition);
   job->timeout = Int_val(caml_kafka_timeout);
@@ -262,6 +268,7 @@ static value result_consume_batch_queue(struct job_consume_batch_queue* job)
     RAISE(rd_errno, "Failed to consume messages (%s)", rd_kafka_err2str(rd_errno));
   }
 
+  caml_remove_generational_global_root(&(job->caml_kafka_queue));
   lwt_unix_free_job(&job->job);
   CAMLreturn(caml_msg_list);
 }
@@ -278,6 +285,7 @@ value ocaml_kafka_consume_batch_queue_job(value caml_kafka_queue, value caml_kaf
     lwt_unix_new_plus(struct job_consume_batch_queue, msg_count * sizeof (rd_kafka_message_t*));
 
   job->caml_kafka_queue = caml_kafka_queue;
+  caml_register_generational_global_root(&(job->caml_kafka_queue));
   job->queue = get_handler(Field(caml_kafka_queue,0));
   job->timeout = Int_val(caml_kafka_timeout);
   job->msg_count = msg_count;
