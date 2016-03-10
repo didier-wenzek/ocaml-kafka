@@ -180,6 +180,7 @@ value ocaml_kafka_new_consumer(value caml_consumer_options)
 
   rd_kafka_t *handler = rd_kafka_new(RD_KAFKA_CONSUMER, conf, error_msg, sizeof(error_msg));
   if (handler == NULL) {
+     rd_kafka_conf_destroy(conf);
      RAISE(RD_KAFKA_RESP_ERR__FAIL, "Failed to create new kafka consumer (%s)", error_msg);
   }
 
@@ -235,6 +236,7 @@ value ocaml_kafka_new_producer(value caml_delivery_callback, value caml_producer
 
   rd_kafka_t *handler = rd_kafka_new(RD_KAFKA_PRODUCER, conf, error_msg, sizeof(error_msg));
   if (handler == NULL) {
+     rd_kafka_conf_destroy(conf);
      RAISE(RD_KAFKA_RESP_ERR__FAIL, "Failed to create new kafka producer (%s)", error_msg);
   }
 
