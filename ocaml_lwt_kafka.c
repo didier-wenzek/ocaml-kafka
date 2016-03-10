@@ -60,6 +60,8 @@ static value result_consume(struct job_consume* job)
     rd_kafka_message_destroy(message);
   } else {
     rd_kafka_resp_err_t rd_errno = job->rd_errno;
+    caml_remove_generational_global_root(&(job->caml_kafka_topic));
+    lwt_unix_free_job(&job->job);
     RAISE(rd_errno, "Failed to consume message (%s)", rd_kafka_err2str(rd_errno));
   }
 
@@ -124,6 +126,8 @@ static value result_consume_queue(struct job_consume_queue* job)
      rd_kafka_message_destroy(message);
   } else {
      rd_kafka_resp_err_t rd_errno = rd_kafka_errno2err(errno);
+     caml_remove_generational_global_root(&(job->caml_kafka_queue));
+     lwt_unix_free_job(&job->job);
      RAISE(rd_errno, "Failed to consume message from queue (%s)", rd_kafka_err2str(rd_errno));
   }
 
@@ -192,6 +196,8 @@ static value result_consume_batch(struct job_consume_batch* job)
     }
   } else {
     rd_kafka_resp_err_t rd_errno = job->rd_errno;
+    caml_remove_generational_global_root(&(job->caml_kafka_topic));
+    lwt_unix_free_job(&job->job);
     RAISE(rd_errno, "Failed to consume messages (%s)", rd_kafka_err2str(rd_errno));
   }
 
@@ -265,6 +271,8 @@ static value result_consume_batch_queue(struct job_consume_batch_queue* job)
     }
   } else {
     rd_kafka_resp_err_t rd_errno = job->rd_errno;
+    caml_remove_generational_global_root(&(job->caml_kafka_queue));
+    lwt_unix_free_job(&job->job);
     RAISE(rd_errno, "Failed to consume messages (%s)", rd_kafka_err2str(rd_errno));
   }
 
