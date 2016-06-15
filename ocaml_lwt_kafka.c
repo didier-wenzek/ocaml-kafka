@@ -32,7 +32,7 @@ struct job_consume {
   struct lwt_unix_job job;
 
   rd_kafka_topic_t *topic;
-  int32 partition;
+  int32_t partition;
   int timeout;
 
   value caml_kafka_topic; /* We hide the topic in the job, so we can attach it to message. */
@@ -163,7 +163,7 @@ struct job_consume_batch {
   struct lwt_unix_job job;
 
   rd_kafka_topic_t *topic;
-  int32 partition;
+  int32_t partition;
   int timeout;
   size_t msg_count;
 

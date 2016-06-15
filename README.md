@@ -64,7 +64,8 @@ Kafka.produce producer_topic partition "message 2";;
 let rec consume t p = match Kafka.consume ~timeout_ms t p with
   | Kafka.Message(_,_,_,msg,_) -> msg
   | Kafka.PartitionEnd(_,_,_) -> consume t p
-  | exception Kafka.Error(Kafka.TIMED_OUT,_) -> (Printf.fprintf stderr "Timeout after: %d ms\n%!" timeout_ms; consume t p)
+  | exception Kafka.Error(Kafka.TIMED_OUT,_) ->
+    (Printf.fprintf stderr "Timeout after: %d ms\n%!" timeout_ms; consume t p)
 in
 let msg = consume consumer_topic partition in assert (msg = "message 0");
 let msg = consume consumer_topic partition in assert (msg = "message 1");
