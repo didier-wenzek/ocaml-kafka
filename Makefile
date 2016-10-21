@@ -23,7 +23,7 @@ lwt:
 	ocamlbuild -use-ocamlfind $(LWT_OPT) -pkgs lwt,lwt.unix -libs okafka $(CFLAGS) $(BIN)
 
 install:
-	ocamlfind install okafka META $(LIB) _build/kafka*.cmi _build/kafka*.mli _build/kafka*.cmt*
+	ocamlfind install okafka META $(LIB) _build/kafka*.cmi _build/kafka*.mli _build/kafka*.cmt* _build/kafka*cmx
 
 uninstall:
 	ocamlfind remove okafka
