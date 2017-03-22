@@ -19,7 +19,10 @@ let skip_all_message consume partition =
 let main =
 
    (* Prepare a producer handler. *)
-   let producer = Kafka.new_producer ["metadata.broker.list","localhost:9092"] in
+   let producer = Kafka.new_producer [
+     "metadata.broker.list","localhost:9092";
+     "queue.buffering.max.ms","1";
+   ] in
 
    (* Check that there is a test topic with two partitions. *)
    let () =
@@ -37,7 +40,10 @@ let main =
    assert (List.sort compare test.topic_partitions = [0;1]);
 
    (* Prepare a consumer handler *)
-   let consumer = Kafka.new_consumer ["metadata.broker.list","localhost:9092"] in
+   let consumer = Kafka.new_consumer [
+     "metadata.broker.list","localhost:9092";
+     "fetch.wait.max.ms", "10";
+   ] in
    let consumer_topic = Kafka.new_topic consumer "test" ["auto.commit.enable","false"] in
    let partition = 1 in
 
@@ -80,7 +86,7 @@ let main =
    Kafka.produce producer_topic partition "message 1 bis";
    Kafka.produce producer_topic partition "message 2 bis";
 
-   let messages = Kafka.consume_batch ~timeout_ms:3000 ~msg_count:4 consumer_topic partition in
+   let messages = Kafka.consume_batch ~timeout_ms:3000 ~msg_count:3 consumer_topic partition in
    assert (List.fold_left (fun acc -> function | Kafka.Message(_,_,_,msg,_) -> acc @ [msg] | _ -> acc) [] messages
         = ["message 0 bis"; "message 1 bis"; "message 2 bis"]);
 
@@ -121,6 +127,7 @@ let main =
    assert (n+m = 3);
 
    (* Consuming batches of a queue. *)
+   (* Here, we send 3 messages but we expect 5 messages: the 2 other messages are the partition ends. *)
    Kafka.produce producer_topic Kafka.partition_unassigned "message 0 ter";
    Kafka.produce producer_topic Kafka.partition_unassigned "message 1 ter";
    Kafka.produce producer_topic Kafka.partition_unassigned "message 2 ter";
@@ -160,7 +167,7 @@ let main =
    let last_error = ref None in
    let delivery_callback msg_id err = (last_msg_id := msg_id; last_error := err) in
 
-   let producer_with_delivery_callback = Kafka.new_producer ~delivery_callback ["metadata.broker.list","localhost:9092"] in
+   let producer_with_delivery_callback = Kafka.new_producer ~delivery_callback ["metadata.broker.list","localhost:9092"; "queue.buffering.max.ms","1"] in
    let topic_with_delivery_callback = Kafka.new_topic producer_with_delivery_callback "test" ["message.timeout.ms","10000"] in
    Kafka.produce topic_with_delivery_callback Kafka.partition_unassigned ~msg_id:156 "message 6"; 
    Kafka.poll_events producer_with_delivery_callback |> ignore;
