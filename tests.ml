@@ -2,8 +2,8 @@ let usage () =
   Printf.fprintf stderr "These tests require a 'test' topic to be created with 2 partitions on local broker.\n";
   Printf.fprintf stderr " => abort tests\n%!";
   Printf.fprintf stderr "\n%!";
-  Printf.fprintf stderr "You may use:\n%!";
-  Printf.fprintf stderr "$ ./create_topic.native test\n%!";
+  Printf.fprintf stderr "You may use the following command to create the test topic:\n%!";
+  Printf.fprintf stderr "$ $KAFKA_HOME/bin/kafka-topics.sh --create --topic test --partitions 2 --replication-factor 1 --zookeeper localhost\n%!";
   exit 1 |> ignore
 
 open Kafka.Metadata
@@ -188,9 +188,3 @@ let main =
    assert (List.exists (fun msg -> msg = "message 123") messages);
    assert (List.exists (fun msg -> msg = "message 124") messages);
    assert (List.exists (fun msg -> msg = "message 125") messages)
-
-
-   
-   
-   
-

@@ -1,6 +1,6 @@
 TARGETS = okafka.cma okafka.cmxa okafka.cmxs okafka.a dllocamlkafka.so libocamlkafka.a
 LIB = $(addprefix _build/, $(TARGETS))
-BIN = create_topic.native tests.native
+BIN = tests.native
 TOOLS = tail_kafka_topic.native sendto_kafka_topic.native
 
 CFLAGS = -cflag -safe-string -cflag -bin-annot
