@@ -8,8 +8,4 @@
 *.cmxs
 *.cmxa
 _build/
-*.native
-libocamlkafka.clib
-okafka.mllib
-META
-librdkafka-version
+.merlin
