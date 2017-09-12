@@ -1,6 +1,0 @@
-<libocamlkafka.a>: use_rdkafka
-<okafka.cma>: use_kafka, use_rdkafka
-<okafka.cmxa>: use_kafka, use_rdkafka
-<okafka.cmxs>: use_kafka, link_rdkafka
-<tests.native> : use_kafka, use_rdkafka
-<*.native> : use_kafka, use_rdkafka
