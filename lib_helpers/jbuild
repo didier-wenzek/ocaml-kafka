@@ -1,0 +1,6 @@
+(jbuild_version 1)
+
+(library
+ ((name kafka_helpers)
+  (public_name okafka.helpers)
+  (libraries (okafka))))

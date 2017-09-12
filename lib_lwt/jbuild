@@ -1,0 +1,8 @@
+(jbuild_version 1)
+
+(library
+ ((name kafka_lwt)
+  (public_name okafka.lwt)
+  (libraries (okafka lwt.unix))
+  (c_names (ocaml_lwt_kafka))
+  (c_library_flags (-lrdkafka -lpthread -lz))))

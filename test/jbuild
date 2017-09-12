@@ -1,0 +1,10 @@
+(jbuild_version 1)
+
+(executables
+ ((names (tests issue3))
+  (libraries (okafka.lwt okafka.helpers))))
+
+(alias
+ ((name    runtest)
+  (deps    (tests.exe))
+  (action  (run ${<}))))

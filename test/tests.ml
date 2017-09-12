@@ -61,7 +61,7 @@ let main =
    let rec consume t p = match Kafka.consume ~timeout_ms t p with
       | Kafka.Message(_,_,_,msg,_) -> msg
       | Kafka.PartitionEnd(_,_,_) -> (
-          Printf.fprintf stderr "No message for now\n%!";
+          (* Printf.fprintf stderr "No message for now\n%!"; *)
           consume t p
       )
       | exception Kafka.Error(Kafka.TIMED_OUT,_) -> (
@@ -112,7 +112,7 @@ let main =
           else (n,m+1)
       )
       | Kafka.PartitionEnd(_,_,_) -> (
-          Printf.fprintf stderr "No queued message for now\n%!";
+          (* Printf.fprintf stderr "No queued message for now\n%!"; *)
           consume_queue (n,m)
       )
       | exception Kafka.Error(Kafka.TIMED_OUT,_) -> (
@@ -147,7 +147,7 @@ let main =
    let rec consume_k t = match Kafka.consume_queue t with
       | Kafka.Message(_,_,_,msg,key) -> key,msg
       | Kafka.PartitionEnd(_,_,_) -> (
-          Printf.fprintf stderr "No keyed message for now\n%!";
+          (* Printf.fprintf stderr "No keyed message for now\n%!"; *)
           consume_k t
       )
       | exception Kafka.Error(Kafka.TIMED_OUT,_) -> (
@@ -183,15 +183,20 @@ let main =
    Kafka.destroy_handler consumer;
 
    (* KafkaConsumer / KafkaProducer API *)
+   let open Kafka_helpers in
    let stop_at_end = true in
    let iterable_of_list xs f = List.iter f xs in
-   let sink = KafkaProducer.partition_sink "test" Kafka.partition_unassigned in
-   let src = KafkaConsumer.fold_topic ~stop_at_end "test" [] in
+   let sink = Kafka_producer.partition_sink "test" Kafka.partition_unassigned in
+   let src = Kafka_consumer.fold_topic ~stop_at_end "test" [] in
    let offsets = [0,Kafka.offset_tail 3; 1,Kafka.offset_tail 3] in
    
-   ["message 123"; "message 124"; "message 125"] |> iterable_of_list |> KafkaProducer.stream_to sink;
+   ["message 123"; "message 124"; "message 125"] |> iterable_of_list |> Kafka_producer.stream_to sink;
    let messages = src (fun acc -> function Kafka.Message(_,_,_,msg,_) -> msg::acc | _ -> acc) offsets [] in
    assert (List.length messages = 6);
    assert (List.exists (fun msg -> msg = "message 123") messages);
    assert (List.exists (fun msg -> msg = "message 124") messages);
-   assert (List.exists (fun msg -> msg = "message 125") messages)
+   assert (List.exists (fun msg -> msg = "message 125") messages);
+
+
+   "Tests successful\n%!"
+  
