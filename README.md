@@ -21,9 +21,9 @@ $ opam install kafka
 From source:
 
 ```sh
-$ make
+$ make            # use jbuilder
 $ make test       # assuming kakfa is running at localhost:9092 with a 'test' topic.
-$ make install    # use ocamlfind
+$ make install    # use opam
 ```
 
 To enable Lwt support:
@@ -84,11 +84,11 @@ Kafka.destroy_handler consumer;;
 Documentation
 -------------
 
-The API is documented in [kafka.mli](kafka.mli),
-and the Lwt extension is documented in [kafka_lwt.mli](kafka_lwt.mli).
+The API is documented in [lib/kafka.mli](lib/kafka.mli),
+and the Lwt extension is documented in [lib_lwt/kafka_lwt.mli](lib_lwt/kafka_lwt.mli).
 
-See [tail_kafka_topic.ml](tail_kafka_topic.ml) for an example consumer using queues, batches and lwt.
-See [sendto_kafka_topic.ml](sendto_kafka_topic.ml) for an example producer.
+See [bin/tail_kafka_topic.ml](bin/tail_kafka_topic.ml) for an example consumer using queues, batches and lwt.
+See [bin/sendto_kafka_topic.ml](bin/sendto_kafka_topic.ml) for an example producer.
 
 Configuration options of producers, consumers and topics
 are inherited from [librdkafka/CONFIGURATION](https://github.com/edenhill/librdkafka/blob/master/CONFIGURATION.md).
