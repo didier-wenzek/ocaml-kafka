@@ -2,7 +2,7 @@
 
 (executables
  ((names (tests issue3))
-  (libraries (okafka.lwt okafka.helpers))))
+  (libraries (kafka.lwt kafka.helpers))))
 
 (alias
  ((name    runtest)

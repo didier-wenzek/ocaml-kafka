@@ -2,7 +2,7 @@
 
 (executables
  ((names (sendto_kafka_topic tail_kafka_topic))
-  (libraries (okafka.lwt cmdliner))))
+  (libraries (kafka.lwt cmdliner))))
 
 (install
  ((section bin)

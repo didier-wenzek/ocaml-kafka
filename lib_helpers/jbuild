@@ -2,5 +2,5 @@
 
 (library
  ((name kafka_helpers)
-  (public_name okafka.helpers)
-  (libraries (okafka))))
+  (public_name kafka.helpers)
+  (libraries (kafka))))

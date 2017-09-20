@@ -2,7 +2,7 @@
 
 (library
  ((name kafka_lwt)
-  (public_name okafka.lwt)
-  (libraries (okafka lwt.unix))
+  (public_name kafka.lwt)
+  (libraries (kafka lwt.unix))
   (c_names (ocaml_lwt_kafka))
   (c_library_flags (-lrdkafka -lpthread -lz))))
