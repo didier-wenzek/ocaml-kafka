@@ -1,4 +1,6 @@
 opam-version: "1.2"
+version: "0.3"
+name: "kafka"
 maintainer: "Didier Wenzek <didier.wenzek@acidalie.com>"
 authors: ["Didier Wenzek <didier.wenzek@acidalie.com>"]
 homepage: "https://github.com/didier-wenzek/ocaml-kafka"
