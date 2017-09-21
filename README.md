@@ -39,7 +39,7 @@ Usage
 
 ```ocaml
 #use "topfind";;
-#require "okafka";;
+#require "kafka";;
 
 (* Prepare a producer handler. *)
 let producer = Kafka.new_producer ["metadata.broker.list","localhost:9092"];;

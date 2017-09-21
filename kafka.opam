@@ -1,16 +1,23 @@
 opam-version: "1.2"
-version: "0.3.0"
-name: "okafka"
-synopsis: "OCaml bindings for Kafka"
 maintainer: "Didier Wenzek <didier.wenzek@acidalie.com>"
 authors: ["Didier Wenzek <didier.wenzek@acidalie.com>"]
 homepage: "https://github.com/didier-wenzek/ocaml-kafka"
 bug-reports: "https://github.com/didier-wenzek/ocaml-kafka/issues"
-dev-repo: "https://github.com/didier-wenzek/ocaml-kafka"
-license: "GPL"
-build: [
-  ["jbuilder" "build" "--only" "okafka" "--root" "." "-j" jobs "@install"]
+dev-repo: "https://github.com/didier-wenzek/ocaml-kafka.git"
+license: "MIT"
+build: [ ["jbuilder" "build" "-p" "kafka" "." "-j" jobs "@install"] ]
+#build-test: [ "jbuilder" "runtest" "-p" name ]
+depends: [
+  "jbuilder" {build}
 ]
-install: [make "install"]
-remove: [make "uninstall"]
-depends: ["jbuilder"]
+depopts: [
+  "lwt"
+]
+depexts: [                                                                                                                                                                                                       
+  [[ "ubuntu"] ["librdkafka-dev"]]
+  [[ "debian"] ["librdkafka-dev"]]
+  [[ "alpine"] ["librdkafka-dev"]]
+  [[ "centos"] ["librdkafka-devel"]]
+  [[ "fedora"] ["librdkafka-devel"]]
+  [[ "osx" "homebrew"] ["librdkafka"]]
+]
