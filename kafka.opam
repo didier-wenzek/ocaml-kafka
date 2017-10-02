@@ -10,16 +10,19 @@ license: "MIT"
 build: [ ["jbuilder" "build" "-p" "kafka" "." "-j" jobs "@install"] ]
 #build-test: [ "jbuilder" "runtest" "-p" name ]
 depends: [
+  "base-unix"
+  "lwt"
+  "cmdliner"
   "jbuilder" {build}
 ]
-depopts: [
-  "lwt"
+depexts: [
+  [["alpine"] ["zlib-dev" "librdkafka-dev"]]
+  [["centos"] ["zlib-devel" "librdkafka-devel"]]
+  [["debian"] ["zlib1g-dev" "librdkafka-dev"]]
+  [["fedora"] ["zlib-devel" "librdkafka-devel"]]
+  [["homebrew" "osx"] ["zlib" "librdkafka"]]
+  [["ubuntu"] ["zlib1g-dev" "librdkafka-dev"]]
 ]
-depexts: [                                                                                                                                                                                                       
-  [[ "ubuntu"] ["librdkafka-dev"]]
-  [[ "debian"] ["librdkafka-dev"]]
-  [[ "alpine"] ["librdkafka-dev"]]
-  [[ "centos"] ["librdkafka-devel"]]
-  [[ "fedora"] ["librdkafka-devel"]]
-  [[ "osx" "homebrew"] ["librdkafka"]]
+available: [
+  ocaml-version >= "4.02.3"
 ]
