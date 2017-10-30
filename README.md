@@ -3,9 +3,9 @@ OCaml bindings for Kafka
 
 Pre-requisites
 --------------
-* [OCaml](http://caml.inria.fr/)
+* [OCaml](http://caml.inria.fr/) (`ocaml-version >= "4.02.3"`)
 * [Apache Kafka](http://kafka.apache.org/)
-* [librdkafka](https://github.com/edenhill/librdkafka)
+* [librdkafka](https://github.com/edenhill/librdkafka) (`version >= 0.8.6`)
 
 License
 -------
@@ -24,14 +24,6 @@ From source:
 $ make            # use jbuilder
 $ make test       # assuming kakfa is running at localhost:9092 with a 'test' topic.
 $ make install    # use opam
-```
-
-To enable Lwt support:
-
-```sh
-$ make lwt
-$ make test
-$ make install
 ```
 
 Usage
