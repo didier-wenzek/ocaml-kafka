@@ -7,7 +7,7 @@ homepage: "https://github.com/didier-wenzek/ocaml-kafka"
 bug-reports: "https://github.com/didier-wenzek/ocaml-kafka/issues"
 dev-repo: "https://github.com/didier-wenzek/ocaml-kafka.git"
 license: "MIT"
-build: [ ["jbuilder" "build" "-p" "kafka" "." "-j" jobs "@install"] ]
+build: [["jbuilder" "build" "-p" name "-j" jobs]]
 #build-test: [ "jbuilder" "runtest" "-p" name ]
 depends: [
   "base-unix"
