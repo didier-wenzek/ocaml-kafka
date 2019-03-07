@@ -1,10 +1,10 @@
 type ('a,'b) sink = unit -> ('a -> unit) * (unit -> 'b)
 type 'a iterable = ('a -> unit) -> unit
 
-let stream_to open_sink iterable =
+let stream_to : ('a, 'b) sink -> 'a iterable -> 'b = fun open_sink iterable ->
   let (push,close) = open_sink () in
   try iterable push ; close ()
-  with error -> close (); raise error 
+  with error -> ignore (close ()); raise error
   
 type 'a push_error_handler = ('a -> unit) -> 'a -> exn -> unit
 let retry_on_error push msg error = push msg
