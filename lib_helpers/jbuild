@@ -1,6 +1,0 @@
-(jbuild_version 1)
-
-(library
- ((name kafka_helpers)
-  (public_name kafka.helpers)
-  (libraries (kafka))))

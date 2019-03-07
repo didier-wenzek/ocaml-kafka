@@ -7,13 +7,13 @@ homepage: "https://github.com/didier-wenzek/ocaml-kafka"
 bug-reports: "https://github.com/didier-wenzek/ocaml-kafka/issues"
 dev-repo: "https://github.com/didier-wenzek/ocaml-kafka.git"
 license: "MIT"
-build: [["jbuilder" "build" "-p" name "-j" jobs]]
+build: [["dune" "build" "-p" name "-j" jobs]]
 #build-test: [ "jbuilder" "runtest" "-p" name ]
 depends: [
   "base-unix"
   "lwt"
   "cmdliner"
-  "jbuilder" {build}
+  "dune" {build & >= "1.0"}
 ]
 depexts: [
   [["alpine"] ["zlib-dev" "librdkafka-dev"]]

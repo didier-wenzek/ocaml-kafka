@@ -1,0 +1,4 @@
+(library
+ (name kafka_helpers)
+ (public_name kafka.helpers)
+ (libraries kafka))

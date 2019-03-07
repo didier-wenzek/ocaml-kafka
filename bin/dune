@@ -1,0 +1,9 @@
+(executables
+ (names sendto_kafka_topic tail_kafka_topic)
+ (libraries kafka.lwt cmdliner))
+
+(install
+ (section bin)
+ (files
+  (sendto_kafka_topic.exe as sendto_kafka_topic)
+  (tail_kafka_topic.exe as tail_kafka_topic)))

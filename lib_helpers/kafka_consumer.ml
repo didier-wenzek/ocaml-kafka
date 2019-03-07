@@ -132,7 +132,7 @@ let fold_queue
   ?(consumer_props = ["metadata.broker.list","localhost:9092"])
   ?(topic_props = [])
   ?(timeout_ms = 1000)
-  ?(stop_at_end = false)
+  ?stop_at_end:(_stop_at_end = false)
   topic_partition_pairs update topic_partition_offsets seed
 =
   let consumer = Kafka.new_consumer consumer_props in
