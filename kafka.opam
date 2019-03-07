@@ -11,6 +11,7 @@ depends: [
   "ocaml" {>= "4.02.3"}
   "lwt"
   "cmdliner"
+  "conf-zlib"
   "dune" {build & >= "1.0"}
 ]
 build: [
@@ -18,12 +19,12 @@ build: [
   ["dune" "runtest" "-p" name] {with-test}
 ]
 depexts: [
-  ["zlib-dev" "librdkafka-dev"] {os-distribution = "alpine"}
-  ["zlib-devel" "librdkafka-devel"] {os-distribution = "centos"}
-  ["zlib1g-dev" "librdkafka-dev"] {os-distribution = "debian"}
-  ["zlib-devel" "librdkafka-devel"] {os-distribution = "fedora"}
-  ["zlib" "librdkafka"] {os-distribution = "homebrew" & os = "macos"}
-  ["zlib1g-dev" "librdkafka-dev"] {os-distribution = "ubuntu"}
+  ["librdkafka-dev"] {os-distribution = "alpine"}
+  ["librdkafka-devel"] {os-distribution = "centos"}
+  ["librdkafka-dev"] {os-distribution = "debian"}
+  ["librdkafka-devel"] {os-distribution = "fedora"}
+  ["librdkafka"] {os-distribution = "homebrew" & os = "macos"}
+  ["librdkafka-dev"] {os-distribution = "ubuntu"}
 ]
 synopsis: "OCaml bindings for Kafka"
 description: """
