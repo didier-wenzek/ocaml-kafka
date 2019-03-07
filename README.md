@@ -21,8 +21,8 @@ $ opam install kafka
 From source:
 
 ```sh
-$ make            # use jbuilder
-$ make test       # assuming kakfa is running at localhost:9092 with a 'test' topic.
+$ make            # use dune
+$ make test       # assuming kafka is running at localhost:9092 with a 'test' topic.
 $ make install    # use opam
 ```
 
