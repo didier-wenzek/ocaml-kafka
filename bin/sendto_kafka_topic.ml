@@ -1,6 +1,5 @@
 open Cmdliner
 open Lwt
-open Kafka.Metadata
 
 let info =
   let doc = "Send to kafka all messages read from standard input" in

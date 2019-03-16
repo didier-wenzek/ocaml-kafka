@@ -1,0 +1,5 @@
+(library
+ (name kafka)
+ (public_name kafka)
+ (c_names ocaml_kafka)
+ (c_library_flags -lrdkafka -lpthread -lz))

@@ -1,28 +1,32 @@
-opam-version: "1.2"
-version: "0.4"
+opam-version: "2.0"
 name: "kafka"
+version: "0.4"
 maintainer: "Didier Wenzek <didier.wenzek@acidalie.com>"
-authors: ["Didier Wenzek <didier.wenzek@acidalie.com>"]
+authors: "Didier Wenzek <didier.wenzek@acidalie.com>"
+license: "MIT"
 homepage: "https://github.com/didier-wenzek/ocaml-kafka"
 bug-reports: "https://github.com/didier-wenzek/ocaml-kafka/issues"
-dev-repo: "https://github.com/didier-wenzek/ocaml-kafka.git"
-license: "MIT"
-build: [["jbuilder" "build" "-p" name "-j" jobs]]
-#build-test: [ "jbuilder" "runtest" "-p" name ]
+dev-repo: "git+https://github.com/didier-wenzek/ocaml-kafka.git"
 depends: [
-  "base-unix"
+  "ocaml" {>= "4.02.3"}
   "lwt"
   "cmdliner"
-  "jbuilder" {build}
+  "conf-zlib"
+  "dune" {build & >= "1.0"}
+]
+build: [
+  ["dune" "build" "-p" name "-j" jobs]
+  ["dune" "runtest" "-p" name] {with-test}
 ]
 depexts: [
-  [["alpine"] ["zlib-dev" "librdkafka-dev"]]
-  [["centos"] ["zlib-devel" "librdkafka-devel"]]
-  [["debian"] ["zlib1g-dev" "librdkafka-dev"]]
-  [["fedora"] ["zlib-devel" "librdkafka-devel"]]
-  [["homebrew" "osx"] ["zlib" "librdkafka"]]
-  [["ubuntu"] ["zlib1g-dev" "librdkafka-dev"]]
+  ["librdkafka-dev"] {os-distribution = "alpine"}
+  ["librdkafka-devel"] {os-distribution = "centos"}
+  ["librdkafka-dev"] {os-distribution = "debian"}
+  ["librdkafka-devel"] {os-distribution = "fedora"}
+  ["librdkafka"] {os-distribution = "homebrew" & os = "macos"}
+  ["librdkafka-dev"] {os-distribution = "ubuntu"}
 ]
-available: [
-  ocaml-version >= "4.02.3"
-]
+synopsis: "OCaml bindings for Kafka"
+description: """
+Kafka is a high-throughput distributed messaging system.
+"""

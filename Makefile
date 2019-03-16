@@ -1,16 +1,16 @@
 all:
-	jbuilder build @install
+	dune build @install
 
 install: all
-	jbuilder install
+	dune install
 
 uninstall:
-	jbuilder uninstall
+	dune uninstall
 
 test:
-	jbuilder runtest
+	dune runtest
 
 clean:
-	jbuilder clean
+	dune clean
 
 .PHONY: all clean test install uninstall
