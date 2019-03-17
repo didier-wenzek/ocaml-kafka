@@ -7,8 +7,8 @@ let stream_to : ('a, 'b) sink -> 'a iterable -> 'b = fun open_sink iterable ->
   with error -> ignore (close ()); raise error
   
 type 'a push_error_handler = ('a -> unit) -> 'a -> exn -> unit
-let retry_on_error push msg error = push msg
-let raise_on_error push msg error = raise error
+let retry_on_error push msg _error = push msg
+let raise_on_error _push _msg error = raise error
 
 let partition_sink
   ?(producer_props = ["metadata.broker.list","localhost:9092"])

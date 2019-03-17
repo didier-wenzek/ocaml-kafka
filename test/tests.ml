@@ -74,7 +74,7 @@ let main =
    let msg = consume consumer_topic partition in assert (msg = "message 2");
 
    (match Kafka.consume ~timeout_ms consumer_topic partition with
-     | Kafka.PartitionEnd (t,p,o) -> (
+     | Kafka.PartitionEnd (t,p,_) -> (
         assert (Kafka.topic_name t = "test");
         assert (p = partition)
      )
@@ -104,7 +104,7 @@ let main =
    Kafka.produce producer_topic Kafka.partition_unassigned "message 5";
 
    let rec consume_queue (n,m) = match Kafka.consume_queue ~timeout_ms queue with
-      | Kafka.Message(topic,partition,offset,msg,_) -> (
+      | Kafka.Message(topic,partition,_,_,_) -> (
           assert (topic == consumer_topic);
           assert (partition = 0 || partition = 1);
           if partition = 0
