@@ -43,8 +43,11 @@ let main =
    let consumer = Kafka.new_consumer [
      "metadata.broker.list","localhost:9092";
      "fetch.wait.max.ms", "10";
+     "enable.partition.eof", "true";
    ] in
-   let consumer_topic = Kafka.new_topic consumer "test" ["auto.commit.enable","false"] in
+   let consumer_topic = Kafka.new_topic consumer "test" [
+     "auto.commit.enable","false";
+   ] in
    let partition = 1 in
 
    (* Start collecting messages *)
@@ -78,6 +81,10 @@ let main =
         assert (Kafka.topic_name t = "test");
         assert (p = partition)
      )
+     | exception Kafka.Error(Kafka.TIMED_OUT,_) -> (
+          (* enable.partition.eof must be set to true to catch partition end *)
+          assert false
+      )
      | _ -> assert false
    );
 
@@ -197,6 +204,4 @@ let main =
    assert (List.exists (fun msg -> msg = "message 124") messages);
    assert (List.exists (fun msg -> msg = "message 125") messages);
 
-
    "Tests successful\n%!"
-  

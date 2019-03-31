@@ -19,6 +19,8 @@ let fold_partition
   ?(stop_at_end = false)
   topic_name partition update offset seed
 =
+  (* enable.partition.eof must be set to true to catch partition end *)
+  let consumer_props = ("enable.partition.eof", "true")::consumer_props in
   let consumer = Kafka.new_consumer consumer_props in
   let topic = Kafka.new_topic consumer topic_name topic_props in
   let start_consuming () =
@@ -101,6 +103,8 @@ let fold_topic
   ?(stop_at_end = false)
   topic_name partitions update partition_offsets seed
 =
+  (* enable.partition.eof must be set to true to catch partition end *)
+  let consumer_props = ("enable.partition.eof", "true")::consumer_props in
   let consumer = Kafka.new_consumer consumer_props in
   let topic = Kafka.new_topic consumer topic_name topic_props in
   let partitions = match partitions with
@@ -135,6 +139,8 @@ let fold_queue
   ?stop_at_end:(_stop_at_end = false)
   topic_partition_pairs update topic_partition_offsets seed
 =
+  (* enable.partition.eof must be set to true to catch partition end *)
+  let consumer_props = ("enable.partition.eof", "true")::consumer_props in
   let consumer = Kafka.new_consumer consumer_props in
   let topics = List.fold_left (fun acc (topic_name,_) ->
     if TopicMap.mem topic_name acc
