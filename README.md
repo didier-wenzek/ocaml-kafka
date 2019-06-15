@@ -40,7 +40,7 @@ let producer_topic = Kafka.new_topic producer "test" ["message.timeout.ms","1000
 (* Prepare a consumer handler *)
 let consumer = Kafka.new_consumer ["metadata.broker.list","localhost:9092"];;
 let consumer_topic = Kafka.new_topic consumer "test" ["auto.commit.enable","false"];;
-let partition = 1;;
+let partition = 0;;
 let timeout_ms = 1000;;
 
 (* Start collecting messages *)
