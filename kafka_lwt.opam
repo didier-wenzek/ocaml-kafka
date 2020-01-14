@@ -12,22 +12,16 @@ bug-reports: "https://github.com/didier-wenzek/ocaml-kafka/issues"
 homepage: "https://github.com/didier-wenzek/ocaml-kafka"
 license: "MIT"
 dev-repo: "git+https://github.com/didier-wenzek/ocaml-kafka.git"
-synopsis: "OCaml bindings for Kafka"
+synopsis: "OCaml bindings for Kafka, Lwt bindings"
 description: """
 
 Kafka is a high-throughput distributed messaging system.
 """
 depends: [
   "ocaml" {>= "4.02.3"}
+  "kafka" {= version}
+  "cmdliner"
+  "lwt"
   "conf-zlib"
   "dune" {>= "1.10"}
-]
-depexts: [
-  ["librdkafka-dev"] {os-distribution = "alpine"}
-  ["librdkafka"] {os-distribution = "archlinux"}
-  ["librdkafka-devel"] {os-distribution = "centos"}
-  ["librdkafka-dev"] {os-distribution = "debian"}
-  ["librdkafka-devel"] {os-distribution = "fedora"}
-  ["librdkafka"] {os-distribution = "homebrew" & os = "macos"}
-  ["librdkafka-dev"] {os-distribution = "ubuntu"}
 ]
