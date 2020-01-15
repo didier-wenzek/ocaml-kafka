@@ -1,6 +1,8 @@
 OCaml bindings for Kafka
 ====================================
 
+[![Build Status](https://travis-ci.org/didier-wenzek/ocaml-kafka.svg?branch=master)](https://travis-ci.org/didier-wenzek/ocaml-kafka)
+
 Pre-requisites
 --------------
 * [OCaml](http://caml.inria.fr/) (`ocaml-version >= "4.02.3"`)
