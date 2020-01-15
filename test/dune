@@ -1,6 +1,6 @@
 (executables
- (names tests issue3)
- (libraries kafka_lwt kafka.helpers))
+ (names tests)
+ (libraries kafka.helpers))
 
 (alias
  (name runtest)
