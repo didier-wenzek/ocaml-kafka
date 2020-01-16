@@ -1,7 +1,6 @@
 #include <caml/memory.h>
 #include <caml/alloc.h>
 #include <lwt_unix.h>
-#include <errno.h>
 #include <string.h>
 #include <librdkafka/rdkafka.h>
 
@@ -45,7 +44,7 @@ struct job_consume {
 static void worker_consume(struct job_consume* job)
 {
   job->message = rd_kafka_consume(job->topic, job->partition, job->timeout);
-  job->rd_errno = (job->message)?RD_KAFKA_RESP_ERR_NO_ERROR:rd_kafka_errno2err(errno);
+  job->rd_errno = (job->message)?RD_KAFKA_RESP_ERR_NO_ERROR:rd_kafka_last_error();
 }
 
 /* The function building the caml [consume] result. */
@@ -110,7 +109,7 @@ struct job_consume_queue {
 static void worker_consume_queue(struct job_consume_queue* job)
 {
   job->message = rd_kafka_consume_queue(job->queue, job->timeout);
-  job->rd_errno = (job->message)?RD_KAFKA_RESP_ERR_NO_ERROR:rd_kafka_errno2err(errno);
+  job->rd_errno = (job->message)?RD_KAFKA_RESP_ERR_NO_ERROR:rd_kafka_last_error();
 }
 
 /* The function building the caml [consume_queue] result. */
@@ -125,7 +124,7 @@ static value result_consume_queue(struct job_consume_queue* job)
      caml_msg = ocaml_kafka_extract_queue_message(job->caml_kafka_queue, message);
      rd_kafka_message_destroy(message);
   } else {
-     rd_kafka_resp_err_t rd_errno = rd_kafka_errno2err(errno);
+     rd_kafka_resp_err_t rd_errno = rd_kafka_last_error();
      caml_remove_generational_global_root(&(job->caml_kafka_queue));
      lwt_unix_free_job(&job->job);
      RAISE(rd_errno, "Failed to consume message from queue (%s)", rd_kafka_err2str(rd_errno));
@@ -178,7 +177,7 @@ struct job_consume_batch {
 static void worker_consume_batch(struct job_consume_batch* job)
 {
   job->actual_msg_count = rd_kafka_consume_batch(job->topic, job->partition, job->timeout, job->messages, job->msg_count);
-  job->rd_errno = (job->actual_msg_count>=0)?RD_KAFKA_RESP_ERR_NO_ERROR:rd_kafka_errno2err(errno);
+  job->rd_errno = (job->actual_msg_count>=0)?RD_KAFKA_RESP_ERR_NO_ERROR:rd_kafka_last_error();
 }
 
 /* The function building the caml [consume_batch] result. */
@@ -253,7 +252,7 @@ struct job_consume_batch_queue {
 static void worker_consume_batch_queue(struct job_consume_batch_queue* job)
 {
   job->actual_msg_count = rd_kafka_consume_batch_queue(job->queue, job->timeout, job->messages, job->msg_count);
-  job->rd_errno = (job->actual_msg_count>=0)?RD_KAFKA_RESP_ERR_NO_ERROR:rd_kafka_errno2err(errno);
+  job->rd_errno = (job->actual_msg_count>=0)?RD_KAFKA_RESP_ERR_NO_ERROR:rd_kafka_last_error();
 }
 
 /* The function building the caml [consume_batch_queue] result. */

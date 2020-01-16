@@ -5,7 +5,6 @@
 #include <caml/alloc.h>
 
 #include <string.h>
-#include <errno.h>
 #include <stdarg.h>
 #include <librdkafka/rdkafka.h>
 
@@ -79,7 +78,7 @@ void ocaml_kafka_raise(rd_kafka_resp_err_t rd_errno, const char *error, ...)
 {
   CAMLparam0();
   CAMLlocalN(error_parameters, 2);
-  static value *exception_handler = NULL;
+  static const value *exception_handler = NULL;
   static char error_msg[160];
   va_list ap;
   va_start(ap, error);
@@ -197,10 +196,10 @@ void ocaml_kafka_delivery_callback(rd_kafka_t *producer, void *payload, size_t l
   caml_callback = (value) opaque;
 
   if (msg_opaque) {
-    int msg_id = (int) msg_opaque;      // has been set by ocaml_kafka_produce
-    caml_msg_id = Val_int(msg_id);
+    long msg_id = (long) msg_opaque;    // has been set by ocaml_kafka_produce
+    caml_msg_id = Val_long(msg_id);
   } else {
-    caml_msg_id = Val_int(0);           // None
+    caml_msg_id = Val_long(0);          // None
   }
 
   if (! err) {
@@ -314,7 +313,7 @@ value ocaml_kafka_new_topic(value caml_partitioner_callback, value caml_kafka_ha
 
   rd_kafka_topic_t* topic = rd_kafka_topic_new(handler, name, conf);
   if (!topic) {
-     rd_kafka_resp_err_t rd_errno = rd_kafka_errno2err(errno);
+     rd_kafka_resp_err_t rd_errno = rd_kafka_last_error();
      RAISE(rd_errno, "Failed to create new kafka topic (%s)", rd_kafka_err2str(rd_errno));
   }
 
@@ -358,7 +357,7 @@ value ocaml_kafka_consume_start(value caml_kafka_topic, value caml_kafka_partiti
   int64_t offset = Int64_val(caml_kafka_offset);
   int err = rd_kafka_consume_start(topic, partition, offset);
   if (err) {
-     rd_kafka_resp_err_t rd_errno = rd_kafka_errno2err(errno);
+     rd_kafka_resp_err_t rd_errno = rd_kafka_last_error();
      RAISE(rd_errno, "Failed to start consuming messages (%s)", rd_kafka_err2str(rd_errno));
   }
 
@@ -374,7 +373,7 @@ value ocaml_kafka_consume_stop(value caml_kafka_topic, value caml_kafka_partitio
   int32_t partition = Int_val(caml_kafka_partition);
   int err = rd_kafka_consume_stop(topic, partition);
   if (err) {
-     rd_kafka_resp_err_t rd_errno = rd_kafka_errno2err(errno);
+     rd_kafka_resp_err_t rd_errno = rd_kafka_last_error();
      RAISE(rd_errno, "Failed to stop consuming messages (%s)", rd_kafka_err2str(rd_errno));
   }
 
@@ -471,7 +470,7 @@ value ocaml_kafka_consume(value caml_kafka_timeout, value caml_kafka_topic, valu
     caml_msg = ocaml_kafka_extract_topic_message(caml_kafka_topic, message);
     rd_kafka_message_destroy(message);
   } else {
-    rd_kafka_resp_err_t rd_errno = rd_kafka_errno2err(errno);
+    rd_kafka_resp_err_t rd_errno = rd_kafka_last_error();
     RAISE(rd_errno, "Failed to consume message (%s)", rd_kafka_err2str(rd_errno));
   }
 
@@ -508,7 +507,7 @@ value ocaml_kafka_consume_batch(value caml_kafka_timeout, value caml_msg_count, 
       rd_kafka_message_destroy(messages[i]);
     }
   } else {
-    rd_kafka_resp_err_t rd_errno = rd_kafka_errno2err(errno);
+    rd_kafka_resp_err_t rd_errno = rd_kafka_last_error();
     RAISE(rd_errno, "Failed to consume messages (%s)", rd_kafka_err2str(rd_errno));
   }
 
@@ -535,11 +534,11 @@ value ocaml_kafka_produce(value caml_kafka_topic, value caml_kafka_partition, va
      key_len = caml_string_length(caml_key);
   } 
 
-  int msg_id = Int_val(caml_msgid);
+  long msg_id = Long_val(caml_msgid);
 
   int err = rd_kafka_produce(topic, partition, RD_KAFKA_MSG_F_COPY, payload, len, key, key_len, (void *)msg_id);
   if (err) {
-     rd_kafka_resp_err_t rd_errno = rd_kafka_errno2err(errno);
+     rd_kafka_resp_err_t rd_errno = rd_kafka_last_error();
      RAISE(rd_errno, "Failed to produce message (%s)", rd_kafka_err2str(rd_errno));
   }
 
@@ -611,7 +610,7 @@ value ocaml_kafka_new_queue(value caml_kafka_handler)
 
   rd_kafka_queue_t* queue = rd_kafka_queue_new(handler);
   if (!queue) {
-     rd_kafka_resp_err_t rd_errno = rd_kafka_errno2err(errno);
+     rd_kafka_resp_err_t rd_errno = rd_kafka_last_error();
      RAISE(rd_errno, "Failed to create new kafka queue (%s)", rd_kafka_err2str(rd_errno));
   }
 
@@ -667,7 +666,7 @@ value ocaml_kafka_consume_start_queue(value caml_kafka_queue, value caml_kafka_t
   int64_t offset = Int64_val(caml_kafka_offset);
   int err = rd_kafka_consume_start_queue(topic, partition, offset, queue);
   if (err) {
-     rd_kafka_resp_err_t rd_errno = rd_kafka_errno2err(errno);
+     rd_kafka_resp_err_t rd_errno = rd_kafka_last_error();
      RAISE(rd_errno, "Failed to start consuming & queue messages (%s)", rd_kafka_err2str(rd_errno));
   }
 
@@ -756,7 +755,7 @@ value ocaml_kafka_consume_queue(value caml_kafka_timeout, value caml_kafka_queue
      caml_msg = ocaml_kafka_extract_queue_message(caml_kafka_queue, message);
      rd_kafka_message_destroy(message);
   } else {
-     rd_kafka_resp_err_t rd_errno = rd_kafka_errno2err(errno);
+     rd_kafka_resp_err_t rd_errno = rd_kafka_last_error();
      RAISE(rd_errno, "Failed to consume message from queue (%s)", rd_kafka_err2str(rd_errno));
   }
 
@@ -792,7 +791,7 @@ value ocaml_kafka_consume_batch_queue(value caml_kafka_timeout, value caml_msg_c
       rd_kafka_message_destroy(messages[i]);
     }
   } else {
-    rd_kafka_resp_err_t rd_errno = rd_kafka_errno2err(errno);
+    rd_kafka_resp_err_t rd_errno = rd_kafka_last_error();
     RAISE(rd_errno, "Failed to consume messages (%s)", rd_kafka_err2str(rd_errno));
   }
 
