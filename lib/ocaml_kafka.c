@@ -78,7 +78,7 @@ void ocaml_kafka_raise(rd_kafka_resp_err_t rd_errno, const char *error, ...)
 {
   CAMLparam0();
   CAMLlocalN(error_parameters, 2);
-  static value *exception_handler = NULL;
+  static const value *exception_handler = NULL;
   static char error_msg[160];
   va_list ap;
   va_start(ap, error);
