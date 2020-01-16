@@ -196,10 +196,10 @@ void ocaml_kafka_delivery_callback(rd_kafka_t *producer, void *payload, size_t l
   caml_callback = (value) opaque;
 
   if (msg_opaque) {
-    int msg_id = (int) msg_opaque;      // has been set by ocaml_kafka_produce
-    caml_msg_id = Val_int(msg_id);
+    long msg_id = (long) msg_opaque;    // has been set by ocaml_kafka_produce
+    caml_msg_id = Val_long(msg_id);
   } else {
-    caml_msg_id = Val_int(0);           // None
+    caml_msg_id = Val_long(0);          // None
   }
 
   if (! err) {
