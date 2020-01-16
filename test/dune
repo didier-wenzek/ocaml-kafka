@@ -3,7 +3,7 @@
  (libraries kafka.helpers))
 
 (alias
- (name runtest)
+ (name integration)
  (deps
   (:< tests.exe))
  (action
