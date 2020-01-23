@@ -20,6 +20,6 @@ matrix:
   - os: linux
     env: OCAML_VERSION=4.09 PACKAGE="kafka"     PINS="kafka:."
   - os: linux
-    env: OCAML_VERSION=4.00 PACKAGE="kafka_lwt" PINS="kafka:. kafka_lwt:."
+    env: OCAML_VERSION=4.09 PACKAGE="kafka_lwt" PINS="kafka:. kafka_lwt:."
   - os: osx
     env: OCAML_VERSION=4.09 PACKAGE="kafka"     PINS="kafka:."
