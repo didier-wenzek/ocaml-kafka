@@ -1,2 +1,9 @@
+let dummy () = ()
+
 let () =
-  Alcotest.run "Unittest" []
+  Alcotest.run "Unittests" [
+    "all", [
+      Alcotest.test_case "dummy" `Quick dummy
+
+    ]
+  ]

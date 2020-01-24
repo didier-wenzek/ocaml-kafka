@@ -23,12 +23,12 @@ before_install:
 matrix:
   include:
   - os: linux
-    env: OCAML_VERSION=4.02 PACKAGE="kafka"     PINS="kafka:."
+    env: OCAML_VERSION=4.02 PACKAGE="kafka"     PINS="kafka.dev:."
   - os: linux
-    env: OCAML_VERSION=4.02 PACKAGE="kafka_lwt" PINS="kafka:. kafka_lwt."
+    env: OCAML_VERSION=4.02 PACKAGE="kafka_lwt" PINS="kafka.dev:. kafka_lwt.dev:."
   - os: linux
-    env: OCAML_VERSION=4.09 PACKAGE="kafka"     PINS="kafka:."
+    env: OCAML_VERSION=4.09 PACKAGE="kafka"     PINS="kafka.dev:."
   - os: linux
-    env: OCAML_VERSION=4.09 PACKAGE="kafka_lwt" PINS="kafka:. kafka_lwt:."
+    env: OCAML_VERSION=4.09 PACKAGE="kafka_lwt" PINS="kafka.dev:. kafka_lwt.dev:."
   - os: osx
-    env: OCAML_VERSION=4.09 PACKAGE="kafka"     PINS="kafka:."
+    env: OCAML_VERSION=4.09 PACKAGE="kafka"     PINS="kafka.dev:."

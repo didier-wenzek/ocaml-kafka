@@ -1,0 +1,3 @@
+(tests
+  (names unit)
+  (libraries alcotest-lwt lwt))
