@@ -3,7 +3,7 @@
  (libraries kafka_lwt kafka.helpers))
 
 (alias
- (name runtest)
+ (name issue3)
  (package kafka_lwt)
  (deps
   (:< issue3.exe))
