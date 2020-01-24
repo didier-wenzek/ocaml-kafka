@@ -1,10 +1,10 @@
 (executables
- (names tests)
+ (names integration)
  (libraries kafka.helpers))
 
 (alias
  (name integration)
  (deps
-  (:< tests.exe))
+  (:< integration.exe))
  (action
   (run %{<})))

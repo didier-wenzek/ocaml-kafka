@@ -23,5 +23,6 @@ depends: [
   "cmdliner"
   "lwt"
   "conf-zlib"
+  "alcotest-lwt" {with-test}
   "dune" {>= "1.10"}
 ]
