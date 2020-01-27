@@ -13,7 +13,7 @@
   (depends
     (ocaml (>= 4.02.3))
     conf-zlib
-    (alcotest :with-test)
+    (alcotest (and (>= 0.8.5) :with-test))
     (dune (>= 1.10)))
   (synopsis "OCaml bindings for Kafka")
   (description "
@@ -28,7 +28,7 @@ Kafka is a high-throughput distributed messaging system.
     cmdliner
     lwt
     conf-zlib
-    (alcotest-lwt :with-test)
+    (alcotest-lwt (and (>= 0.8.5) :with-test))
     (dune (>= 1.10)))
   (synopsis "OCaml bindings for Kafka, Lwt bindings")
   (description "

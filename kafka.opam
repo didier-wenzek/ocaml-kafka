@@ -20,7 +20,7 @@ Kafka is a high-throughput distributed messaging system.
 depends: [
   "ocaml" {>= "4.02.3"}
   "conf-zlib"
-  "alcotest" {with-test}
+  "alcotest" {>= "0.8.5" & with-test}
   "dune" {>= "1.10"}
 ]
 depexts: [

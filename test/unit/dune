@@ -1,3 +1,4 @@
 (tests
   (names unit)
+  (package kafka)
   (libraries alcotest))
