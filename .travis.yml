@@ -6,6 +6,10 @@ dist: bionic
 cache:
     directories:
     - $HOME/.opam
+addons:
+  apt:
+    packages:
+    - librdkafka-dev
 env:
   global:
     - DEPOPTS="*"
