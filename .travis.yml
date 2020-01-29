@@ -8,6 +8,8 @@ cache:
     - $HOME/.opam
 addons:
   apt:
+    sources:
+    - sourceline: 'ppa:leonidas/librdkafka'
     packages:
     - librdkafka-dev
 env:
