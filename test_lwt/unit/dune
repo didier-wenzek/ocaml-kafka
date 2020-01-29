@@ -1,0 +1,4 @@
+(tests
+  (names unit)
+  (package kafka_lwt)
+  (libraries alcotest-lwt lwt))

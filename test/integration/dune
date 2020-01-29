@@ -1,0 +1,10 @@
+(executables
+ (names integration)
+ (libraries kafka.helpers))
+
+(alias
+ (name integration)
+ (deps
+  (:< integration.exe))
+ (action
+  (run %{<})))

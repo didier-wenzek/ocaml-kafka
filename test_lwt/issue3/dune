@@ -1,10 +1,11 @@
 (executables
- (names tests issue3)
+ (names issue3)
  (libraries kafka_lwt kafka.helpers))
 
 (alias
- (name runtest)
+ (name issue3)
+ (package kafka_lwt)
  (deps
-  (:< tests.exe))
+  (:< issue3.exe))
  (action
   (run %{<})))
