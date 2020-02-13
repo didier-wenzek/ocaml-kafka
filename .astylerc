@@ -1,0 +1,8 @@
+# run astyle --project lib_async/ocaml_kafka_async.c
+--style=google
+--indent=spaces=2
+--convert-tabs
+--add-braces
+--suffix=none
+--pad-oper
+--pad-header

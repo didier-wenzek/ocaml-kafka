@@ -34,3 +34,17 @@ Kafka is a high-throughput distributed messaging system.
   (description "
 Kafka is a high-throughput distributed messaging system.
 "))
+
+(package
+  (name kafka_async)
+  (depends
+    (ocaml (>= 4.03.0))
+    (kafka (= :version))
+    (async (>= v0.11))
+    (core (>= v0.11))
+    (alcotest-async (and (>= 0.8.5) :with-test))
+    (dune (>= 1.10)))
+  (synopsis "OCaml bindings for Kafka, Async bindings")
+  (description "
+Kafka is a high-throughput distributed messaging system.
+"))

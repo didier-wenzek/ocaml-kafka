@@ -1,0 +1,11 @@
+(executables
+ (names integration)
+ (libraries core async kafka_async)
+ (preprocess (pps ppx_let)))
+
+(alias
+ (name integration)
+ (deps
+  (:< integration.exe))
+ (action
+  (run %{<})))
