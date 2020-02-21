@@ -78,7 +78,7 @@ value ocaml_kafka_consume_job(value caml_kafka_topic, value caml_kafka_partition
 
   job->caml_kafka_topic = caml_kafka_topic;
   caml_register_generational_global_root(&(job->caml_kafka_topic));
-  job->topic = get_handler(Field(caml_kafka_topic,0));
+  job->topic = get_handler(caml_kafka_topic);
   job->partition = Int_val(caml_kafka_partition);
   job->timeout = Int_val(caml_kafka_timeout);
 
@@ -218,7 +218,7 @@ value ocaml_kafka_consume_batch_job(value caml_kafka_topic, value caml_kafka_par
 
   job->caml_kafka_topic = caml_kafka_topic;
   caml_register_generational_global_root(&(job->caml_kafka_topic));
-  job->topic = get_handler(Field(caml_kafka_topic,0));
+  job->topic = get_handler(caml_kafka_topic);
   job->partition = Int_val(caml_kafka_partition);
   job->timeout = Int_val(caml_kafka_timeout);
   job->msg_count = msg_count;
