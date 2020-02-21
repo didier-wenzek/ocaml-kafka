@@ -292,7 +292,7 @@ extern CAMLprim
 value ocaml_kafka_new_topic(value caml_partitioner_callback, value caml_kafka_handler, value caml_topic_name, value caml_topic_options)
 {
   CAMLparam4(caml_partitioner_callback, caml_kafka_handler, caml_topic_name, caml_topic_options);
-  CAMLlocal3(caml_callback, caml_topic, caml_kafka_topic_handler);
+  CAMLlocal2(caml_callback, caml_kafka_topic_handler);
 
   rd_kafka_t *handler = get_handler(caml_kafka_handler);
   const char* name = String_val(caml_topic_name);
@@ -317,12 +317,8 @@ value ocaml_kafka_new_topic(value caml_partitioner_callback, value caml_kafka_ha
      RAISE(rd_errno, "Failed to create new kafka topic (%s)", rd_kafka_err2str(rd_errno));
   }
 
-  // The handler is wrapped with its name.
   caml_kafka_topic_handler = alloc_caml_handler(topic);
-  caml_topic = caml_alloc_small(2,0);
-  Field(caml_topic, 0) = caml_kafka_topic_handler;
-  Field(caml_topic, 1) = caml_topic_name;
-  CAMLreturn(caml_topic);
+  CAMLreturn(caml_kafka_topic_handler);
 }
 
 extern CAMLprim
@@ -330,9 +326,9 @@ value ocaml_kafka_destroy_topic(value caml_kafka_topic)
 {
   CAMLparam1(caml_kafka_topic);
 
-  rd_kafka_topic_t *topic = handler_val(Field(caml_kafka_topic,0));
+  rd_kafka_topic_t *topic = handler_val(caml_kafka_topic);
   if (topic) {
-    free_caml_handler(Field(caml_kafka_topic,0));
+    free_caml_handler(Field(caml_kafka_topic, 0));
     rd_kafka_topic_destroy(topic);
   }
 
@@ -342,9 +338,10 @@ value ocaml_kafka_destroy_topic(value caml_kafka_topic)
 extern CAMLprim
 value ocaml_kafka_topic_name(value caml_kafka_topic)
 {
-  // use "noalloc" : https://blogs.janestreet.com/faster-ocaml-to-c-calls/
-  // => must be declared "noalloc" ml side.
-  return Field(caml_kafka_topic,1);
+  CAMLparam1(caml_kafka_topic);
+
+  rd_kafka_topic_t* rkt = get_handler(caml_kafka_topic);
+  CAMLreturn(caml_copy_string(rd_kafka_topic_name(rkt)));
 }
 
 extern CAMLprim
@@ -352,7 +349,7 @@ value ocaml_kafka_consume_start(value caml_kafka_topic, value caml_kafka_partiti
 {
   CAMLparam3(caml_kafka_topic,caml_kafka_partition,caml_kafka_offset);
 
-  rd_kafka_topic_t *topic = get_handler(Field(caml_kafka_topic,0));
+  rd_kafka_topic_t *topic = get_handler(caml_kafka_topic);
   int32_t partition = Int_val(caml_kafka_partition);
   int64_t offset = Int64_val(caml_kafka_offset);
   int err = rd_kafka_consume_start(topic, partition, offset);
@@ -369,7 +366,7 @@ value ocaml_kafka_consume_stop(value caml_kafka_topic, value caml_kafka_partitio
 {
   CAMLparam2(caml_kafka_topic,caml_kafka_partition);
 
-  rd_kafka_topic_t *topic = get_handler(Field(caml_kafka_topic,0));
+  rd_kafka_topic_t *topic = get_handler(caml_kafka_topic);
   int32_t partition = Int_val(caml_kafka_partition);
   int err = rd_kafka_consume_stop(topic, partition);
   if (err) {
@@ -456,7 +453,7 @@ value ocaml_kafka_consume(value caml_kafka_timeout, value caml_kafka_topic, valu
   CAMLparam3(caml_kafka_topic,caml_kafka_partition,caml_kafka_timeout);
   CAMLlocal1(caml_msg);
 
-  rd_kafka_topic_t *topic = get_handler(Field(caml_kafka_topic,0));
+  rd_kafka_topic_t *topic = get_handler(caml_kafka_topic);
   int32_t partition = Int_val(caml_kafka_partition);
   int timeout = DEFAULT_TIMEOUT_MS;
   if (Is_block(caml_kafka_timeout)) {
@@ -483,7 +480,7 @@ value ocaml_kafka_consume_batch(value caml_kafka_timeout, value caml_msg_count, 
   CAMLparam4(caml_kafka_topic,caml_kafka_partition,caml_kafka_timeout, caml_msg_count);
   CAMLlocal1(caml_msg_list);
 
-  rd_kafka_topic_t *topic = get_handler(Field(caml_kafka_topic,0));
+  rd_kafka_topic_t *topic = get_handler(caml_kafka_topic);
   int32_t partition = Int_val(caml_kafka_partition);
   int timeout = DEFAULT_TIMEOUT_MS;
   if (Is_block(caml_kafka_timeout)) {
@@ -520,7 +517,7 @@ value ocaml_kafka_produce(value caml_kafka_topic, value caml_kafka_partition, va
   CAMLparam5(caml_kafka_topic,caml_kafka_partition,caml_opt_key,caml_msgid,caml_msg);
   CAMLlocal1(caml_key);
 
-  rd_kafka_topic_t *topic = get_handler(Field(caml_kafka_topic,0));
+  rd_kafka_topic_t *topic = get_handler(caml_kafka_topic);
   int32_t partition = Int_val(caml_kafka_partition);
 
   void* payload = String_val(caml_msg);
@@ -577,7 +574,7 @@ value ocaml_kafka_store_offset(value caml_kafka_topic, value caml_kafka_partitio
 {
   CAMLparam3(caml_kafka_topic,caml_kafka_partition,caml_kafka_offset);
 
-  rd_kafka_topic_t *topic = get_handler(Field(caml_kafka_topic,0));
+  rd_kafka_topic_t *topic = get_handler(caml_kafka_topic);
   int32_t partition = Int_val(caml_kafka_partition);
   int64_t offset = Int64_val(caml_kafka_offset);
 
@@ -643,14 +640,14 @@ value ocaml_kafka_consume_start_queue(value caml_kafka_queue, value caml_kafka_t
   CAMLlocal3(caml_topics, caml_topic, caml_cons);
 
   rd_kafka_queue_t *queue = get_handler(Field(caml_kafka_queue,0));
-  rd_kafka_topic_t *topic = get_handler(Field(caml_kafka_topic,0));
+  rd_kafka_topic_t *topic = get_handler(caml_kafka_topic);
 
   rd_kafka_topic_t *found_topic = NULL;
   caml_topics = Field(caml_kafka_queue,1);
   while (found_topic == NULL && caml_topics != Val_emptylist) {
      caml_topic = Field(caml_topics,0);
      caml_topics = Field(caml_topics,1);
-     rd_kafka_topic_t *handler = get_handler(Field(caml_topic,0));
+     rd_kafka_topic_t *handler = get_handler(caml_topic);
      if (handler == topic) {
        found_topic = handler;
      }
@@ -684,7 +681,7 @@ value ocaml_kafka_search_registered_topic(value caml_kafka_queue, rd_kafka_topic
   while (found_topic == NULL && caml_topics != Val_emptylist) {
     caml_topic = Field(caml_topics,0);
     caml_topics = Field(caml_topics,1);
-    rd_kafka_topic_t *handler = get_handler(Field(caml_topic,0));
+    rd_kafka_topic_t *handler = get_handler(caml_topic);
     if (handler == topic) {
       found_topic = handler;
     }
@@ -830,7 +827,7 @@ value ocaml_kafka_get_topic_metadata(value caml_handler, value caml_topic, value
   CAMLlocal1(caml_topic_metadata);
 
   rd_kafka_t *handler = get_handler(caml_handler);
-  rd_kafka_topic_t *topic = get_handler(Field(caml_topic,0));
+  rd_kafka_topic_t *topic = get_handler(caml_topic);
   int timeout = Int_val(caml_timeout);
 
   const struct rd_kafka_metadata *metadata = NULL;
