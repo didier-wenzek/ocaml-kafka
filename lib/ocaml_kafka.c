@@ -328,7 +328,7 @@ value ocaml_kafka_destroy_topic(value caml_kafka_topic)
 
   rd_kafka_topic_t *topic = handler_val(caml_kafka_topic);
   if (topic) {
-    free_caml_handler(Field(caml_kafka_topic, 0));
+    free_caml_handler(caml_kafka_topic);
     rd_kafka_topic_destroy(topic);
   }
 
