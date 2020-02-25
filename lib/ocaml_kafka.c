@@ -203,8 +203,10 @@ ocaml_kafka_opaque* ocaml_kafka_opaque_create(value caml_callback) {
 }
 
 void ocaml_kafka_opaque_destroy(ocaml_kafka_opaque* opaque) {
-  caml_remove_generational_global_root(&opaque->caml_callback);
-  free(opaque);
+  if (opaque) {
+    caml_remove_generational_global_root(&opaque->caml_callback);
+    free(opaque);
+  }
 }
 
 static
@@ -258,9 +260,7 @@ value ocaml_kafka_new_producer(value caml_delivery_callback, value caml_producer
 
   rd_kafka_t *handler = rd_kafka_new(RD_KAFKA_PRODUCER, conf, error_msg, sizeof(error_msg));
   if (handler == NULL) {
-     if (opaque) {
-       ocaml_kafka_opaque_destroy(opaque);
-     }
+     ocaml_kafka_opaque_destroy(opaque);
      rd_kafka_conf_destroy(conf);
      RAISE(RD_KAFKA_RESP_ERR__FAIL, "Failed to create new kafka producer (%s)", error_msg);
   }
@@ -277,9 +277,7 @@ value ocaml_kafka_destroy_handler(value caml_kafka_handler)
   rd_kafka_t *handler = handler_val(caml_kafka_handler);
   if (handler) {
     ocaml_kafka_opaque* opaque = rd_kafka_opaque(handler);
-    if (opaque) {
-      ocaml_kafka_opaque_destroy(opaque);
-    }
+    ocaml_kafka_opaque_destroy(opaque);
     free_caml_handler(caml_kafka_handler);
     rd_kafka_destroy(handler);
   }
@@ -340,18 +338,14 @@ value ocaml_kafka_new_topic(value caml_partitioner_callback, value caml_kafka_ha
   rd_kafka_conf_res_t conf_err = configure_topic(conf, caml_topic_options, error_msg, sizeof(error_msg));
   if (conf_err) {
      rd_kafka_topic_conf_destroy(conf);
-     if (opaque) {
-       ocaml_kafka_opaque_destroy(opaque);
-     }
+     ocaml_kafka_opaque_destroy(opaque);
      RAISE(RD_KAFKA_CONF_RES(conf_err), "Failed to configure new kafka topic (%s)", error_msg);
   }
 
   rd_kafka_topic_t* topic = rd_kafka_topic_new(handler, name, conf);
   if (!topic) {
      rd_kafka_resp_err_t rd_errno = rd_kafka_last_error();
-     if (opaque) {
-       ocaml_kafka_opaque_destroy(opaque);
-     }
+     ocaml_kafka_opaque_destroy(opaque);
      RAISE(rd_errno, "Failed to create new kafka topic (%s)", rd_kafka_err2str(rd_errno));
   }
 
