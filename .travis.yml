@@ -1,7 +1,7 @@
 language: c
-sudo: required
 install: wget https://raw.githubusercontent.com/ocaml/ocaml-ci-scripts/master/.travis-opam.sh
 script: bash -ex .travis-opam.sh
+os: linux
 dist: bionic
 cache:
     directories:
@@ -26,7 +26,7 @@ before_install:
     - kafka/bin/kafka-server-start.sh kafka/config/server.properties &
     - sleep 5
     - kafka/bin/kafka-topics.sh --create --bootstrap-server localhost:9092 --replication-factor 1 --partitions 2 --topic test
-matrix:
+jobs:
   include:
   - os: linux
     env: OCAML_VERSION=4.02 PACKAGE="kafka"     PINS="kafka.dev:."
