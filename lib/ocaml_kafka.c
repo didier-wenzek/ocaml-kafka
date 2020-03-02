@@ -199,7 +199,7 @@ ocaml_kafka_opaque* ocaml_kafka_opaque_create(value caml_callback) {
     caml_register_generational_global_root(&opaque->caml_callback);
     caml_modify_generational_global_root(&opaque->caml_callback, caml_callback);
   }
-  return opaque;
+  CAMLreturnT(ocaml_kafka_opaque*, opaque);
 }
 
 void ocaml_kafka_opaque_destroy(ocaml_kafka_opaque* opaque) {
@@ -322,7 +322,7 @@ value ocaml_kafka_new_topic(value caml_partitioner_callback, value caml_kafka_ha
   CAMLparam4(caml_partitioner_callback, caml_kafka_handler, caml_topic_name, caml_topic_options);
   CAMLlocal2(caml_callback, caml_kafka_topic_handler);
 
-  ocaml_kafka_opaque* opaque;
+  ocaml_kafka_opaque* opaque = NULL;
   rd_kafka_t *handler = get_handler(caml_kafka_handler);
   const char* name = String_val(caml_topic_name);
 
