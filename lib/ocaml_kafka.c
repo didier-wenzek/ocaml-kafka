@@ -360,6 +360,8 @@ value ocaml_kafka_destroy_topic(value caml_kafka_topic)
 
   rd_kafka_topic_t *topic = handler_val(caml_kafka_topic);
   if (topic) {
+    ocaml_kafka_opaque* opaque = rd_kafka_topic_opaque(topic);
+    ocaml_kafka_opaque_destroy(opaque);
     free_caml_handler(caml_kafka_topic);
     rd_kafka_topic_destroy(topic);
   }
