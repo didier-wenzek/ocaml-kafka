@@ -187,13 +187,35 @@ value ocaml_kafka_new_consumer(value caml_consumer_options)
   CAMLreturn(caml_handler);
 }
 
+typedef struct {
+  value caml_callback;
+} ocaml_kafka_opaque;
+
+ocaml_kafka_opaque* ocaml_kafka_opaque_create(value caml_callback) {
+  CAMLparam1(caml_callback);
+
+  ocaml_kafka_opaque* opaque = malloc(sizeof (ocaml_kafka_opaque));
+  if (opaque) {
+    caml_register_generational_global_root(&opaque->caml_callback);
+    caml_modify_generational_global_root(&opaque->caml_callback, caml_callback);
+  }
+  return opaque;
+}
+
+void ocaml_kafka_opaque_destroy(ocaml_kafka_opaque* opaque) {
+  if (opaque) {
+    caml_remove_generational_global_root(&opaque->caml_callback);
+    free(opaque);
+  }
+}
+
 static
 void ocaml_kafka_delivery_callback(rd_kafka_t *producer, void *payload, size_t len, rd_kafka_resp_err_t err, void *opaque, void *msg_opaque)
 {
   CAMLparam0();
   CAMLlocal3(caml_callback, caml_msg_id, caml_error);
 
-  caml_callback = (value) opaque;
+  caml_callback = ((ocaml_kafka_opaque*)opaque)->caml_callback;
 
   if (msg_opaque) {
     long msg_id = (long) msg_opaque;    // has been set by ocaml_kafka_produce
@@ -220,6 +242,8 @@ value ocaml_kafka_new_producer(value caml_delivery_callback, value caml_producer
   CAMLlocal1(caml_callback);
 
   char error_msg[160];
+  ocaml_kafka_opaque* opaque = NULL;
+
   rd_kafka_conf_t *conf = rd_kafka_conf_new();
   rd_kafka_conf_res_t conf_err = configure_handler(conf, caml_producer_options, error_msg, sizeof(error_msg));
   if (conf_err) {
@@ -229,12 +253,14 @@ value ocaml_kafka_new_producer(value caml_delivery_callback, value caml_producer
 
   if (Is_block(caml_delivery_callback)) {
      caml_callback = Field(caml_delivery_callback, 0);
-     rd_kafka_conf_set_opaque(conf, (void*) caml_callback);
+     opaque = ocaml_kafka_opaque_create(caml_callback);
+     rd_kafka_conf_set_opaque(conf, (void*) opaque);
      rd_kafka_conf_set_dr_cb(conf, ocaml_kafka_delivery_callback);
   } 
 
   rd_kafka_t *handler = rd_kafka_new(RD_KAFKA_PRODUCER, conf, error_msg, sizeof(error_msg));
   if (handler == NULL) {
+     ocaml_kafka_opaque_destroy(opaque);
      rd_kafka_conf_destroy(conf);
      RAISE(RD_KAFKA_RESP_ERR__FAIL, "Failed to create new kafka producer (%s)", error_msg);
   }
@@ -250,6 +276,8 @@ value ocaml_kafka_destroy_handler(value caml_kafka_handler)
 
   rd_kafka_t *handler = handler_val(caml_kafka_handler);
   if (handler) {
+    ocaml_kafka_opaque* opaque = rd_kafka_opaque(handler);
+    ocaml_kafka_opaque_destroy(opaque);
     free_caml_handler(caml_kafka_handler);
     rd_kafka_destroy(handler);
   }
@@ -279,7 +307,7 @@ int32_t ocaml_kafka_partitioner_callback(const rd_kafka_topic_t *topic, const vo
   CAMLparam0();
   CAMLlocal4(caml_callback, caml_key, caml_partition_cnt, caml_partition);
 
-  caml_callback = (value) opaque;
+  caml_callback = ((ocaml_kafka_opaque*)opaque)->caml_callback;
   caml_partition_cnt = Val_int(partition_cnt);
   caml_key = caml_alloc_string(keylen);
   memcpy(String_val(caml_key), key, keylen);
@@ -294,13 +322,15 @@ value ocaml_kafka_new_topic(value caml_partitioner_callback, value caml_kafka_ha
   CAMLparam4(caml_partitioner_callback, caml_kafka_handler, caml_topic_name, caml_topic_options);
   CAMLlocal2(caml_callback, caml_kafka_topic_handler);
 
+  ocaml_kafka_opaque* opaque;
   rd_kafka_t *handler = get_handler(caml_kafka_handler);
   const char* name = String_val(caml_topic_name);
 
   rd_kafka_topic_conf_t *conf = rd_kafka_topic_conf_new();
   if (Is_block(caml_partitioner_callback)) {
      caml_callback = Field(caml_partitioner_callback, 0);
-     rd_kafka_topic_conf_set_opaque(conf, (void*) caml_callback);
+     opaque = ocaml_kafka_opaque_create(caml_callback);
+     rd_kafka_topic_conf_set_opaque(conf, (void*) opaque);
      rd_kafka_topic_conf_set_partitioner_cb(conf, ocaml_kafka_partitioner_callback);
   } 
 
@@ -308,12 +338,14 @@ value ocaml_kafka_new_topic(value caml_partitioner_callback, value caml_kafka_ha
   rd_kafka_conf_res_t conf_err = configure_topic(conf, caml_topic_options, error_msg, sizeof(error_msg));
   if (conf_err) {
      rd_kafka_topic_conf_destroy(conf);
+     ocaml_kafka_opaque_destroy(opaque);
      RAISE(RD_KAFKA_CONF_RES(conf_err), "Failed to configure new kafka topic (%s)", error_msg);
   }
 
   rd_kafka_topic_t* topic = rd_kafka_topic_new(handler, name, conf);
   if (!topic) {
      rd_kafka_resp_err_t rd_errno = rd_kafka_last_error();
+     ocaml_kafka_opaque_destroy(opaque);
      RAISE(rd_errno, "Failed to create new kafka topic (%s)", rd_kafka_err2str(rd_errno));
   }
 
@@ -328,6 +360,8 @@ value ocaml_kafka_destroy_topic(value caml_kafka_topic)
 
   rd_kafka_topic_t *topic = handler_val(caml_kafka_topic);
   if (topic) {
+    ocaml_kafka_opaque* opaque = rd_kafka_topic_opaque(topic);
+    ocaml_kafka_opaque_destroy(opaque);
     free_caml_handler(caml_kafka_topic);
     rd_kafka_topic_destroy(topic);
   }
