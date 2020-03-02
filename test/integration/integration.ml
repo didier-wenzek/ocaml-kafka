@@ -172,9 +172,12 @@ let main =
    (* A callback may be attached to a producer to be called on message delivery. *)
    let last_msg_id = ref 0 in
    let last_error = ref None in
-   let delivery_callback msg_id err = (last_msg_id := msg_id; last_error := err) in
 
-   let producer_with_delivery_callback = Kafka.new_producer ~delivery_callback ["metadata.broker.list","localhost:9092"; "queue.buffering.max.ms","1"] in
+   let producer_with_delivery_callback =
+       let delivery_callback msg_id err = (last_msg_id := msg_id; last_error := err) in
+       Kafka.new_producer ~delivery_callback ["metadata.broker.list","localhost:9092"; "queue.buffering.max.ms","1"]
+   in
+   Gc.full_major (); (* The callback is properly registered as GC root *)
    let topic_with_delivery_callback = Kafka.new_topic producer_with_delivery_callback "test" ["message.timeout.ms","10000"] in
    Kafka.produce topic_with_delivery_callback Kafka.partition_unassigned ~msg_id:156 "message 6"; 
    Kafka.poll_events producer_with_delivery_callback |> ignore;
