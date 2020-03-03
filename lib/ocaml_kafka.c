@@ -3,6 +3,7 @@
 #include <caml/callback.h>
 #include <caml/fail.h>
 #include <caml/alloc.h>
+#include <caml/version.h>
 
 #include <string.h>
 #include <stdarg.h>
@@ -196,15 +197,24 @@ ocaml_kafka_opaque* ocaml_kafka_opaque_create(value caml_callback) {
 
   ocaml_kafka_opaque* opaque = malloc(sizeof (ocaml_kafka_opaque));
   if (opaque) {
+#if OCAML_VERSION >= 40900
     caml_register_generational_global_root(&opaque->caml_callback);
     caml_modify_generational_global_root(&opaque->caml_callback, caml_callback);
+#else
+    caml_register_global_root(&opaque->caml_callback);
+    opaque->caml_callback = caml_callback;
+#endif /* OCAML_VERSION >= 40900 */
   }
   CAMLreturnT(ocaml_kafka_opaque*, opaque);
 }
 
 void ocaml_kafka_opaque_destroy(ocaml_kafka_opaque* opaque) {
   if (opaque) {
+#if OCAML_VERSION >= 40900
     caml_remove_generational_global_root(&opaque->caml_callback);
+#else
+    caml_remove_global_root(&opaque->caml_callback);
+#endif /* OCAML_VERSION >= 40900 */
     free(opaque);
   }
 }
