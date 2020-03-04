@@ -5,6 +5,7 @@
 
 (alias
  (name integration)
+ (package kafka_async)
  (deps
   (:< integration.exe))
  (action
