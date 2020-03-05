@@ -5,3 +5,5 @@
  (preprocess (pps ppx_let))
  (c_names ocaml_async_kafka)
  (c_library_flags -lrdkafka))
+
+(copy_files ../lib/ocaml_kafka.h)
