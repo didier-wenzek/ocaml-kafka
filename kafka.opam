@@ -21,7 +21,7 @@ depends: [
   "ocaml" {>= "4.02.3"}
   "conf-zlib"
   "alcotest" {>= "0.8.5" & with-test}
-  "dune" {>= "2.3.0"}
+  "dune" {>= "1.10"}
 ]
 depexts: [
   ["librdkafka-dev"] {os-distribution = "alpine"}

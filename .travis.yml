@@ -17,7 +17,6 @@ env:
     - DEPOPTS="*"
     - TESTS=true
     - DISTRO=ubuntu-18.04
-    - PRE_INSTALL_HOOK="opam update"
     - POST_INSTALL_HOOK="opam reinstall --with-test kafka && make integration"
 before_install:
     - wget http://mirrors.dotsrc.org/apache/kafka/2.4.0/kafka_2.12-2.4.0.tgz -O kafka.tar.gz

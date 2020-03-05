@@ -23,5 +23,5 @@ depends: [
   "async" {>= "v0.11"}
   "core" {>= "v0.11"}
   "alcotest-async" {>= "0.8.5" & with-test}
-  "dune" {>= "2.3.0"}
+  "dune" {>= "1.10"}
 ]

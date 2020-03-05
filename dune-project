@@ -14,7 +14,7 @@
     (ocaml (>= 4.02.3))
     conf-zlib
     (alcotest (and (>= 0.8.5) :with-test))
-    (dune (>= 2.3.0)))
+    (dune (>= 1.10)))
   (synopsis "OCaml bindings for Kafka")
   (description "
 Kafka is a high-throughput distributed messaging system.
@@ -29,7 +29,7 @@ Kafka is a high-throughput distributed messaging system.
     lwt
     conf-zlib
     (alcotest-lwt (and (>= 0.8.5) :with-test))
-    (dune (>= 2.3.0)))
+    (dune (>= 1.10)))
   (synopsis "OCaml bindings for Kafka, Lwt bindings")
   (description "
 Kafka is a high-throughput distributed messaging system.
@@ -43,7 +43,7 @@ Kafka is a high-throughput distributed messaging system.
     (async (>= v0.11))
     (core (>= v0.11))
     (alcotest-async (and (>= 0.8.5) :with-test))
-    (dune (>= 2.3.0)))
+    (dune (>= 1.10)))
   (synopsis "OCaml bindings for Kafka, Async bindings")
   (description "
 Kafka is a high-throughput distributed messaging system.
