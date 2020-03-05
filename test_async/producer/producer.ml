@@ -9,7 +9,7 @@ let main topic messages =
   let%bind producer = Deferred.return @@ Kafka_async.new_producer options in
   Log.Global.debug "Got a producer";
   let%bind topic =
-    Deferred.return @@ Kafka_async.new_producer_topic producer topic []
+    Deferred.return @@ Kafka_async.new_topic producer topic []
   in
   Log.Global.debug "Got a topic";
   let partition = 0 in

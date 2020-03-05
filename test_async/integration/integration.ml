@@ -11,7 +11,7 @@ let main_result host port topic =
   in
   let%bind producer_topic =
     Deferred.return
-    @@ Kafka_async.new_producer_topic producer topic
+    @@ Kafka_async.new_topic producer topic
          [ ("message.timeout.ms", "1000") ]
   in
   let%bind consumer =
