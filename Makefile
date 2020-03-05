@@ -20,4 +20,4 @@ clean:
 
 .PHONY: integration
 integration: ## Run integration tests, requires Kafka
-	dune build @integration --force
+	dune build --only-packages kafka @integration --force
