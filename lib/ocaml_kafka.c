@@ -182,10 +182,6 @@ value ocaml_kafka_new_consumer(value caml_consumer_options)
   CAMLreturn(caml_handler);
 }
 
-typedef struct {
-  value caml_callback;
-} ocaml_kafka_opaque;
-
 ocaml_kafka_opaque* ocaml_kafka_opaque_create(value caml_callback) {
   CAMLparam1(caml_callback);
 

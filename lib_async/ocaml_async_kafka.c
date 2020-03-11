@@ -48,6 +48,7 @@ CAMLprim value ocaml_kafka_async_new_producer(value caml_delivery_callback, valu
   CAMLparam2(caml_delivery_callback, caml_producer_options);
   CAMLlocal2(caml_callback, result);
 
+  ocaml_kafka_opaque* opaque = NULL;
   char error_msg[160];
   rd_kafka_conf_t *conf = rd_kafka_conf_new();
   rd_kafka_conf_res_t conf_err = configure_handler(conf, caml_producer_options, error_msg, sizeof(error_msg));
@@ -57,11 +58,13 @@ CAMLprim value ocaml_kafka_async_new_producer(value caml_delivery_callback, valu
     CAMLreturn(result);
   }
 
-  rd_kafka_conf_set_opaque(conf, (void*) caml_delivery_callback);
+  opaque = ocaml_kafka_opaque_create(caml_delivery_callback);
+  rd_kafka_conf_set_opaque(conf, (void*) opaque);
   rd_kafka_conf_set_dr_cb(conf, ocaml_kafka_delivery_callback);
 
   rd_kafka_t *handler = rd_kafka_new(RD_KAFKA_PRODUCER, conf, error_msg, sizeof(error_msg));
   if (handler == NULL) {
+    ocaml_kafka_opaque_destroy(opaque);
     rd_kafka_conf_destroy(conf);
     result = ERROR(RD_KAFKA_RESP_ERR__FAIL, "Failed to create new kafka producer (%s)", error_msg);
     CAMLreturn(result);

@@ -12,4 +12,11 @@ rd_kafka_conf_res_t configure_handler(rd_kafka_conf_t *, value, char*, size_t);
 void ocaml_kafka_delivery_callback(rd_kafka_t*, void*, size_t, rd_kafka_resp_err_t, void*, void*);
 value alloc_caml_handler(void*);
 
+typedef struct {
+  value caml_callback;
+} ocaml_kafka_opaque;
+
+ocaml_kafka_opaque* ocaml_kafka_opaque_create(value);
+void ocaml_kafka_opaque_destroy(ocaml_kafka_opaque*);
+
 #endif /* OCAML_KAFKA_H */
