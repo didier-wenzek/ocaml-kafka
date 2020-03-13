@@ -3,6 +3,11 @@ open Async
 
 let main_result host port topic =
   let open Deferred.Result.Let_syntax in
+  let rng = Random.State.make_self_init () in
+  let make_random_message rng =
+    let bit = Random.State.int rng Int.max_value in
+    Printf.sprintf "message %d" bit
+  in
   let producer_options =
     [ ("metadata.broker.list", Printf.sprintf "%s:%d" host port) ]
   in
@@ -26,7 +31,7 @@ let main_result host port topic =
   in
   Log.Global.debug "Created consumer";
   let partition = 0 in
-  let messages = [ "message 0"; "message 1"; "message 2" ] in
+  let messages = List.init 3 ~f:(Fn.const (make_random_message rng)) in
   let%bind _ =
     messages
     |> List.map ~f:(Kafka_async.produce producer producer_topic partition)
@@ -37,7 +42,6 @@ let main_result host port topic =
   let%bind consumed =
     Deferred.ok
     @@ Pipe.fold reader ~init:(String.Set.of_list messages) ~f:(fun awaiting ->
-           Log.Global.debug "Received message";
            function
            | Message (topic, _, _, payload, _) ->
                let topic_name = Kafka.topic_name topic in
