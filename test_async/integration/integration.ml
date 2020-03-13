@@ -9,21 +9,22 @@ let main_result host port topic =
   let%bind producer =
     Deferred.return @@ Kafka_async.new_producer producer_options
   in
+  Log.Global.debug "Created producer";
   let%bind producer_topic =
     Deferred.return
-    @@ Kafka_async.new_topic producer topic
-         [ ("message.timeout.ms", "1000") ]
+    @@ Kafka_async.new_topic producer topic [ ("message.timeout.ms", "1000") ]
   in
+  Log.Global.debug "Created topic";
   let%bind consumer =
     Deferred.return
     @@ Kafka_async.new_consumer
          [
            ("metadata.broker.list", Printf.sprintf "%s:%d" host port);
-           ("fetch.wait.max.ms", "10");
            ("group.id", "test-consumer-groups");
-           ("enable.partition.eof", "true");
+           ("auto.offset.reset", "earliest");
          ]
   in
+  Log.Global.debug "Created consumer";
   let partition = 0 in
   let messages = [ "message 0"; "message 1"; "message 2" ] in
   let%bind _ =
@@ -31,9 +32,9 @@ let main_result host port topic =
     |> List.map ~f:(Kafka_async.produce producer producer_topic partition)
     |> Deferred.Result.all
   in
+  Log.Global.debug "Emitted messages";
   let%bind reader = Deferred.return @@ Kafka_async.consume consumer ~topic in
-  Log.Global.debug "Created consumer";
-  let%bind _consumed =
+  let%bind consumed =
     Deferred.ok
     @@ Pipe.fold reader ~init:(String.Set.of_list messages) ~f:(fun awaiting ->
            Log.Global.debug "Received message";
@@ -51,7 +52,9 @@ let main_result host port topic =
                Log.Global.error "End of partition";
                Deferred.return awaiting)
   in
-  return ()
+  match String.Set.is_empty consumed with
+  | true -> return ()
+  | false -> Deferred.return @@ Error (Kafka.FAIL, "Not all messages consumed")
 
 let main_or_error host port topic =
   match%map main_result host port topic with
