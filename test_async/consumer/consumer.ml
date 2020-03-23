@@ -1,15 +1,14 @@
 open Core
 open Async
 
-let options =
-  [
-    ("metadata.broker.list", "localhost:9092"); ("auto.offset.reset", "earliest");
-  ]
+let options = [ ("auto.offset.reset", "earliest") ]
 
-let main (topic, group_id) =
+let main (brokers, topic, group_id) =
   let open Deferred.Result.Let_syntax in
   Log.Global.debug "Starting";
-  let options = ("group.id", group_id) :: options in
+  let options =
+    ("metadata.broker.list", brokers) :: ("group.id", group_id) :: options
+  in
   let%bind consumer = Deferred.return @@ Kafka_async.new_consumer options in
   Log.Global.debug "Got a consumer";
   let%bind reader = Deferred.return @@ Kafka_async.consume consumer ~topic in
@@ -45,6 +44,10 @@ let () =
         flag "group-id"
           (optional_with_default "ocaml-kafka-async-consumer" string)
           ~doc:"GROUPID Which group.id to pick for consuming"
+      and brokers =
+        flag "brokers"
+          (optional_with_default "localhost:9092" string)
+          ~doc:"BROKERS Comma separated list of brokers to connect to"
       in
-      fun () -> main_or_error (topic, group_id)]
+      fun () -> main_or_error (brokers, topic, group_id)]
   |> Command.run

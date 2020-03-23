@@ -1,16 +1,15 @@
 open Core
 open Async
 
-let options = [ ("metadata.broker.list", "localhost:9092") ]
-
-let main topic messages =
+let main (brokers, topic, messages) =
   let open Deferred.Result.Let_syntax in
   Log.Global.debug "Starting";
-  let%bind producer = Deferred.return @@ Kafka_async.new_producer options in
-  Log.Global.debug "Got a producer";
-  let%bind topic =
-    Deferred.return @@ Kafka_async.new_topic producer topic []
+  let%bind producer =
+    Deferred.return
+    @@ Kafka_async.new_producer [ ("metadata.broker.list", brokers) ]
   in
+  Log.Global.debug "Got a producer";
+  let%bind topic = Deferred.return @@ Kafka_async.new_topic producer topic [] in
   Log.Global.debug "Got a topic";
   let partition = 0 in
   let defs =
@@ -20,8 +19,8 @@ let main topic messages =
   Log.Global.info "Produced successfully";
   return ()
 
-let main_or_error topic (msg, messages) =
-  match%bind main topic (msg :: messages) with
+let main_or_error opts =
+  match%bind main opts with
   | Ok _ as v -> return v
   | Error (_, msg) -> return @@ Error (Error.of_string msg)
 
@@ -32,8 +31,12 @@ let () =
       let _ = Log.Global.set_level_via_param ()
       and topic =
         flag "topic" (required string) ~doc:"NAME Which topic to post to"
-      and payloads =
+      and msg, messages =
         anon (t2 ("payload" %: string) (sequence ("payload" %: string)))
+      and brokers =
+        flag "brokers"
+          (optional_with_default "localhost:9092" string)
+          ~doc:"BROKERS Comma separated list of brokers to connect to"
       in
-      fun () -> main_or_error topic payloads]
+      fun () -> main_or_error (brokers, topic, msg :: messages)]
   |> Command.run
