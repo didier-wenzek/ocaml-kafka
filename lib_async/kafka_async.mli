@@ -21,7 +21,10 @@ val new_consumer : (string * string) list -> consumer response
 val new_topic :
   producer -> string -> (string * string) list -> Kafka.topic response
 
-val consume : consumer -> topic:string -> Kafka.message Pipe.Reader.t response
+val new_consumer_topic :
+  consumer -> string -> (string * string) list -> Kafka.topic response
+
+val consume : consumer -> Kafka.topic -> Kafka.message Pipe.Reader.t response
 
 val destroy_consumer : consumer -> unit
 

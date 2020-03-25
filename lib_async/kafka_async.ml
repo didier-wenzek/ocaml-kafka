@@ -11,11 +11,23 @@ type producer = {
   stop_poll : unit Ivar.t;
 }
 
+module TopicKey = struct
+  type t = Kafka.topic
+
+  let hash x = x |> Kafka.topic_name |> String.hash
+
+  let compare a b = String.compare (Kafka.topic_name a) (Kafka.topic_name b)
+
+  let sexp_of_t x = x |> Kafka.topic_name |> Sexp.of_string
+end
+
+module TopicTable = Hashtbl.Make_plain (TopicKey)
+
 type consumer = {
   handler : Kafka.handler;
   start_poll : unit Ivar.t;
   stop_poll : unit Ivar.t;
-  subscriptions : Kafka.message Pipe.Writer.t String.Table.t;
+  subscriptions : Kafka.message Pipe.Writer.t TopicTable.t;
 }
 
 let next_msg_id =
@@ -75,14 +87,13 @@ external consumer_poll' : Kafka.handler -> Kafka.message option response
 let handle_incoming_message subscriptions = function
   | None | Some (Kafka.PartitionEnd _) -> ()
   | Some (Kafka.Message (topic, _, _, _, _) as msg) -> (
-      let topic_name = Kafka.topic_name topic in
-      match String.Table.find subscriptions topic_name with
+      match TopicTable.find subscriptions topic with
       | None -> ()
       | Some writer -> Pipe.write_without_pushback writer msg)
 
 let new_consumer xs =
   let open Result.Let_syntax in
-  let subscriptions = String.Table.create ~size:(8 * 1024) () in
+  let subscriptions = TopicTable.create ~size:(8 * 1024) () in
   let stop_poll = Ivar.create () in
   let start_poll = Ivar.create () in
   let%bind handler = new_consumer' xs in
@@ -95,36 +106,38 @@ let new_consumer xs =
       | Ok success -> handle_incoming_message subscriptions success);
   return { handler; subscriptions; start_poll; stop_poll }
 
-external subscribe' : Kafka.handler -> topics:string list -> unit response
+external subscribe' : Kafka.handler -> Kafka.topic list -> unit response
   = "ocaml_kafka_async_subscribe"
 
-let consume consumer ~topic =
+let consume consumer topic =
   let open Result.Let_syntax in
-  match String.Table.mem consumer.subscriptions topic with
+  match TopicTable.mem consumer.subscriptions topic with
   | true -> Error (Kafka.FAIL, "Already subscribed to this topic")
   | false ->
       Ivar.fill consumer.start_poll ();
-      let existing_subs = String.Table.keys consumer.subscriptions in
-      let%bind () =
-        subscribe' consumer.handler ~topics:(topic :: existing_subs)
-      in
+      let existing_subs = TopicTable.keys consumer.subscriptions in
+      let%bind () = subscribe' consumer.handler (topic :: existing_subs) in
       let reader =
         Pipe.create_reader ~close_on_exception:true (fun writer ->
-            String.Table.add_exn consumer.subscriptions ~key:topic ~data:writer;
+            TopicTable.add_exn consumer.subscriptions ~key:topic ~data:writer;
             Ivar.read consumer.stop_poll)
       in
       don't_wait_for
         (let open Deferred.Let_syntax in
         let%map () = Pipe.closed reader in
-        String.Table.remove consumer.subscriptions topic;
-        let remaining_subs = String.Table.keys consumer.subscriptions in
-        ignore @@ subscribe' consumer.handler ~topics:remaining_subs);
+        TopicTable.remove consumer.subscriptions topic;
+        let remaining_subs = TopicTable.keys consumer.subscriptions in
+        ignore @@ subscribe' consumer.handler remaining_subs);
       return reader
 
-let new_topic (producer : producer) name opts =
-  match Kafka.new_topic producer.handler name opts with
+let new_topic' handler name opts =
+  match Kafka.new_topic handler name opts with
   | v -> Ok v
   | exception Kafka.Error (e, msg) -> Error (e, msg)
+
+let new_topic (producer : producer) = new_topic' producer.handler
+
+let new_consumer_topic (consumer : consumer) = new_topic' consumer.handler
 
 let destroy_consumer consumer =
   Ivar.fill consumer.stop_poll ();

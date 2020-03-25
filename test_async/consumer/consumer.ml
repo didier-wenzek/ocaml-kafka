@@ -11,7 +11,11 @@ let main (brokers, topic, group_id) =
   in
   let%bind consumer = Deferred.return @@ Kafka_async.new_consumer options in
   Log.Global.debug "Got a consumer";
-  let%bind reader = Deferred.return @@ Kafka_async.consume consumer ~topic in
+  let%bind topic =
+    Deferred.return @@ Kafka_async.new_consumer_topic consumer topic []
+  in
+  Log.Global.debug "Got a topic";
+  let%bind reader = Deferred.return @@ Kafka_async.consume consumer topic in
   let%bind () =
     Deferred.ok
     @@ Pipe.iter reader ~f:(function

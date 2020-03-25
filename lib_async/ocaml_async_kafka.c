@@ -127,7 +127,7 @@ CAMLprim value ocaml_kafka_async_subscribe(value caml_kafka_handler, value caml_
 
     hd = caml_topic_list;
     while (Int_val(hd) != 0) {
-      topic_name = String_val(Field(hd, 0));
+      topic_name = rd_kafka_topic_name(handler_val(Field(hd, 0)));
       /* we have a head, so there is a tail */
       tl = Field(hd, 1);
       hd = tl;
