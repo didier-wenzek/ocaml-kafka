@@ -5,6 +5,7 @@
 (authors "Didier Wenzek <didier.wenzek@acidalie.com>")
 (bug_reports "https://github.com/didier-wenzek/ocaml-kafka/issues")
 (homepage "https://github.com/didier-wenzek/ocaml-kafka")
+(documentation "https://didier-wenzek.github.io/ocaml-kafka")
 (license "MIT")
 (source (github "didier-wenzek/ocaml-kafka"))
 
