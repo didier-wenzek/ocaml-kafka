@@ -38,28 +38,23 @@ let main_result host port topic =
     |> Deferred.Result.all
   in
   Log.Global.debug "Emitted messages";
-  let%bind consumer_topic =
-    Deferred.return @@ Kafka_async.new_consumer_topic consumer topic []
-  in
-  let%bind reader =
-    Deferred.return @@ Kafka_async.consume consumer consumer_topic
-  in
+  let%bind reader = Deferred.return @@ Kafka_async.consume consumer ~topic in
   let%bind consumed =
     Deferred.ok
     @@ Pipe.fold reader ~init:(String.Set.of_list messages) ~f:(fun awaiting ->
-         function
-         | Message (topic, _, _, payload, _) ->
-             let topic_name = Kafka.topic_name topic in
-             Log.Global.debug "Message on topic '%s', payload '%s'" topic_name
-               payload;
-             let remaining = String.Set.remove awaiting payload in
-             (match String.Set.is_empty remaining with
-             | true -> Pipe.close_read reader
-             | false -> ());
-             Deferred.return remaining
-         | PartitionEnd _ ->
-             Log.Global.error "End of partition";
-             Deferred.return awaiting)
+           function
+           | Message (topic, _, _, payload, _) ->
+               let topic_name = Kafka.topic_name topic in
+               Log.Global.debug "Message on topic '%s', payload '%s'" topic_name
+                 payload;
+               let remaining = String.Set.remove awaiting payload in
+               (match String.Set.is_empty remaining with
+               | true -> Pipe.close_read reader
+               | false -> ());
+               Deferred.return remaining
+           | PartitionEnd _ ->
+               Log.Global.error "End of partition";
+               Deferred.return awaiting)
   in
   match String.Set.is_empty consumed with
   | true -> return ()
