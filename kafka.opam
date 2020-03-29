@@ -10,6 +10,7 @@ maintainer: ["Didier Wenzek <didier.wenzek@acidalie.com>"]
 authors: ["Didier Wenzek <didier.wenzek@acidalie.com>"]
 bug-reports: "https://github.com/didier-wenzek/ocaml-kafka/issues"
 homepage: "https://github.com/didier-wenzek/ocaml-kafka"
+doc: "https://didier-wenzek.github.io/ocaml-kafka"
 license: "MIT"
 dev-repo: "git+https://github.com/didier-wenzek/ocaml-kafka.git"
 synopsis: "OCaml bindings for Kafka"

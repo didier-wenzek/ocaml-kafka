@@ -5,6 +5,7 @@
 (authors "Didier Wenzek <didier.wenzek@acidalie.com>")
 (bug_reports "https://github.com/didier-wenzek/ocaml-kafka/issues")
 (homepage "https://github.com/didier-wenzek/ocaml-kafka")
+(documentation "https://didier-wenzek.github.io/ocaml-kafka")
 (license "MIT")
 (source (github "didier-wenzek/ocaml-kafka"))
 
@@ -28,9 +29,23 @@ Kafka is a high-throughput distributed messaging system.
     cmdliner
     lwt
     conf-zlib
-    (alcotest-lwt (and (>= 0.8.5) :with-test))
+    (alcotest-lwt (and (>= 0.8.5) (< 1.0.0) :with-test))
     (dune (>= 1.10)))
   (synopsis "OCaml bindings for Kafka, Lwt bindings")
+  (description "
+Kafka is a high-throughput distributed messaging system.
+"))
+
+(package
+  (name kafka_async)
+  (depends
+    (ocaml (>= 4.03.0))
+    (kafka (= :version))
+    (async (>= v0.11))
+    (core (>= v0.11))
+    (alcotest-async (and (>= 0.8.5) :with-test))
+    (dune (>= 1.10)))
+  (synopsis "OCaml bindings for Kafka, Async bindings")
   (description "
 Kafka is a high-throughput distributed messaging system.
 "))

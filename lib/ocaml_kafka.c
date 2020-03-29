@@ -9,15 +9,13 @@
 #include <stdarg.h>
 #include <librdkafka/rdkafka.h>
 
+#include "ocaml_kafka.h"
+
 /* Default consumer timeout. */
 #define DEFAULT_TIMEOUT_MS 1000
 
 /* Default batch size. */
 #define DEFAULT_MSG_COUNT 1024
-
-/* Configuration results (of type rd_kafka_conf_res_t) are merge with errors (of type rd_kafka_resp_err_t).
-   So we have a single Error type ocaml side. */
-#define RD_KAFKA_CONF_RES(kafka_conf_res) (RD_KAFKA_RESP_ERR__END + kafka_conf_res)
 
 /* Must be synchronized with Kafka.Error. */
 static int const ERROR_CODES[] = {
@@ -60,7 +58,6 @@ static int const ERROR_CODES[] = {
 
 static int const EUNKNOWN = (sizeof ERROR_CODES) / (sizeof ERROR_CODES[0]);
 
-inline static
 value caml_error_value(rd_kafka_resp_err_t rd_errno)
 {
   CAMLparam0();
@@ -99,9 +96,6 @@ void ocaml_kafka_raise(rd_kafka_resp_err_t rd_errno, const char *error, ...)
   CAMLnoreturn;
 }
 
-#define handler_val(v) *((void **) &Field(v, 0))
-
-inline static
 value alloc_caml_handler(void* hdl)
 {
   CAMLparam0();
@@ -128,7 +122,7 @@ inline static void* get_handler(value caml_handler)
   return hdl;
 }
 
-static rd_kafka_conf_res_t configure_handler(rd_kafka_conf_t *conf, value caml_options, char *errstr, size_t errstr_size)
+rd_kafka_conf_res_t configure_handler(rd_kafka_conf_t *conf, value caml_options, char *errstr, size_t errstr_size)
 {
   CAMLparam0();
   CAMLlocal3(caml_option_pair, caml_option_name, caml_option_value);
@@ -188,10 +182,6 @@ value ocaml_kafka_new_consumer(value caml_consumer_options)
   CAMLreturn(caml_handler);
 }
 
-typedef struct {
-  value caml_callback;
-} ocaml_kafka_opaque;
-
 ocaml_kafka_opaque* ocaml_kafka_opaque_create(value caml_callback) {
   CAMLparam1(caml_callback);
 
@@ -219,7 +209,6 @@ void ocaml_kafka_opaque_destroy(ocaml_kafka_opaque* opaque) {
   }
 }
 
-static
 void ocaml_kafka_delivery_callback(rd_kafka_t *producer, void *payload, size_t len, rd_kafka_resp_err_t err, void *opaque, void *msg_opaque)
 {
   CAMLparam0();

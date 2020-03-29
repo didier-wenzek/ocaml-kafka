@@ -13,17 +13,16 @@ homepage: "https://github.com/didier-wenzek/ocaml-kafka"
 doc: "https://didier-wenzek.github.io/ocaml-kafka"
 license: "MIT"
 dev-repo: "git+https://github.com/didier-wenzek/ocaml-kafka.git"
-synopsis: "OCaml bindings for Kafka, Lwt bindings"
+synopsis: "OCaml bindings for Kafka, Async bindings"
 description: """
 
 Kafka is a high-throughput distributed messaging system.
 """
 depends: [
-  "ocaml" {>= "4.02.3"}
+  "ocaml" {>= "4.03.0"}
   "kafka" {= version}
-  "cmdliner"
-  "lwt"
-  "conf-zlib"
-  "alcotest-lwt" {>= "0.8.5" & < "1.0.0" & with-test}
+  "async" {>= "v0.11"}
+  "core" {>= "v0.11"}
+  "alcotest-async" {>= "0.8.5" & with-test}
   "dune" {>= "1.10"}
 ]
