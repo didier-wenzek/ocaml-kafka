@@ -7,6 +7,7 @@ Basic:
  - [x] Support for queues.
  - [x] Support for keys.
  - [x] Lwt support.
+ - [x] Async support.
  - [ ] Support for the high-level KafkaConsumer interface (rd_kafka_subscribe)
 
 Callbacks:
@@ -38,10 +39,18 @@ Meta-data
  - [x] Meta-data: topic list, partition list.
  - [ ] Meta-data: server list, list of replica.
 
+Lwt:
+ - [ ] Do we have to distinguish types: consumer vs producer ?
+ - [ ] Integration tests
+ - [ ] In the readme, say a word about Lwt.
+ - [ ] Add group id to consumer/producer tools.
+
+Async:
+ - [ ] In the readme, say a word about Async.
+ - [ ] Improve Consumer/Producer tools, notably with args for cluster and group id.
+
 Misc
  - [x] Function: Kafka.outq_len.
  - [ ] rd_kafka_queue_length
- - [ ] Do we have to distinguish types: consumer vs producer ?
  - [ ] Introduce a Kafka.Timeout exception.
  - [ ] Support for events.
- 
