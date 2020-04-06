@@ -7,7 +7,7 @@ let usage () =
   exit 1 |> ignore
 
 open Kafka.Metadata
-let timeout_ms = 1000
+let timeout_ms = 2000
 
 let skip_all_message consume partition = 
   let rec loop () = match consume partition with

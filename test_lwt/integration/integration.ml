@@ -1,6 +1,9 @@
 open Lwt.Infix
 let return = Lwt.return
 
+let brokers = "localhost"
+let topic_name = "test"
+
 let produce brokers topic_name keyed_messages =
   let producer = Kafka_lwt.new_producer ["metadata.broker.list",brokers] in
   let topic = Kafka.new_topic producer topic_name [] in
@@ -27,8 +30,9 @@ let consume brokers topic_name messages =
   let expected_messages = messages |> List.fold_left cache Cache.empty |> ref in
   let remove_received = function
     | Kafka.Message (_,_,_,_,Some(key)) when Cache.mem key !expected_messages ->
-      expected_messages := Cache.remove key !expected_messages
-    | _ -> ()
+      expected_messages := Cache.remove key !expected_messages;
+      return () (* Lwt_io.printf "Received as expected: %s\n%!" key *)
+    | _ -> return ()
   in
   let consumer = Kafka.new_consumer ["metadata.broker.list",brokers] in
   let topic = Kafka.new_topic consumer topic_name [] in
@@ -48,7 +52,7 @@ let consume brokers topic_name messages =
       return ()
     else
       Kafka_lwt.consume_queue queue
-      >|=
+      >>=
       remove_received
       >>=
       loop
@@ -66,13 +70,20 @@ let timeout s err =
   >>= fun () ->
   Lwt_io.printf "%s\n%!" err
   >>= fun () ->
-  Lwt.fail Stdlib.Exit
+  Lwt.fail (Failure "timeout")
+
+let expect_error expected_err action =
+  Lwt.catch action (function
+    | Kafka.Error(err,_) when err = expected_err -> return ()
+    | exn -> Lwt.fail exn
+  )
+  
+
+let _ = Random.self_init ()
+let random_str prefix = prefix ^ (string_of_int (Random.int 1000000))
+let random_msg () = (random_str "k_", random_str "msg_")
 
 let test_produce_consume () =
-  let brokers = "localhost" in
-  let topic_name = "test" in
-  let random_str prefix = prefix ^ (string_of_int (Random.int 1000000)) in
-  let random_msg () = (random_str "k_", random_str "msg_") in
   let messages = [random_msg (); random_msg (); random_msg (); random_msg (); random_msg ()] in
   Lwt.join [
     produce brokers topic_name messages;
@@ -82,5 +93,14 @@ let test_produce_consume () =
     ]
   ]
 
+let test_consume_error () =
+  Lwt.pick [
+    expect_error Kafka.TIMED_OUT (fun () -> consume brokers topic_name [random_msg ()]);
+    timeout 2.0 "Fail to detect the error."
+  ]
+
 let () =
-  Lwt_main.run (test_produce_consume ())
+  Lwt_main.run (List.fold_left Lwt.bind (return ()) [
+    test_produce_consume;
+    test_consume_error;
+  ])
