@@ -124,7 +124,7 @@ static value result_consume_queue(struct job_consume_queue* job)
      caml_msg = ocaml_kafka_extract_queue_message(job->caml_kafka_queue, message);
      rd_kafka_message_destroy(message);
   } else {
-     rd_kafka_resp_err_t rd_errno = rd_kafka_last_error();
+     rd_kafka_resp_err_t rd_errno = job->rd_errno;
      caml_remove_generational_global_root(&(job->caml_kafka_queue));
      lwt_unix_free_job(&job->job);
      RAISE(rd_errno, "Failed to consume message from queue (%s)", rd_kafka_err2str(rd_errno));
