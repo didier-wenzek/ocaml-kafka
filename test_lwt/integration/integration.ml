@@ -21,8 +21,10 @@ let produce brokers topic_name keyed_messages =
 
 module Cache = Map.Make(String)
 
+let cache c (k,v) = Cache.add k v c
+
 let consume brokers topic_name messages =
-  let expected_messages = messages |> List.to_seq |> Cache.of_seq |> ref in
+  let expected_messages = messages |> List.fold_left cache Cache.empty |> ref in
   let remove_received = function
     | Kafka.Message (_,_,_,_,Some(key)) when Cache.mem key !expected_messages ->
       expected_messages := Cache.remove key !expected_messages
