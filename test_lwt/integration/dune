@@ -1,0 +1,11 @@
+(executables
+ (names integration)
+ (libraries kafka_lwt))
+
+(alias
+ (name integration)
+ (package kafka_lwt)
+ (deps
+  (:< integration.exe))
+ (action
+  (run %{<})))
