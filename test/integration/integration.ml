@@ -7,7 +7,7 @@ let usage () =
   exit 1 |> ignore
 
 open Kafka.Metadata
-let timeout_ms = 2000
+let timeout_ms = 1000
 
 let skip_all_message consume partition = 
   let rec loop () = match consume partition with
@@ -17,6 +17,8 @@ let skip_all_message consume partition =
   in loop ()
 
 let main =
+
+   Format.printf "%s\n%!" "Start Sync tests";
 
    (* Prepare a producer handler. *)
    let producer = Kafka.new_producer [
@@ -140,8 +142,10 @@ let main =
    Kafka.produce producer_topic Kafka.partition_unassigned "message 2 ter";
 
    let messages = Kafka.consume_batch_queue ~timeout_ms:3000 ~msg_count:5 queue in
-   assert (List.sort compare (List.fold_left (fun acc -> function | Kafka.Message(_,_,_,msg,_) -> acc @ [msg] | _ -> acc) [] messages)
-        = ["message 0 ter"; "message 1 ter"; "message 2 ter"]);
+   assert (List.sort compare (List.fold_left (fun acc -> function
+     | Kafka.Message(_,_,_,msg,_) -> Format.printf "Consume_batch_queue received: %s\n%!" msg; acc @ [msg]
+     | Kafka.PartitionEnd(_,partition,_) -> Format.printf "Consume_batch_queue eof: %d\n%!" partition; acc
+   ) [] messages) = ["message 0 ter"; "message 1 ter"; "message 2 ter"]);
 
    (* Produce some keyed messages *)
    let partitioner_callback partition_cnt key = Printf.printf "xoxox %s \n%!" key;(Hashtbl.hash key) mod partition_cnt in
@@ -207,4 +211,5 @@ let main =
    assert (List.exists (fun msg -> msg = "message 124") messages);
    assert (List.exists (fun msg -> msg = "message 125") messages);
 
+   Format.printf "%s\n%!" "Done Sync tests";
    "Tests successful\n%!"

@@ -101,6 +101,8 @@ let test_consume_error () =
 
 let () =
   Lwt_main.run (List.fold_left Lwt.bind (return ()) [
+    (fun () -> Lwt_io.printf "%s\n%!" "Start LWT tests");
     test_produce_consume;
     test_consume_error;
+    (fun () -> Lwt_io.printf "%s\n%!" "Done LWT tests");
   ])
