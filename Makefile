@@ -11,8 +11,7 @@ uninstall:
 	dune uninstall
 
 .PHONY: test
-test:
-	dune runtest --force
+test: integration
 
 .PHONY: clean
 clean:

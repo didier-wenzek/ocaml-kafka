@@ -1,4 +1,4 @@
-(tests
+(executables
  (names integration)
  (libraries core async kafka_async)
  (preprocess (pps ppx_let)))
