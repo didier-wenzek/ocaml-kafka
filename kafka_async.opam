@@ -23,6 +23,5 @@ depends: [
   "kafka" {= version}
   "async" {>= "v0.11"}
   "core" {>= "v0.11"}
-  "alcotest-async" {>= "0.8.5" & with-test}
   "dune" {>= "1.10"}
 ]
