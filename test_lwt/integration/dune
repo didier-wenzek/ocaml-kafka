@@ -1,4 +1,4 @@
-(executables
+(tests
  (names integration)
  (libraries kafka_lwt))
 
