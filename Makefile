@@ -27,4 +27,4 @@ endif
 
 .PHONY: integration
 integration: ## Run integration tests, requires Kafka
-	dune build --only-packages $(ONLY_PACKAGES) @integration --force
+	dune build --only-packages $(ONLY_PACKAGES) @integration --force -j 1
