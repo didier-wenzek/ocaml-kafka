@@ -103,7 +103,7 @@ let consume consumer ~topic =
   match String.Table.mem consumer.subscriptions topic with
   | true -> Error (Kafka.FAIL, "Already subscribed to this topic")
   | false ->
-      Ivar.fill consumer.start_poll ();
+      Ivar.fill_if_empty consumer.start_poll ();
       let existing_subs = String.Table.keys consumer.subscriptions in
       let%bind () =
         subscribe' consumer.handler ~topics:(topic :: existing_subs)
