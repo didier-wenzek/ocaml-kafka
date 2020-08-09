@@ -3,7 +3,7 @@ open Async
 
 let options = [ ("auto.offset.reset", "earliest") ]
 
-let main (brokers, topic, group_id) =
+let main (brokers, (topic, topics), group_id) =
   let open Deferred.Result.Let_syntax in
   Log.Global.debug "Starting";
   let options =
@@ -11,7 +11,17 @@ let main (brokers, topic, group_id) =
   in
   let%bind consumer = Deferred.return @@ Kafka_async.new_consumer options in
   Log.Global.debug "Got a consumer";
-  let%bind reader = Deferred.return @@ Kafka_async.consume consumer ~topic in
+  let topics = topic :: topics in
+  let%bind readers =
+    topics
+    |> List.map ~f:(fun topic ->
+    Kafka_async.consume consumer ~topic)
+    |> Result.all
+    |> Deferred.return
+  in
+  Log.Global.debug "Set up subscriptions on %d topics" (List.length topics);
+  let reader = Pipe.interleave readers in
+  Log.Global.debug "Merged subscriptions";
   let%bind () =
     Deferred.ok
     @@ Pipe.iter reader ~f:(function
@@ -38,8 +48,8 @@ let () =
   Command.async_or_error ~summary:"Consume messages on Kafka topic"
     [%map_open
       let _ = Log.Global.set_level_via_param ()
-      and topic =
-        flag "topic" (required string) ~doc:"NAME Which topic to consume from"
+      and topics =
+        flag "topic" (one_or_more string) ~doc:"NAME Which topics to consume from"
       and group_id =
         flag "group-id"
           (optional_with_default "ocaml-kafka-async-consumer" string)
@@ -49,5 +59,5 @@ let () =
           (optional_with_default "localhost:9092" string)
           ~doc:"BROKERS Comma separated list of brokers to connect to"
       in
-      fun () -> main_or_error (brokers, topic, group_id)]
+      fun () -> main_or_error (brokers, topics, group_id)]
   |> Command.run

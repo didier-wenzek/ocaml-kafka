@@ -103,15 +103,17 @@ let consume consumer ~topic =
   match String.Table.mem consumer.subscriptions topic with
   | true -> Error (Kafka.FAIL, "Already subscribed to this topic")
   | false ->
-      Ivar.fill consumer.start_poll ();
-      let existing_subs = String.Table.keys consumer.subscriptions in
-      let%bind () =
-        subscribe' consumer.handler ~topics:(topic :: existing_subs)
-      in
+      Ivar.fill_if_empty consumer.start_poll ();
+      let subscribe_error = ref None in
       let reader =
-        Pipe.create_reader ~close_on_exception:true (fun writer ->
+        Pipe.create_reader ~close_on_exception:false (fun writer ->
             String.Table.add_exn consumer.subscriptions ~key:topic ~data:writer;
-            Ivar.read consumer.stop_poll)
+            let topics = String.Table.keys consumer.subscriptions in
+            match subscribe' consumer.handler ~topics with
+            | Ok () -> Ivar.read consumer.stop_poll
+            | Error e ->
+                subscribe_error := Some e;
+                Deferred.return ())
       in
       don't_wait_for
         (let open Deferred.Let_syntax in
@@ -119,7 +121,12 @@ let consume consumer ~topic =
         String.Table.remove consumer.subscriptions topic;
         let remaining_subs = String.Table.keys consumer.subscriptions in
         ignore @@ subscribe' consumer.handler ~topics:remaining_subs);
-      return reader
+      match Pipe.is_closed reader with
+      | false -> return reader
+      | true  ->
+          match !subscribe_error with
+          | None -> Error (Kafka.FAIL, "Programmer error, subscribe_error unset")
+          | Some e -> Error e
 
 let new_topic (producer : producer) name opts =
   match Kafka.new_topic producer.handler name opts with
