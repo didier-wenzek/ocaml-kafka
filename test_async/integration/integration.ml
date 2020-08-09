@@ -39,6 +39,7 @@ let main_result host port topic =
   in
   Log.Global.debug "Emitted messages";
   let%bind reader = Deferred.return @@ Kafka_async.consume consumer ~topic in
+  let%bind _dummy_reader = Deferred.return @@ Kafka_async.consume consumer ~topic:"dummy_topic_pull_request_23" in
   let%bind consumed =
     Deferred.ok
     @@ Pipe.fold reader ~init:(String.Set.of_list messages) ~f:(fun awaiting ->
