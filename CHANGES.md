@@ -1,6 +1,6 @@
 * Add Async bindings
 * Split sync and Lwt variants into separate OPAM packages
-* Fix caompatibility with OCaml 4.09
+* Fix compatibility with OCaml 4.09
 * Register callbacks as GC roots
 * Port to `dune`
 * Port to OPAM 2 format

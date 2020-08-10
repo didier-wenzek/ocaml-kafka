@@ -81,8 +81,11 @@ Documentation
 The API is documented in [lib/kafka.mli](lib/kafka.mli),
 and the Lwt extension is documented in [lib_lwt/kafka_lwt.mli](lib_lwt/kafka_lwt.mli).
 
-See [bin/tail_kafka_topic.ml](bin/tail_kafka_topic.ml) for an example consumer using queues, batches and lwt.
-See [bin/sendto_kafka_topic.ml](bin/sendto_kafka_topic.ml) for an example producer.
+See [bin/tail_kafka_topic.ml](bin/tail_kafka_topic.ml) for a consumer using queues, batches and lwt.
+See [bin/sendto_kafka_topic.ml](bin/sendto_kafka_topic.ml) for a producer.
 
-Configuration options of producers, consumers and topics
+For Async producer and consumer, see [test_async/producer/producer.ml](test_async/producer/producer.ml)
+and [test_async/consumer/consumer.ml](test_async/consumer/consumer.ml).
+
+The configuration options for producers, consumers and topics
 are inherited from [librdkafka/CONFIGURATION](https://github.com/edenhill/librdkafka/blob/master/CONFIGURATION.md).
