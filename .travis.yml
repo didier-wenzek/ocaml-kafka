@@ -21,6 +21,7 @@ env:
 before_install:
     - wget http://mirrors.dotsrc.org/apache/kafka/2.4.0/kafka_2.12-2.4.0.tgz -O kafka.tar.gz
     - mkdir -p kafka && tar xzf kafka.tar.gz -C kafka --strip-components 1
+    - if test ! -f /bin/bash; then ln -s /usr/local/bin/bash /bin/bash; fi
     - kafka/bin/zookeeper-server-start.sh kafka/config/zookeeper.properties &
     - sleep 3
     - kafka/bin/kafka-server-start.sh kafka/config/server.properties &
