@@ -40,3 +40,5 @@ jobs:
     env: OCAML_VERSION=4.09 PACKAGE="kafka_async" PINS="kafka.dev:. kafka_async.dev:."
   - os: osx
     env: OCAML_VERSION=4.09 PACKAGE="kafka"     PINS="kafka.dev:."
+  - os: freebsd
+    env: OCAML_VERSION=4.09 PACKAGE="kafka"     PINS="kafka.dev:."
