@@ -2,6 +2,7 @@ type handler
 type topic
 type queue
 type partition = int
+type partition_assignment = Assigned of int | Unassigned
 type offset = int64
 
 type message =
@@ -64,7 +65,7 @@ external destroy_handler : handler -> unit = "ocaml_kafka_destroy_handler"
 external handler_name : handler -> string = "ocaml_kafka_handler_name"
 
 external new_topic :
-     ?partitioner_callback:(int -> string-> partition)
+     ?partitioner_callback:(int -> string -> partition_assignment)
   -> handler
   -> string
   -> (string*string) list
@@ -78,7 +79,7 @@ external topic_name : topic -> string = "ocaml_kafka_topic_name"
   While the underlying library, librdkafka, allows any void* msg_opaque data.
   This is to avoid issues with the garbage collector
 *)
-external produce_idmsg: topic -> partition -> ?key:string -> msg_id -> string -> unit = "ocaml_kafka_produce"
+external produce_idmsg: topic -> partition_assignment -> ?key:string -> msg_id -> string -> unit = "ocaml_kafka_produce"
      let produce topic partition ?key ?(msg_id = 0) msg = produce_idmsg topic partition ?key msg_id msg
 external outq_len : handler -> int = "ocaml_kafka_outq_len"
 external poll: handler -> int -> int = "ocaml_kafka_poll"
@@ -94,7 +95,6 @@ let wait_delivery ?(timeout_ms = 100) ?(max_outq_len = 0) handler =
 external consume_start : topic -> partition -> offset -> unit = "ocaml_kafka_consume_start"
 external consume_stop : topic -> partition -> unit = "ocaml_kafka_consume_stop"
 
-let partition_unassigned = -1
 let offset_beginning = -2L
 let offset_end = -1L
 let offset_stored = -1000L

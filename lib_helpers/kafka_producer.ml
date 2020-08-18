@@ -45,7 +45,7 @@ let topic_sink
        Kafka.wait_delivery ~max_outq_len producer;
        push p_msg
     in
-    try Kafka.produce topic (partition mod partition_count) msg
+    try Kafka.produce topic (Kafka.Assigned (partition mod partition_count)) msg
     with error -> delivery_error_handler wait_and_push (partition,msg) error
   in
   let term () = (Kafka.wait_delivery producer; Kafka.destroy_topic topic; Kafka.destroy_handler producer) in

@@ -36,10 +36,13 @@ let brokers =
 let topic =
   let doc = "The topic to feed." in
   Arg.(required & pos 0 (some string) None & info [] ~docv:"TOPIC" ~doc)
+
+let partition_conv = Arg.conv ((fun _c ->
+  Ok Kafka.Unassigned), (fun _fmt _v -> ()))
  
 let partition =
   let doc = "The partition to feed (all if unassigned)." in
-  Arg.(value & pos 1 int Kafka.partition_unassigned & info [] ~docv:"PARTITION" ~doc)
+  Arg.(value & pos 1 partition_conv Kafka.Unassigned & info [] ~docv:"PARTITION" ~doc)
  
 let sendto_topic_t = Term.(pure sendto_topic $ brokers $ topic $ partition)
 
