@@ -58,9 +58,9 @@ let main =
    skip_all_message (Kafka.consume ~timeout_ms consumer_topic) partition;
 
    (* Produce some messages *)
-   Kafka.produce producer_topic partition "message 0";
-   Kafka.produce producer_topic partition "message 1";
-   Kafka.produce producer_topic partition "message 2";
+   Kafka.produce producer_topic (Kafka.Assigned partition) "message 0";
+   Kafka.produce producer_topic (Kafka.Assigned partition) "message 1";
+   Kafka.produce producer_topic (Kafka.Assigned partition) "message 2";
    
    (* Consume messages *)
    let rec consume t p = match Kafka.consume ~timeout_ms t p with
@@ -91,9 +91,9 @@ let main =
    );
 
    (* Message may be consumed by batch too *)
-   Kafka.produce producer_topic partition "message 0 bis";
-   Kafka.produce producer_topic partition "message 1 bis";
-   Kafka.produce producer_topic partition "message 2 bis";
+   Kafka.produce producer_topic (Kafka.Assigned partition) "message 0 bis";
+   Kafka.produce producer_topic (Kafka.Assigned partition) "message 1 bis";
+   Kafka.produce producer_topic (Kafka.Assigned partition) "message 2 bis";
 
    let messages = Kafka.consume_batch ~timeout_ms:3000 ~msg_count:3 consumer_topic partition in
    assert (List.fold_left (fun acc -> function | Kafka.Message(_,_,_,msg,_) -> acc @ [msg] | _ -> acc) [] messages
@@ -108,9 +108,9 @@ let main =
    Kafka.consume_start_queue queue consumer_topic 1 Kafka.offset_end;
    skip_all_message Kafka.consume_queue queue;
 
-   Kafka.produce producer_topic Kafka.partition_unassigned "message 3";
-   Kafka.produce producer_topic Kafka.partition_unassigned "message 4";
-   Kafka.produce producer_topic Kafka.partition_unassigned "message 5";
+   Kafka.produce producer_topic Kafka.Unassigned "message 3";
+   Kafka.produce producer_topic Kafka.Unassigned "message 4";
+   Kafka.produce producer_topic Kafka.Unassigned "message 5";
 
    let rec consume_queue (n,m) = match Kafka.consume_queue ~timeout_ms queue with
       | Kafka.Message(topic,partition,_,_,_) -> (
@@ -137,9 +137,9 @@ let main =
 
    (* Consuming batches of a queue. *)
    (* Here, we send 3 messages but we expect 5 messages: the 2 other messages are the partition ends. *)
-   Kafka.produce producer_topic Kafka.partition_unassigned "message 0 ter";
-   Kafka.produce producer_topic Kafka.partition_unassigned "message 1 ter";
-   Kafka.produce producer_topic Kafka.partition_unassigned "message 2 ter";
+   Kafka.produce producer_topic Kafka.Unassigned "message 0 ter";
+   Kafka.produce producer_topic Kafka.Unassigned "message 1 ter";
+   Kafka.produce producer_topic Kafka.Unassigned "message 2 ter";
 
    let messages = Kafka.consume_batch_queue ~timeout_ms:3000 ~msg_count:5 queue in
    assert (List.sort compare (List.fold_left (fun acc -> function
@@ -148,11 +148,14 @@ let main =
    ) [] messages) = ["message 0 ter"; "message 1 ter"; "message 2 ter"]);
 
    (* Produce some keyed messages *)
-   let partitioner_callback partition_cnt key = Printf.printf "xoxox %s \n%!" key;(Hashtbl.hash key) mod partition_cnt in
+   let partitioner_callback partition_cnt key =
+     Printf.printf "xoxox %s \n%!" key;
+     Kafka.Assigned ((Hashtbl.hash key) mod partition_cnt)
+   in
    let keyed_topic = Kafka.new_topic ~partitioner_callback producer "test" ["message.timeout.ms","1000"] in
-   Kafka.produce keyed_topic Kafka.partition_unassigned ~key:"key 0" "key-message 0";
-   Kafka.produce keyed_topic Kafka.partition_unassigned ~key:"key 1" "key-message 1";
-   Kafka.produce keyed_topic Kafka.partition_unassigned ~key:"key 2" "key-message 2";
+   Kafka.produce keyed_topic Kafka.Unassigned ~key:"key 0" "key-message 0";
+   Kafka.produce keyed_topic Kafka.Unassigned ~key:"key 1" "key-message 1";
+   Kafka.produce keyed_topic Kafka.Unassigned ~key:"key 2" "key-message 2";
    
    (* Consume keyed messages *)
    let rec consume_k t = match Kafka.consume_queue t with
@@ -183,7 +186,7 @@ let main =
    in
    Gc.full_major (); (* The callback is properly registered as GC root *)
    let topic_with_delivery_callback = Kafka.new_topic producer_with_delivery_callback "test" ["message.timeout.ms","10000"] in
-   Kafka.produce topic_with_delivery_callback Kafka.partition_unassigned ~msg_id:156 "message 6"; 
+   Kafka.produce topic_with_delivery_callback Kafka.Unassigned ~msg_id:156 "message 6";
    Kafka.poll_events producer_with_delivery_callback |> ignore;
    assert (!last_msg_id = 156);
    assert (!last_error = None);
@@ -200,7 +203,7 @@ let main =
    let open Kafka_helpers in
    let stop_at_end = true in
    let iterable_of_list xs f = List.iter f xs in
-   let sink = Kafka_producer.partition_sink "test" Kafka.partition_unassigned in
+   let sink = Kafka_producer.partition_sink "test" Kafka.Unassigned in
    let src = Kafka_consumer.fold_topic ~stop_at_end "test" [] in
    let offsets = [0,Kafka.offset_tail 3; 1,Kafka.offset_tail 3] in
    
