@@ -10,7 +10,6 @@ type queue
 
 (* Partition id, from 0 to topic partition count -1 *)
 type partition = int
-type partition_assignment = int option
 
 (* Offset in a partition *)
 type offset = int64
@@ -108,7 +107,7 @@ val handler_name : handler -> string
    to assign a partition after the key provided by [produce_key_msg].
  *)
 val new_topic :
-    ?partitioner_callback:(int -> string-> partition_assignment)  (* [partitioner partition_count key] assigns a partition for a key in [0..partition_count-1] *)
+    ?partitioner_callback:(int -> string -> int option)(* [partitioner partition_count key] assigns a partition for a key in [0..partition_count-1] *)
   -> handler                                           (* consumer or producer *)
   -> string                                            (* topic name *)
   -> (string*string) list                              (* topic option *)

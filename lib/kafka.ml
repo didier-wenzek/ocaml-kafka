@@ -2,7 +2,6 @@ type handler
 type topic
 type queue
 type partition = int
-type partition_assignment = int option
 type offset = int64
 
 type message =
@@ -65,7 +64,7 @@ external destroy_handler : handler -> unit = "ocaml_kafka_destroy_handler"
 external handler_name : handler -> string = "ocaml_kafka_handler_name"
 
 external new_topic :
-     ?partitioner_callback:(int -> string -> partition_assignment)
+     ?partitioner_callback:(int -> string -> int option)
   -> handler
   -> string
   -> (string*string) list
