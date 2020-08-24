@@ -312,7 +312,11 @@ int32_t ocaml_kafka_partitioner_callback(const rd_kafka_topic_t *topic, const vo
   memcpy(String_val(caml_key), key, keylen);
 
   caml_partition = caml_callback2(caml_callback, caml_partition_cnt, caml_key);
-  CAMLreturn(Int_val(caml_partition));
+  int32_t partition = RD_KAFKA_PARTITION_UA;
+  if (Is_block(caml_partition) && Tag_val(caml_partition) == 0) {
+    partition = Int_val(Field(caml_partition, 0));
+  }
+  CAMLreturn(partition);
 }
 
 extern CAMLprim
@@ -551,7 +555,11 @@ value ocaml_kafka_produce(value caml_kafka_topic, value caml_kafka_partition, va
   CAMLlocal1(caml_key);
 
   rd_kafka_topic_t *topic = get_handler(caml_kafka_topic);
-  int32_t partition = Int_val(caml_kafka_partition);
+  int32_t partition = RD_KAFKA_PARTITION_UA;
+  if (Is_block(caml_kafka_partition) && Tag_val(caml_kafka_partition) == 0) {
+    partition = Int_val(Field(caml_kafka_partition, 0));
+  }
+
 
   void* payload = String_val(caml_msg);
   size_t len = caml_string_length(caml_msg);

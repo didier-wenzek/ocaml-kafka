@@ -13,7 +13,7 @@ let main (brokers, topic, messages) =
   Log.Global.debug "Got a topic";
   let partition = 0 in
   let defs =
-    List.map ~f:(Kafka_async.produce producer topic partition) messages
+    List.map ~f:(Kafka_async.produce producer topic ~partition) messages
   in
   let%bind _ = Deferred.Result.all defs in
   Log.Global.info "Produced successfully";

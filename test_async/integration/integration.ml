@@ -34,7 +34,7 @@ let main_result host port topic =
   let messages = List.init 3 ~f:(Fn.const (make_random_message rng)) in
   let%bind _ =
     messages
-    |> List.map ~f:(Kafka_async.produce producer producer_topic partition)
+    |> List.map ~f:(Kafka_async.produce producer producer_topic ~partition)
     |> Deferred.Result.all
   in
   Log.Global.debug "Emitted messages";

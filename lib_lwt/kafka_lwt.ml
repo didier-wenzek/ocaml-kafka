@@ -24,12 +24,12 @@ let next_msg_id =
     let id = !n in n := id + 1 ; id
   in get_next 
 
-let produce topic partition ?key msg =
+let produce topic ?partition ?key msg =
   let msg_id = next_msg_id () in
   let waiter, wakener = Lwt.wait () in
 
   Hashtbl.add pending_msg msg_id wakener;
-  Kafka.produce topic partition ?key ~msg_id msg;
+  Kafka.produce topic ?partition ?key ~msg_id msg;
   waiter
 
 let delivery_callback msg_id error =

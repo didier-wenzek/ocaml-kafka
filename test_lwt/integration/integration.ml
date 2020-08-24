@@ -8,7 +8,7 @@ let produce brokers topic_name keyed_messages =
   let producer = Kafka_lwt.new_producer ["metadata.broker.list",brokers] in
   let topic = Kafka.new_topic producer topic_name [] in
   let send (key,msg) =
-    Kafka_lwt.produce topic Kafka.partition_unassigned ~key msg
+    Kafka_lwt.produce topic ~key msg
   in
   let loop () =
     Lwt_list.iter_s send keyed_messages
