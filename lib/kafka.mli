@@ -107,7 +107,7 @@ val handler_name : handler -> string
    to assign a partition after the key provided by [produce_key_msg].
  *)
 val new_topic :
-    ?partitioner_callback:(int -> string -> int option)(* [partitioner partition_count key] assigns a partition for a key in [0..partition_count-1] *)
+    ?partitioner_callback:(int -> string -> partition option) (* [partitioner partition_count key] assigns a partition for a key in [0..partition_count-1] *)
   -> handler                                           (* consumer or producer *)
   -> string                                            (* topic name *)
   -> (string*string) list                              (* topic option *)
@@ -134,7 +134,7 @@ val topic_name : topic -> string
   This id will be passed to the delivery callback of the producer,
   once the message delivered.
 *)
-val produce: topic -> ?partition:int -> ?key:string -> ?msg_id:msg_id -> string -> unit
+val produce: topic -> ?partition:partition -> ?key:string -> ?msg_id:msg_id -> string -> unit
 
 (* Returns the current out queue length: messages waiting to be sent to, or acknowledged by, the broker. *)
 val outq_len : handler -> int

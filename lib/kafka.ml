@@ -64,7 +64,7 @@ external destroy_handler : handler -> unit = "ocaml_kafka_destroy_handler"
 external handler_name : handler -> string = "ocaml_kafka_handler_name"
 
 external new_topic :
-     ?partitioner_callback:(int -> string -> int option)
+     ?partitioner_callback:(int -> string -> partition option)
   -> handler
   -> string
   -> (string*string) list

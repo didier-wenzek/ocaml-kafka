@@ -16,7 +16,7 @@ val partition_sink:
      ?producer_props:(string*string) list
   -> ?topic_props:(string*string) list
   -> ?delivery_error_handler:string push_error_handler     (* The default is to raise an error *)
-  -> string -> partition:int option                        (* topic name and partition to stream into *)
+  -> string -> partition:Kafka.partition option            (* topic name and partition to stream into *)
   -> (string,unit) sink  
 
 val topic_sink:
