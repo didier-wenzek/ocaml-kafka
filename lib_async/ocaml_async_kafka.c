@@ -229,7 +229,10 @@ CAMLprim value ocaml_kafka_async_produce(value caml_kafka_topic, value caml_kafk
   CAMLlocal2(caml_key, result);
 
   rd_kafka_topic_t *topic = handler_val(caml_kafka_topic);
-  int32_t partition = Int_val(caml_kafka_partition);
+  int32_t partition = RD_KAFKA_PARTITION_UA;
+  if (Is_block(caml_kafka_partition) && Tag_val(caml_kafka_partition) == 0) {
+    partition = Int_val(Field(caml_kafka_partition, 0));
+  }
 
   void* payload = String_val(caml_msg);
   size_t len = caml_string_length(caml_msg);
