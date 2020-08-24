@@ -25,7 +25,7 @@ Kafka is a high-throughput distributed messaging system.
   (depends
     (ocaml (>= 4.02.3))
     (kafka (= :version))
-    (cmdliner (>= 1.0.0))
+    cmdliner
     lwt
     conf-zlib
     (dune (>= 1.10)))
