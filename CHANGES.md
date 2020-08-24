@@ -1,3 +1,7 @@
+O.6
+===
+* Change signature of Kafka.produce [breaking change]
+
 0.5
 ===
 
