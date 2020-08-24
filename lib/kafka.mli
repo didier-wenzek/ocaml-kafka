@@ -119,12 +119,11 @@ val destroy_topic : topic -> unit
 (* Kafka topic handle name *)
 val topic_name : topic -> string
 
-(* [produce topic partition message]
+(* [produce topic message]
   produces and sends a single message to the broker.
 
-  The [partition] may be
-  - either a proper partition (0..N-1)
-  - or [Kafka.partition_unassigned].
+  An optional [partition] argument may be passed to specify the partition to
+  emit to (0..N-1), otherwise a partition will be automatically determined.
 
   An optional key may be attached to the message.
   This key will be used by the partitioner of the topic handler.
