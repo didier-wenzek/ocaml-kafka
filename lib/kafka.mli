@@ -107,7 +107,7 @@ val handler_name : handler -> string
    to assign a partition after the key provided by [produce_key_msg].
  *)
 val new_topic :
-    ?partitioner_callback:(int -> string-> partition)  (* [partitioner partition_count key] assigns a partition for a key in [0..partition_count-1] *)
+    ?partitioner_callback:(int -> string -> partition option) (* [partitioner partition_count key] assigns a partition for a key in [0..partition_count-1] *)
   -> handler                                           (* consumer or producer *)
   -> string                                            (* topic name *)
   -> (string*string) list                              (* topic option *)
@@ -119,12 +119,11 @@ val destroy_topic : topic -> unit
 (* Kafka topic handle name *)
 val topic_name : topic -> string
 
-(* [produce topic partition message]
+(* [produce topic message]
   produces and sends a single message to the broker.
 
-  The [partition] may be
-  - either a proper partition (0..N-1)
-  - or [Kafka.partition_unassigned].
+  An optional [partition] argument may be passed to specify the partition to
+  emit to (0..N-1), otherwise a partition will be automatically determined.
 
   An optional key may be attached to the message.
   This key will be used by the partitioner of the topic handler.
@@ -134,9 +133,7 @@ val topic_name : topic -> string
   This id will be passed to the delivery callback of the producer,
   once the message delivered.
 *)
-val produce: topic -> partition -> ?key:string -> ?msg_id:msg_id -> string -> unit
-
-val partition_unassigned: partition
+val produce: topic -> ?partition:partition -> ?key:string -> ?msg_id:msg_id -> string -> unit
 
 (* Returns the current out queue length: messages waiting to be sent to, or acknowledged by, the broker. *)
 val outq_len : handler -> int

@@ -9,7 +9,7 @@ type 'a response = ('a, Kafka.error * string) result
 val produce :
   producer ->
   Kafka.topic ->
-  Kafka.partition ->
+  ?partition:Kafka.partition ->
   ?key:string ->
   string ->
   unit response Deferred.t
