@@ -14,7 +14,7 @@ let partition_sink
   ?(producer_props = ["metadata.broker.list","localhost:9092"])
   ?(topic_props = [])
   ?(delivery_error_handler = raise_on_error)
-  topic_name partition
+  topic_name ~partition
 = fun () ->
   let producer = Kafka.new_producer producer_props in
   let topic = Kafka.new_topic producer topic_name topic_props in
@@ -24,7 +24,7 @@ let partition_sink
        Kafka.wait_delivery ~max_outq_len producer;
        push msg
     in
-    try Kafka.produce topic partition msg
+    try Kafka.produce topic ?partition msg
     with error -> delivery_error_handler wait_and_push msg error
   in
   let term () = (Kafka.wait_delivery producer; Kafka.destroy_topic topic; Kafka.destroy_handler producer) in
@@ -45,7 +45,7 @@ let topic_sink
        Kafka.wait_delivery ~max_outq_len producer;
        push p_msg
     in
-    try Kafka.produce topic (Kafka.Assigned (partition mod partition_count)) msg
+    try Kafka.produce topic ~partition:(partition mod partition_count) msg
     with error -> delivery_error_handler wait_and_push (partition,msg) error
   in
   let term () = (Kafka.wait_delivery producer; Kafka.destroy_topic topic; Kafka.destroy_handler producer) in

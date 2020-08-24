@@ -13,7 +13,7 @@ let info =
 let sendto_topic brokers topic_name partition =
   let producer = Kafka_lwt.new_producer ["metadata.broker.list",brokers] in
   let topic = Kafka.new_topic producer topic_name [] in
-  let send msg () = Kafka_lwt.produce topic partition msg in
+  let send msg () = Kafka_lwt.produce topic ?partition msg in
   let report_error msg error = Lwt_io.fprintf Lwt_io.stderr "%s:%s\n%!" (Printexc.to_string error) msg in
   let rec loop () = try_bind
     (fun () -> Lwt_io.read_line Lwt_io.stdin)
@@ -37,19 +37,9 @@ let topic =
   let doc = "The topic to feed." in
   Arg.(required & pos 0 (some string) None & info [] ~docv:"TOPIC" ~doc)
 
-let partition_conv = Arg.conv ((fun s ->
-  match int_of_string s with
-  | n -> Ok (Kafka.Assigned n)
-  | exception _ -> Error (`Msg "Integer required")), (fun fmt v ->
-      let s = match v with
-      | Kafka.Unassigned -> "Unassigned"
-      | Kafka.Assigned n -> Printf.sprintf "Assigned %d" n
-      in
-      Format.pp_print_string fmt s))
- 
 let partition =
   let doc = "The partition to feed (all if unassigned)." in
-  Arg.(value & pos 1 partition_conv Kafka.Unassigned & info [] ~docv:"PARTITION" ~doc)
+  Arg.(value & opt (some int) None & info [] ~docv:"PARTITION" ~doc)
  
 let sendto_topic_t = Term.(pure sendto_topic $ brokers $ topic $ partition)
 

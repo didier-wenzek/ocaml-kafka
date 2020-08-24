@@ -50,9 +50,9 @@ let timeout_ms = 1000;;
 Kafka.consume_start consumer_topic partition Kafka.offset_end;;
 
 (* Produce some messages *)
-Kafka.produce producer_topic partition "message 0";;
-Kafka.produce producer_topic partition "message 1";;
-Kafka.produce producer_topic partition "message 2";;
+Kafka.produce producer_topic ~partition "message 0";;
+Kafka.produce producer_topic ~partition "message 1";;
+Kafka.produce producer_topic ~partition "message 2";;
 
 (* Consume messages *)
 let rec consume t p = match Kafka.consume ~timeout_ms t p with

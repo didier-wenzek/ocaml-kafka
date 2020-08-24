@@ -72,7 +72,7 @@ val new_producer : ?delivery_check_period_ms:int -> (string*string) list -> Kafk
 
   Immediately returns a [Lwt.t] thread, which will be awaken on success or failure.
 *)
-val produce: Kafka.topic -> Kafka.partition_assignment -> ?key:string -> string -> unit Lwt.t
+val produce: Kafka.topic -> ?partition:int -> ?key:string -> string -> unit Lwt.t
 
 (** Wait that messages are delivered (waiting that less than max_outq_len messages are pending). *)
 val wait_delivery: ?timeout_ms:int -> ?max_outq_len:int -> Kafka.handler -> unit Lwt.t

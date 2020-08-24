@@ -10,7 +10,7 @@ type queue
 
 (* Partition id, from 0 to topic partition count -1 *)
 type partition = int
-type partition_assignment = Assigned of int | Unassigned
+type partition_assignment = int option
 
 (* Offset in a partition *)
 type offset = int64
@@ -135,7 +135,7 @@ val topic_name : topic -> string
   This id will be passed to the delivery callback of the producer,
   once the message delivered.
 *)
-val produce: topic -> partition_assignment -> ?key:string -> ?msg_id:msg_id -> string -> unit
+val produce: topic -> ?partition:int -> ?key:string -> ?msg_id:msg_id -> string -> unit
 
 (* Returns the current out queue length: messages waiting to be sent to, or acknowledged by, the broker. *)
 val outq_len : handler -> int

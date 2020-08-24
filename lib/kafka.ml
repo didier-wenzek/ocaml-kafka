@@ -2,7 +2,7 @@ type handler
 type topic
 type queue
 type partition = int
-type partition_assignment = Assigned of int | Unassigned
+type partition_assignment = int option
 type offset = int64
 
 type message =
@@ -79,8 +79,8 @@ external topic_name : topic -> string = "ocaml_kafka_topic_name"
   While the underlying library, librdkafka, allows any void* msg_opaque data.
   This is to avoid issues with the garbage collector
 *)
-external produce_idmsg: topic -> partition_assignment -> ?key:string -> msg_id -> string -> unit = "ocaml_kafka_produce"
-     let produce topic partition ?key ?(msg_id = 0) msg = produce_idmsg topic partition ?key msg_id msg
+external produce_idmsg: topic -> ?partition:int -> ?key:string -> msg_id -> string -> unit = "ocaml_kafka_produce"
+     let produce topic ?partition ?key ?(msg_id = 0) msg = produce_idmsg topic ?partition ?key msg_id msg
 external outq_len : handler -> int = "ocaml_kafka_outq_len"
 external poll: handler -> int -> int = "ocaml_kafka_poll"
 let poll_events ?(timeout_ms = 1000) handler = poll handler timeout_ms
