@@ -137,7 +137,7 @@ rd_kafka_conf_res_t configure_handler(rd_kafka_conf_t *conf, value caml_options,
     conf_err = rd_kafka_conf_set(conf, String_val(caml_option_name), String_val(caml_option_value), errstr, errstr_size);
     if (conf_err) return conf_err;
   }
-  CAMLreturn(RD_KAFKA_CONF_OK);
+  CAMLreturnT(rd_kafka_conf_res_t, RD_KAFKA_CONF_OK);
 };
 
 static
@@ -156,7 +156,7 @@ rd_kafka_conf_res_t configure_topic(rd_kafka_topic_conf_t *conf, value caml_opti
     conf_err = rd_kafka_topic_conf_set(conf, String_val(caml_option_name), String_val(caml_option_value), errstr, errstr_size);
     if (conf_err) return conf_err;
   }
-  CAMLreturn(RD_KAFKA_CONF_OK);
+  CAMLreturnT(rd_kafka_conf_res_t, RD_KAFKA_CONF_OK);
 };
 
 extern CAMLprim
@@ -316,7 +316,7 @@ int32_t ocaml_kafka_partitioner_callback(const rd_kafka_topic_t *topic, const vo
   if (Is_block(caml_partition) && Tag_val(caml_partition) == 0) {
     partition = Int_val(Field(caml_partition, 0));
   }
-  CAMLreturn(partition);
+  CAMLreturnT(int32_t, partition);
 }
 
 extern CAMLprim
