@@ -37,7 +37,7 @@ Offsets
 Resources
  - [x] Free messages once consumed using rd_kafka_message_destroy.
  - [ ] Function: Kafka.wait_destroyed.
- - [ ] rd_kafka_flush
+ - [x] rd_kafka_flush
 
 Meta-data
  - [x] Value Kafka.librdkafka_version: string.

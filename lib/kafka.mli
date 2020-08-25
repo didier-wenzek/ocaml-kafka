@@ -139,8 +139,14 @@ val topic_name : topic -> string
   An optional id may be attached to the message.
   This id will be passed to the delivery callback of the producer,
   once the message delivered.
+
+  Since producing is asynchronous, you should call [Kafka.flush] before you destroy the producer.
+  Otherwise, any outstanding messages will be silently discarded.
 *)
 val produce: topic -> ?partition:partition -> ?key:string -> ?msg_id:msg_id -> string -> unit
+
+(** Wait until all outstanding produce requests are completed. *)
+val flush: ?timeout_ms:int -> handler -> unit
 
 (** Returns the current out queue length: messages waiting to be sent to, or acknowledged by, the broker. *)
 val outq_len : handler -> int

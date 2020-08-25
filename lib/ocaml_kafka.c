@@ -585,6 +585,22 @@ value ocaml_kafka_produce(value caml_kafka_topic, value caml_kafka_partition, va
 }
 
 extern CAMLprim
+value ocaml_kafka_flush(value caml_kafka_handler, value caml_kafka_timeout)
+{
+  CAMLparam2(caml_kafka_handler, caml_kafka_timeout);
+
+  rd_kafka_t *handler = get_handler(caml_kafka_handler);
+  int timeout = Int_val(caml_kafka_timeout);
+
+  rd_kafka_resp_err_t rd_errno = rd_kafka_flush(handler, timeout);
+  if (rd_errno) {
+     RAISE(rd_errno, "Failed to flush all messages (%s)", rd_kafka_err2str(rd_errno));
+  }
+
+  CAMLreturn(Val_unit);
+
+}
+extern CAMLprim
 value ocaml_kafka_outq_len(value caml_kafka_handler)
 {
   CAMLparam1(caml_kafka_handler);

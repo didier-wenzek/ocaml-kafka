@@ -80,6 +80,8 @@ external topic_name : topic -> string = "ocaml_kafka_topic_name"
 *)
 external produce_idmsg: topic -> ?partition:int -> ?key:string -> msg_id -> string -> unit = "ocaml_kafka_produce"
      let produce topic ?partition ?key ?(msg_id = 0) msg = produce_idmsg topic ?partition ?key msg_id msg
+external flush: handler -> int -> unit = "ocaml_kafka_flush"
+     let flush ?(timeout_ms = 1000) handler = flush handler timeout_ms
 external outq_len : handler -> int = "ocaml_kafka_outq_len"
 external poll: handler -> int -> int = "ocaml_kafka_poll"
 let poll_events ?(timeout_ms = 1000) handler = poll handler timeout_ms

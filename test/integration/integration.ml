@@ -61,6 +61,7 @@ let main =
    Kafka.produce producer_topic ~partition "message 0";
    Kafka.produce producer_topic ~partition "message 1";
    Kafka.produce producer_topic ~partition "message 2";
+   Kafka.flush producer;
    
    (* Consume messages *)
    let rec consume t p = match Kafka.consume ~timeout_ms t p with
@@ -94,6 +95,7 @@ let main =
    Kafka.produce producer_topic ~partition "message 0 bis";
    Kafka.produce producer_topic ~partition "message 1 bis";
    Kafka.produce producer_topic ~partition "message 2 bis";
+   Kafka.flush producer;
 
    let messages = Kafka.consume_batch ~timeout_ms:3000 ~msg_count:3 consumer_topic partition in
    assert (List.fold_left (fun acc -> function | Kafka.Message(_,_,_,msg,_) -> acc @ [msg] | _ -> acc) [] messages
@@ -111,6 +113,7 @@ let main =
    Kafka.produce producer_topic "message 3";
    Kafka.produce producer_topic "message 4";
    Kafka.produce producer_topic "message 5";
+   Kafka.flush producer;
 
    let rec consume_queue (n,m) = match Kafka.consume_queue ~timeout_ms queue with
       | Kafka.Message(topic,partition,_,_,_) -> (
@@ -140,6 +143,7 @@ let main =
    Kafka.produce producer_topic "message 0 ter";
    Kafka.produce producer_topic "message 1 ter";
    Kafka.produce producer_topic "message 2 ter";
+   Kafka.flush producer;
 
    let messages = Kafka.consume_batch_queue ~timeout_ms:3000 ~msg_count:5 queue in
    assert (List.sort compare (List.fold_left (fun acc -> function
@@ -157,6 +161,7 @@ let main =
    (* Produce some keyed messages *)
    let key_msg_pairs = List.map (fun k -> (k,"message "^k)) [""; "0"; "11"; "222"; "a"; "bb"; "ccc" ] in
    key_msg_pairs |> List.iter (fun (key,msg) -> Kafka.produce partitioner_topic ~key msg);
+   Kafka.flush producer;
    
    (* Consume the keyed messages, checking they have been received on the right partition *)
    let rec consume_k t = match Kafka.consume_queue t with
