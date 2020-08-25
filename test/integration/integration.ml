@@ -143,7 +143,6 @@ let main =
    Kafka.produce producer_topic "message 0 ter";
    Kafka.produce producer_topic "message 1 ter";
    Kafka.produce producer_topic "message 2 ter";
-   Kafka.flush producer;
 
    let messages = Kafka.consume_batch_queue ~timeout_ms:3000 ~msg_count:5 queue in
    assert (List.sort compare (List.fold_left (fun acc -> function
