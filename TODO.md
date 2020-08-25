@@ -10,6 +10,10 @@ Basic:
  - [x] Async support.
  - [ ] Support for the high-level KafkaConsumer interface (rd_kafka_subscribe)
 
+Errors:
+ - [ ] Update the list of errors
+ - [ ] Check if an error is fatale/retriable
+
 Callbacks:
  - [x] Support for delivery report callback.
  - [ ] Support for error and log callbacks.
@@ -22,6 +26,7 @@ Messages
  - [x] Wrap messages in message enveloppes with topic,partition,offset,payload,key.
  - [x] Improve error handling on consume : PartitionEnd vs timeout or error.
  - [ ] Support for timestamp of a message.
+ - [ ] Do we need to support headers?
 
 Offsets
  - [x] Support for stored offsets.
@@ -38,6 +43,7 @@ Meta-data
  - [x] Value Kafka.librdkafka_version: string.
  - [x] Meta-data: topic list, partition list.
  - [ ] Meta-data: server list, list of replica.
+ - [ ] Move all meta-data related values in `Kafka.Metadata`
 
 Lwt:
  - [ ] Do we have to distinguish types: consumer vs producer ?
