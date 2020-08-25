@@ -17,6 +17,10 @@ test: integration
 clean:
 	dune clean
 
+.PHONY: doc
+doc:
+	dune build @doc
+
 # Travis sets PACKAGE to determine which subpackages to build
 # `kafka` is always included and if unset all packages will be tested
 ifdef PACKAGE

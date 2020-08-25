@@ -1,8 +1,8 @@
-(* Asynchronous Kafka interface using Lwt.
+(** Asynchronous Kafka interface using Lwt.
 
    For consumers, things work mostly as without Lwt
    and non blocking versions are only provided for consume functions
-   ([Kafka_lwt.consume], [Kafka_lwt.consume_queue], [Kafka_lwt.consume_batch] and [[Kafka_lwt.consume_batch_queue]).
+   ([Kafka_lwt.consume], [Kafka_lwt.consume_queue], [Kafka_lwt.consume_batch] and [Kafka_lwt.consume_batch_queue]).
    These functions use topics or queues prepared
    using either [Kafka.new_topic] or [Kafka.new_queue];
    and assume that consuption has been started using
@@ -16,7 +16,7 @@
    and awaking [Kafka_lwt.produce] when delivery succeeds or fails.
 *)
 
-(* [consume ~timeout_ms topic partition]
+(** [consume ~timeout_ms topic partition]
    consumes a single message from topic [topic] and [partition].
    
    Waits at most [timeout_ms] milli-seconds for a message to be received.
@@ -26,7 +26,7 @@
 *)
 val consume : ?timeout_ms:int -> Kafka.topic -> Kafka.partition -> Kafka.message Lwt.t
 
-(* [consume_queue ~timeout_ms queue]
+(** [consume_queue ~timeout_ms queue]
    consumes a single message from topics and partitions
    attached to the queue using [Kafka.consume_start_queue].
 
@@ -35,7 +35,7 @@ val consume : ?timeout_ms:int -> Kafka.topic -> Kafka.partition -> Kafka.message
 *)
 val consume_queue : ?timeout_ms:int -> Kafka.queue -> Kafka.message Lwt.t
 
-(* [consume_batch ~timeout_ms ~msg_count topic partition]
+(** [consume_batch ~timeout_ms ~msg_count topic partition]
    consumes up to [msg_count] messages from [topic] and [partition],
    taking at most [timeout_ms] to collect the messages
    (hence, it may return less messages than requested).
@@ -45,7 +45,7 @@ val consume_queue : ?timeout_ms:int -> Kafka.queue -> Kafka.message Lwt.t
 *)
 val consume_batch : ?timeout_ms:int -> ?msg_count:int -> Kafka.topic -> Kafka.partition -> Kafka.message list Lwt.t
 
-(* [consume_batch_queue ~timeout_ms ~msg_count queue]
+(** [consume_batch_queue ~timeout_ms ~msg_count queue]
    consumes up to [msg_count] messages from the [queue],
    taking at most [timeout_ms] to collect the messages
    (hence, it may return less messages than requested).
@@ -55,7 +55,7 @@ val consume_batch : ?timeout_ms:int -> ?msg_count:int -> Kafka.topic -> Kafka.pa
 *)
 val consume_batch_queue : ?timeout_ms:int -> ?msg_count:int -> Kafka.queue -> Kafka.message list Lwt.t
 
-(* Create a kafka handler aimed to produce messages using [Kafka_lwt.produce].
+(** Create a kafka handler aimed to produce messages using [Kafka_lwt.produce].
 
  - Same options as [Kafka.new_producer],
    but the option 'delivery.report.only.error' which is enforced to false.
@@ -66,7 +66,7 @@ val consume_batch_queue : ?timeout_ms:int -> ?msg_count:int -> Kafka.queue -> Ka
 *)
 val new_producer : ?delivery_check_period_ms:int -> (string*string) list -> Kafka.handler
 
-(* Produces and sends a single message to the broker.
+(** Produces and sends a single message to the broker.
 
   Same parameters as [Kafka.produce] but without message id (the latter beeing assigned by the system).
 

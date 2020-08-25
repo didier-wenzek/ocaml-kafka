@@ -3,48 +3,49 @@
 (** Version of the librdkafka library used by this binding. *)
 val librdkafka_version : string
 
-(* Handler to a cluster of kafka brokers. Either a producer or a consumer. *)
+(** Handler to a cluster of kafka brokers. Either a producer or a consumer. *)
 type handler
 
-(* A handler to a kafka topic. *)
+(** A handler to a kafka topic. *)
 type topic
 
-(* A message queue allows the application to re-route consumed messages
+(** A message queue allows the application to re-route consumed messages
    from multiple topics and partitions into one single queue point. *)
 type queue
 
-(* Partition id, from 0 to topic partition count -1 *)
+(** Partition id, from 0 to topic partition count -1 *)
 type partition = int
 
-(* Offset in a partition *)
+(** Offset in a partition *)
 type offset = int64
 
-(* A message consumed from a consumer or a queue. *)
+(** A message consumed from a consumer or a queue. *)
 type message =
   | Message of topic * partition * offset * string * string option (* topic, partition, offset, payload, optional key *)
   | PartitionEnd of topic * partition * offset                     (* topic, partition, offset *)
 
-(* Message identifier used by producers for delivery callbacks.*)
+(** Message identifier used by producers for delivery callbacks.*)
 type msg_id = int
 
+(** Error *)
 type error =
   (* Internal errors to rdkafka *)
-  | BAD_MSG                             (* Received message is incorrect *)
-  | BAD_COMPRESSION                     (* Bad/unknown compression *)
-  | DESTROY                             (* Broker is going away *)
-  | FAIL                                (* Generic failure *)
-  | TRANSPORT                           (* Broker transport error *)
-  | CRIT_SYS_RESOURCE                   (* Critical system resource failure *)
-  | RESOLVE                             (* Failed to resolve broker.  *)
-  | MSG_TIMED_OUT                       (* Produced message timed out. *)
-  | UNKNOWN_PARTITION                   (* Permanent: Partition does not exist in cluster. *)
-  | FS                                  (* File or filesystem error *)
-  | UNKNOWN_TOPIC                       (* Permanent: Topic does not exist  in cluster. *)
-  | ALL_BROKERS_DOWN                    (* All broker connections  are down. *)
-  | INVALID_ARG                         (* Invalid argument, or invalid configuration *)
-  | TIMED_OUT                           (* Operation timed out *)
-  | QUEUE_FULL                          (* Queue is full *)
-  | ISR_INSUFF                          (* ISR count < required.acks *)
+  | BAD_MSG                             (** Received message is incorrect *)
+  | BAD_COMPRESSION                     (** Bad/unknown compression *)
+  | DESTROY                             (** Broker is going away *)
+  | FAIL                                (** Generic failure *)
+  | TRANSPORT                           (** Broker transport error *)
+  | CRIT_SYS_RESOURCE                   (** Critical system resource failure *)
+  | RESOLVE                             (** Failed to resolve broker.  *)
+  | MSG_TIMED_OUT                       (** Produced message timed out. *)
+  | UNKNOWN_PARTITION                   (** Permanent: Partition does not exist in cluster. *)
+  | FS                                  (** File or filesystem error *)
+  | UNKNOWN_TOPIC                       (** Permanent: Topic does not exist  in cluster. *)
+  | ALL_BROKERS_DOWN                    (** All broker connections  are down. *)
+  | INVALID_ARG                         (** Invalid argument, or invalid configuration *)
+  | TIMED_OUT                           (** Operation timed out *)
+  | QUEUE_FULL                          (** Queue is full *)
+  | ISR_INSUFF                          (** ISR count < required.acks *)
 
   (* Standard Kafka errors *)
   | UNKNOWN
@@ -62,26 +63,27 @@ type error =
   | OFFSET_METADATA_TOO_LARGE
 
   (* Configuration errors *)
-  | CONF_UNKNOWN                        (* Unknown configuration name. *)
-  | CONF_INVALID                        (* Invalid configuration value. *)
+  | CONF_UNKNOWN                        (** Unknown configuration name. *)
+  | CONF_INVALID                        (** Invalid configuration value. *)
 
+(** Exception *)
 exception Error of error * string
 
-(* Create a kafka handler aimed to consume messages.
+(** Create a kafka handler aimed to consume messages.
 
  - A single option is required : "metadata.broker.list", which is a comma sepated list of "host:port".
  - For a list of options,
-   see https://github.com/edenhill/librdkafka/blob/master/CONFIGURATION.md
-   and https://kafka.apache.org/documentation.html#configuration
+   see {{:https://github.com/edenhill/librdkafka/blob/master/CONFIGURATION.md} librdkafka configuration}
+   and {{:https://kafka.apache.org/documentation.html#configuration} Kafka configuration}.
 *)
 val new_consumer : (string*string) list -> handler
 
-(* Create a kafka handler aimed to produce messages.
+(** Create a kafka handler aimed to produce messages.
 
  - A single option is required : "metadata.broker.list", which is a comma sepated list of "host:port".
  - For a list of options,
-   see https://github.com/edenhill/librdkafka/blob/master/CONFIGURATION.md
-   and https://kafka.apache.org/documentation.html#configuration
+   see {{:https://github.com/edenhill/librdkafka/blob/master/CONFIGURATION.md} librdkafka configuration}
+   and {{:https://kafka.apache.org/documentation.html#configuration} Kafka configuration}.
 
  - A delivery callback may be attached to the producer.
    This callback will be call after each message delivery
@@ -97,19 +99,19 @@ val new_producer :
   -> (string*string) list
   -> handler
 
-(* Destroy Kafka handle (either a consumer or a producer) *)
+(** Destroy Kafka handle (either a consumer or a producer) *)
 val destroy_handler : handler -> unit
 
-(* Kafka handle name *)
+(** Kafka handle name *)
 val handler_name : handler -> string
 
-(* Creates a new topic handler for the kafka topic with the given name.
+(** Creates a new topic handler for the kafka topic with the given name.
 
  - For a list of options,
-   see https://github.com/edenhill/librdkafka/blob/master/CONFIGURATION.md
+   see {{:https://github.com/edenhill/librdkafka/blob/master/CONFIGURATION.md} librdkafka configuration}
 
  - For a producer, a partition_callback may be provided
-   to assign a partition after the key provided by [produce_key_msg].
+   to assign a partition after the key provided by [produce ~key msg].
  *)
 val new_topic :
     ?partitioner_callback:(int -> string -> partition option) (* [partitioner partition_count key] assigns a partition for a key in [0..partition_count-1] *)
@@ -118,13 +120,13 @@ val new_topic :
   -> (string*string) list                              (* topic option *)
   -> topic
 
-(* Destroy topic handle *)
+(** Destroy topic handle *)
 val destroy_topic : topic -> unit
 
-(* Kafka topic handle name *)
+(** Kafka topic handle name *)
 val topic_name : topic -> string
 
-(* [produce topic message]
+(** [produce topic message]
   produces and sends a single message to the broker.
 
   An optional [partition] argument may be passed to specify the partition to
@@ -140,10 +142,10 @@ val topic_name : topic -> string
 *)
 val produce: topic -> ?partition:partition -> ?key:string -> ?msg_id:msg_id -> string -> unit
 
-(* Returns the current out queue length: messages waiting to be sent to, or acknowledged by, the broker. *)
+(** Returns the current out queue length: messages waiting to be sent to, or acknowledged by, the broker. *)
 val outq_len : handler -> int
 
-(* Polls the provided kafka handle for events.
+(** Polls the provided kafka handle for events.
 
   Events will cause application provided callbacks to be called.
 
@@ -164,7 +166,7 @@ val poll_events: ?timeout_ms:int -> handler -> int
 (** Wait that messages are delivered (waiting that less than max_outq_len messages are pending). *)
 val wait_delivery: ?timeout_ms:int -> ?max_outq_len:int -> handler -> unit
 
-(* [consume_start topic partition offset]
+(** [consume_start topic partition offset]
   starts consuming messages for topic [topic] and [partition] at [offset].
 
   Offset may either be a proper offset (0..N)
@@ -184,13 +186,13 @@ val offset_end: offset
 val offset_stored: offset
 val offset_tail: int -> offset
 
-(* [consume_stop topic partition]
+(** [consume_stop topic partition]
    stop consuming messages for topic [topic] and [partition],
    purging all messages currently in the local queue.
 *)
 val consume_stop : topic -> partition -> unit
 
-(* [consume ~timeout_ms topic partition]
+(** [consume ~timeout_ms topic partition]
    consumes a single message from topic [topic] and [partition].
    
    Waits at most [timeout_ms] milli-seconds for a message to be received.
@@ -200,7 +202,7 @@ val consume_stop : topic -> partition -> unit
 *)
 val consume : ?timeout_ms:int -> topic -> partition -> message
 
-(* [consume_batch ~timeout_ms ~msg_count topic partition]
+(** [consume_batch ~timeout_ms ~msg_count topic partition]
    consumes up to [msg_count] messages from [topic] and [partition],
    taking at most [timeout_ms] to collect the messages
    (hence, it may return less messages than requested).
@@ -210,13 +212,13 @@ val consume : ?timeout_ms:int -> topic -> partition -> message
 *)
 val consume_batch : ?timeout_ms:int -> ?msg_count:int -> topic -> partition -> message list
 
-(* Create a new message queue. *)
+(** Create a new message queue. *)
 val new_queue : handler -> queue
 
-(* Destroy a message queue. *)
+(** Destroy a message queue. *)
 val destroy_queue : queue -> unit
 
-(* [consume_start_queue queue topic partition offset]
+(** [consume_start_queue queue topic partition offset]
   starts consuming messages for topic [topic] and [partition] at [offset]
   and routes consumed messages to the given queue.
 
@@ -226,7 +228,7 @@ val destroy_queue : queue -> unit
 *)
 val consume_start_queue : queue -> topic -> partition -> offset -> unit
 
-(* [consume_queue ~timeout_ms queue]
+(** [consume_queue ~timeout_ms queue]
    consumes a single message from topics and partitions
    attached to the queue using [Kafka.consume_start_queue].
 
@@ -235,7 +237,7 @@ val consume_start_queue : queue -> topic -> partition -> offset -> unit
 *)
 val consume_queue : ?timeout_ms:int -> queue -> message
 
-(* [consume_batch_queue ~timeout_ms ~msg_count queue]
+(** [consume_batch_queue ~timeout_ms ~msg_count queue]
    consumes up to [msg_count] messages from the [queue],
    taking at most [timeout_ms] to collect the messages
    (hence, it may return less messages than requested).
@@ -245,7 +247,7 @@ val consume_queue : ?timeout_ms:int -> queue -> message
 *)
 val consume_batch_queue : ?timeout_ms:int -> ?msg_count:int -> queue -> message list
 
-(* [store_offset topic partition offset]
+(** [store_offset topic partition offset]
    stores [offset] for given [topic] and [partition].
 
    The offset will be commited (written) to the offset store according to the topic properties:
@@ -256,19 +258,19 @@ val consume_batch_queue : ?timeout_ms:int -> ?msg_count:int -> queue -> message 
 val store_offset : topic -> partition -> offset -> unit
 
 module Metadata : sig
-  (* Topic information *)
+  (** Topic information *)
   type topic_metadata = {
     topic_name: string;
     topic_partitions: partition list;
   }
 end
 
-(* Topic information of a given topic. *)
+(** Topic information of a given topic. *)
 val topic_metadata: ?timeout_ms:int -> handler -> topic -> Metadata.topic_metadata
 
-(* Information of all local topics. *)
+(** Information of all local topics. *)
 val local_topics_metadata: ?timeout_ms:int -> handler -> Metadata.topic_metadata list
 
-(* Information of all topics known by the brokers. *)
+(** Information of all topics known by the brokers. *)
 val all_topics_metadata: ?timeout_ms:int -> handler -> Metadata.topic_metadata list
 
