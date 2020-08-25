@@ -1,5 +1,7 @@
 O.6
 ===
+* Add `Kafka.flush producer`
+* Add `Kafka.librdkafka_version`
 * Change signature of Kafka.produce [breaking change]
 
 0.5
