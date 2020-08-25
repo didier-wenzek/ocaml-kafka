@@ -348,6 +348,7 @@ value ocaml_kafka_new_topic(value caml_partitioner_callback, value caml_kafka_ha
   rd_kafka_topic_t* topic = rd_kafka_topic_new(handler, name, conf);
   if (!topic) {
      rd_kafka_resp_err_t rd_errno = rd_kafka_last_error();
+     rd_kafka_topic_conf_destroy(conf);
      ocaml_kafka_opaque_destroy(opaque);
      RAISE(rd_errno, "Failed to create new kafka topic (%s)", rd_kafka_err2str(rd_errno));
   }
