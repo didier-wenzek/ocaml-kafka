@@ -31,7 +31,7 @@ depexts: [
   ["librdkafka-devel"] {os-distribution = "fedora"}
   ["librdkafka"] {os-distribution = "homebrew" & os = "macos"}
   ["librdkafka-dev"] {os-distribution = "ubuntu"}
-  ["librdkafka"] {os = "freebsd"}
-  ["librdkafka"] {os = "netbsd"}
-  ["librdkafka"] {os = "dragonfly"}
+  ["net/librdkafka"] {os = "freebsd"}
+  ["devel/librdkafka"] {os = "netbsd"}
+  ["net/librdkafka"] {os = "dragonfly"}
 ]
