@@ -924,3 +924,17 @@ value ocaml_kafka_get_topics_metadata(value caml_handler, value caml_all_topics,
 
   CAMLreturn(caml_topics_metadata);
 }
+
+extern CAMLprim
+value ocaml_kafka_get_librdkafka_version(value unit)
+{
+  CAMLparam1(unit);
+  CAMLlocal1(caml_version);
+
+  const char* version = rd_kafka_version_str();
+  size_t len = strlen(version);
+  caml_version = caml_alloc_string(len);
+  memcpy(String_val(caml_version), version, len);
+
+  CAMLreturn(caml_version);
+}

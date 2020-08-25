@@ -35,7 +35,7 @@ Resources
  - [ ] rd_kafka_flush
 
 Meta-data
- - [ ] Function: Kafka.version: unit -> string.
+ - [x] Value Kafka.librdkafka_version: string.
  - [x] Meta-data: topic list, partition list.
  - [ ] Meta-data: server list, list of replica.
 

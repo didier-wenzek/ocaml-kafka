@@ -122,3 +122,5 @@ let topic_metadata ?(timeout_ms = 1000) handler topic = get_topic_metadata handl
 let local_topics_metadata ?(timeout_ms = 1000) handler = get_topics_metadata handler false timeout_ms
 let all_topics_metadata ?(timeout_ms = 1000) handler = get_topics_metadata handler true timeout_ms
 
+external get_librdkafka_version: unit -> string = "ocaml_kafka_get_librdkafka_version"
+let librdkafka_version = get_librdkafka_version ()

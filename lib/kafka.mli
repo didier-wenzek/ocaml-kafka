@@ -1,3 +1,8 @@
+(** OCaml bindings for Kafka *)
+
+(** Version of the librdkafka library used by this binding. *)
+val librdkafka_version : string
+
 (* Handler to a cluster of kafka brokers. Either a producer or a consumer. *)
 type handler
 

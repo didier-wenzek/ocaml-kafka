@@ -18,7 +18,7 @@ let skip_all_message consume partition =
 
 let main =
 
-   Format.printf "%s\n%!" "Start Sync tests";
+   Format.printf "Start sync tests using librdkafka version %s\n%!" (Kafka.librdkafka_version);
 
    (* Prepare a producer handler. *)
    let producer = Kafka.new_producer [
