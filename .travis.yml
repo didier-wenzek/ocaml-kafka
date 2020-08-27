@@ -22,11 +22,11 @@ before_install:
     - wget http://mirrors.dotsrc.org/apache/kafka/2.4.0/kafka_2.12-2.4.0.tgz -O kafka.tar.gz
     - mkdir -p kafka && tar xzf kafka.tar.gz -C kafka --strip-components 1
     - if test ! -f /bin/bash; then sudo ln -s /usr/local/bin/bash /bin/bash; fi
+    - unset JAVA_HOME  # On freebsd kafka scripts are puzzled by JAVA_HOME
     - kafka/bin/zookeeper-server-start.sh kafka/config/zookeeper.properties &
     - sleep 3
     - kafka/bin/kafka-server-start.sh kafka/config/server.properties &
     - sleep 5
-    - unset JAVA_HOME  # On freebsd kafka-topics.sh is puzzled by JAVA_HOME
     - kafka/bin/kafka-topics.sh --create --bootstrap-server localhost:9092 --replication-factor 1 --partitions 2 --topic test
 jobs:
   include:
@@ -42,5 +42,5 @@ jobs:
     env: OCAML_VERSION=4.09 PACKAGE="kafka_async" PINS="kafka.dev:. kafka_async.dev:."
   - os: osx
     env: OCAML_VERSION=4.09 PACKAGE="kafka"     PINS="kafka.dev:."
-#  - os: freebsd
-#    env: OCAML_VERSION=4.09 PACKAGE="kafka"     PINS="kafka.dev:."
+  - os: freebsd
+    env: OCAML_VERSION=4.09 PACKAGE="kafka"     PINS="kafka.dev:."
