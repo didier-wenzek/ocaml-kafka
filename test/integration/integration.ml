@@ -139,12 +139,12 @@ let main =
    assert (n+m = 3);
 
    (* Consuming batches of a queue. *)
-   (* Here, we send 3 messages but we expect 5 messages: the 2 other messages are the partition ends. *)
    Kafka.produce producer_topic "message 0 ter";
    Kafka.produce producer_topic "message 1 ter";
    Kafka.produce producer_topic "message 2 ter";
+   Kafka.flush producer;
 
-   let messages = Kafka.consume_batch_queue ~timeout_ms:3000 ~msg_count:5 queue in
+   let messages = Kafka.consume_batch_queue ~timeout_ms:3000 queue in
    assert (List.sort compare (List.fold_left (fun acc -> function
      | Kafka.Message(_,_,_,msg,_) -> Format.printf "Consume_batch_queue received: %s\n%!" msg; acc @ [msg]
      | Kafka.PartitionEnd(_,partition,_) -> Format.printf "Consume_batch_queue eof: %d\n%!" partition; acc
