@@ -21,9 +21,11 @@ env:
 before_install:
     - wget http://mirrors.dotsrc.org/apache/kafka/2.4.0/kafka_2.12-2.4.0.tgz -O kafka.tar.gz
     - mkdir -p kafka && tar xzf kafka.tar.gz -C kafka --strip-components 1
-    - if test $(uname) = "FreeBSD"; then sudo pkg install -y net/librdkafka; fi        # Depext asks for confirmation
-    - if test $(uname) = "FreeBSD"; then sudo ln -s /usr/local/bin/bash /bin/bash; fi  # Kafka scripts expect bash to be in /bin
-    - if test $(uname) = "FreeBSD"; then unset JAVA_HOME; fi                           # Kafka scripts are puzzled by JAVA_HOME on freebsd
+    - if test $(uname) = "FreeBSD"; then sudo pkg install -y net/librdkafka; fi           # Depext asks for confirmation; hence pre-install librdkafka
+    - if test $(uname) = "FreeBSD"; then sudo pkg install -y gmake; fi                    #
+    - if test $(uname) = "FreeBSD"; then sudo cp /usr/local/bin/gmake /usr/bin/make; fi   # Use GNU make
+    - if test $(uname) = "FreeBSD"; then sudo ln -s /usr/local/bin/bash /bin/bash; fi     # Kafka scripts expect bash to be in /bin
+    - if test $(uname) = "FreeBSD"; then unset JAVA_HOME; fi                              # Kafka scripts are puzzled by JAVA_HOME on freebsd
     - kafka/bin/zookeeper-server-start.sh kafka/config/zookeeper.properties &
     - sleep 3
     - kafka/bin/kafka-server-start.sh kafka/config/server.properties &
