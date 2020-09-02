@@ -154,7 +154,7 @@ let main =
    let partitioner_callback partition_cnt key = Some ((Hashtbl.hash key) mod partition_cnt) in
    let partitioner_topic = Kafka.new_topic ~partitioner_callback producer "test" [
      "message.timeout.ms","1000";
-     "partitioner", "murmur2"
+     (* "partitioner", "murmur2" *)
    ] in
 
    (* Produce some keyed messages *)
