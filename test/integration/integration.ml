@@ -17,12 +17,13 @@ let skip_all_message consume partition =
   in loop ()
 
 let main =
+   let broker = ":9092" in
 
-   Format.printf "Start sync tests using librdkafka version %s\n%!" (Kafka.librdkafka_version);
+   Format.printf "Start sync tests using librdkafka-version=%s kafka-broker=%s\n%!" Kafka.librdkafka_version broker;
 
    (* Prepare a producer handler. *)
    let producer = Kafka.new_producer [
-     "metadata.broker.list","localhost:9092";
+     "metadata.broker.list",broker;
      "queue.buffering.max.ms","1";
    ] in
 
