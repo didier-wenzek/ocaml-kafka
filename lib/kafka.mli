@@ -280,3 +280,5 @@ val local_topics_metadata: ?timeout_ms:int -> handler -> Metadata.topic_metadata
 (** Information of all topics known by the brokers. *)
 val all_topics_metadata: ?timeout_ms:int -> handler -> Metadata.topic_metadata list
 
+(* Store the consumer offset of a particular partition to a specific offset *)
+val offset_store: topic -> partition -> offset -> unit

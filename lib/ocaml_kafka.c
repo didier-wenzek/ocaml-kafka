@@ -954,3 +954,19 @@ value ocaml_kafka_get_librdkafka_version(value unit)
 
   CAMLreturn(caml_version);
 }
+
+extern CAMLprim
+value ocaml_kafka_offset_store(value caml_kafka_topic, value caml_partition, value caml_offset)
+{
+  CAMLparam3(caml_kafka_topic, caml_partition, caml_offset);
+  rd_kafka_topic_t *rkt = get_handler(caml_kafka_topic);
+  int32_t partition = Int_val(caml_partition);
+  int64_t offset = Int64_val(caml_offset);
+
+  rd_kafka_resp_err_t err = rd_kafka_offset_store(rkt, partition, offset);
+  if (err != RD_KAFKA_RESP_ERR_NO_ERROR) {
+    RAISE(err, "Topic '%s' partition %ld storing offset %lld failed", rd_kafka_topic_name(rkt), partition, offset);
+  }
+
+  CAMLreturn(Val_unit);
+}
