@@ -75,8 +75,35 @@ CAMLprim value ocaml_kafka_async_new_producer(value caml_delivery_callback, valu
   CAMLreturn(result);
 }
 
-CAMLprim value ocaml_kafka_async_new_consumer(value caml_consumer_options) {
-  CAMLparam1(caml_consumer_options);
+static void ocaml_kafka_async_rebalance_cb(rd_kafka_t *rk, rd_kafka_resp_err_t err, rd_kafka_topic_partition_list_t *partitions, void *opaque) {
+  CAMLparam0();
+  CAMLlocal1(caml_cb);
+
+  caml_cb = ((ocaml_kafka_opaque*)opaque)->caml_callback;
+
+  // do the default thing, but also call our OCaml code
+  switch (err)
+  {
+    case RD_KAFKA_RESP_ERR__ASSIGN_PARTITIONS:
+      rd_kafka_assign(rk, partitions);
+      caml_callback(caml_cb, Val_unit);
+      break;
+
+    case RD_KAFKA_RESP_ERR__REVOKE_PARTITIONS:
+      rd_kafka_commit(rk, partitions, 0);
+      rd_kafka_assign(rk, NULL);
+      caml_callback(caml_cb, Val_unit);
+      break;
+
+    default:
+      break;
+  }
+
+  CAMLreturn0;
+}
+
+CAMLprim value ocaml_kafka_async_new_consumer(value caml_rebalance_callback, value caml_consumer_options) {
+  CAMLparam2(caml_rebalance_callback, caml_consumer_options);
   CAMLlocal1(result);
 
   char error_msg[160];
@@ -88,8 +115,16 @@ CAMLprim value ocaml_kafka_async_new_consumer(value caml_consumer_options) {
     CAMLreturn(result);
   }
 
+  ocaml_kafka_opaque* opaque = NULL;
+  if (Is_block(caml_rebalance_callback)) {
+    opaque = ocaml_kafka_opaque_create(caml_rebalance_callback);
+    rd_kafka_conf_set_opaque(conf, (void*) opaque);
+    rd_kafka_conf_set_rebalance_cb(conf, ocaml_kafka_async_rebalance_cb);
+  }
+
   rd_kafka_t *handler = rd_kafka_new(RD_KAFKA_CONSUMER, conf, error_msg, sizeof(error_msg));
   if (handler == NULL) {
+    ocaml_kafka_opaque_destroy(opaque);
     rd_kafka_conf_destroy(conf);
     result = ERROR(RD_KAFKA_RESP_ERR__FAIL, "Failed to create new kafka consumer (%s)", error_msg);
     CAMLreturn(result);

@@ -16,7 +16,7 @@ val produce :
 
 val new_producer : (string * string) list -> producer response
 
-val new_consumer : (string * string) list -> consumer response
+val new_consumer : ?rebalance_callback:(unit -> unit) -> (string * string) list -> consumer response
 
 val new_topic :
   producer -> string -> (string * string) list -> Kafka.topic response
