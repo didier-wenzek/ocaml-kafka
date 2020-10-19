@@ -126,3 +126,5 @@ let all_topics_metadata ?(timeout_ms = 1000) handler = get_topics_metadata handl
 
 external get_librdkafka_version: unit -> string = "ocaml_kafka_get_librdkafka_version"
 let librdkafka_version = get_librdkafka_version ()
+
+external offset_store: topic -> partition -> offset -> unit = "ocaml_kafka_offset_store"
