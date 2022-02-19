@@ -101,7 +101,7 @@ value alloc_caml_handler(void* hdl)
   CAMLparam0();
   CAMLlocal1(caml_handler);
 
-  caml_handler = alloc_small(1, Abstract_tag);
+  caml_handler = caml_alloc_small(1, Abstract_tag);
   handler_val(caml_handler) = hdl;
 
   CAMLreturn(caml_handler);
