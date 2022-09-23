@@ -39,4 +39,4 @@ let () =
           ~doc:"BROKERS Comma separated list of brokers to connect to"
       in
       fun () -> main_or_error (brokers, topic, msg :: messages)]
-  |> Command.run
+  |> Command_unix.run
