@@ -39,8 +39,9 @@ Kafka is a high-throughput distributed messaging system.
   (depends
     (ocaml (>= 4.03.0))
     (kafka (= :version))
-    (async (>= v0.11))
-    (core (>= v0.11))
+    (async (>= v0.15))
+    (core (>= v0.15))
+    (core_unix (>= v0.15))
     (dune (>= 1.10)))
   (synopsis "OCaml bindings for Kafka, Async bindings")
   (description "

@@ -3,7 +3,7 @@ open Async
 
 let options = [ ("auto.offset.reset", "earliest") ]
 
-let main (brokers, (topic, topics), group_id) =
+let main (brokers, topics, group_id) =
   let open Deferred.Result.Let_syntax in
   Log.Global.debug "Starting";
   let options =
@@ -11,7 +11,6 @@ let main (brokers, (topic, topics), group_id) =
   in
   let%bind consumer = Deferred.return @@ Kafka_async.new_consumer options in
   Log.Global.debug "Got a consumer";
-  let topics = topic :: topics in
   let%bind readers =
     topics
     |> List.map ~f:(fun topic ->
@@ -49,7 +48,7 @@ let () =
     [%map_open
       let _ = Log.Global.set_level_via_param ()
       and topics =
-        flag "topic" (one_or_more string) ~doc:"NAME Which topics to consume from"
+        flag "topic" (one_or_more_as_list string) ~doc:"NAME Which topics to consume from"
       and group_id =
         flag "group-id"
           (optional_with_default "ocaml-kafka-async-consumer" string)
@@ -60,4 +59,4 @@ let () =
           ~doc:"BROKERS Comma separated list of brokers to connect to"
       in
       fun () -> main_or_error (brokers, topics, group_id)]
-  |> Command.run
+  |> Command_unix.run

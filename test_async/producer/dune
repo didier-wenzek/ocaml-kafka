@@ -2,5 +2,5 @@
   (name producer)
   (public_name kafka-async-producer)
   (package kafka_async)
-  (libraries core async kafka_async)
+  (libraries core core_unix.command_unix async kafka_async)
   (preprocess (pps ppx_let)))
