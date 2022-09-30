@@ -12,7 +12,7 @@ let info =
     `P "Messages are consumed by batch of MSG_COUNT messages,
         waiting at most TIMEOUT_MS milli-seconds.";
   ] in
-  Term.info "tail_kafka_topic" ~doc ~man
+  Cmd.info "tail_kafka_topic" ~doc ~man
 
 let print_msg = function
   | Kafka.Message (topic,partition,offset,msg,None) ->
@@ -73,9 +73,9 @@ let partition =
   let doc = "The partition to consume." in
   Arg.(value & pos 1 (some int) None & info [] ~docv:"PARTITION" ~doc)
  
-let tail_topic_t = Term.(pure tail_topic $ brokers $ msg_count $ timeout_ms $ topic $ partition $ offset)
+let tail_topic_t = Term.(const tail_topic $ brokers $ msg_count $ timeout_ms $ topic $ partition $ offset)
 
 let () =
-  match Term.eval (tail_topic_t, info) with
-  | `Error _ -> exit 1
-  | _ -> exit 0
+  Cmd.v info tail_topic_t
+  |> Cmd.eval
+  |> exit

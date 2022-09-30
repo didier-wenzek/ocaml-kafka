@@ -8,7 +8,7 @@ let info =
     `P "$(tname) reads standard input and sends each line to the TOPIC kafka topic.";
     `P "Scatter messages over all partitions, unless a specific PARTITION is given.";
   ] in
-  Term.info "sendto_kafka_topic" ~doc ~man
+  Cmd.info "sendto_kafka_topic" ~doc ~man
 
 let sendto_topic brokers topic_name partition =
   let producer = Kafka_lwt.new_producer ["metadata.broker.list",brokers] in
@@ -41,9 +41,9 @@ let partition =
   let doc = "The partition to feed (all if unassigned)." in
   Arg.(value & opt (some int) None & info [] ~docv:"PARTITION" ~doc)
  
-let sendto_topic_t = Term.(pure sendto_topic $ brokers $ topic $ partition)
+let sendto_topic_t = Term.(const sendto_topic $ brokers $ topic $ partition)
 
 let () =
-  match Term.eval (sendto_topic_t, info) with
-  | `Error _ -> exit 1
-  | _ -> exit 0
+  Cmd.v info sendto_topic_t
+  |> Cmd.eval
+  |> exit
