@@ -2,8 +2,8 @@
  (names integration)
  (libraries kafka_lwt))
 
-(alias
- (name integration)
+(rule
+ (alias integration)
  (package kafka_lwt)
  (deps
   (:< integration.exe))

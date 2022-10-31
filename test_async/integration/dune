@@ -3,8 +3,8 @@
  (libraries core async kafka_async)
  (preprocess (pps ppx_let)))
 
-(alias
- (name integration)
+(rule
+ (alias integration)
  (package kafka_async)
  (deps
   (:< integration.exe))

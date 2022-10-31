@@ -2,8 +2,8 @@
  (names integration)
  (libraries kafka.helpers))
 
-(alias
- (name integration)
+(rule
+ (alias integration)
  (deps
   (:< integration.exe))
  (action
