@@ -37,7 +37,7 @@ static int const ERROR_CODES[] = {
     RD_KAFKA_RESP_ERR__QUEUE_FULL,
     RD_KAFKA_RESP_ERR__ISR_INSUFF,
     // not an error RD_KAFKA_RESP_ERR__END
-    
+
     RD_KAFKA_RESP_ERR_UNKNOWN,
     RD_KAFKA_RESP_ERR_OFFSET_OUT_OF_RANGE,
     RD_KAFKA_RESP_ERR_INVALID_MSG,
@@ -255,7 +255,7 @@ value ocaml_kafka_new_producer(value caml_delivery_callback, value caml_producer
      opaque = ocaml_kafka_opaque_create(caml_callback);
      rd_kafka_conf_set_opaque(conf, (void*) opaque);
      rd_kafka_conf_set_dr_cb(conf, ocaml_kafka_delivery_callback);
-  } 
+  }
 
   rd_kafka_t *handler = rd_kafka_new(RD_KAFKA_PRODUCER, conf, error_msg, sizeof(error_msg));
   if (handler == NULL) {
@@ -292,7 +292,7 @@ value ocaml_kafka_handler_name(value caml_kafka_handler)
 
   rd_kafka_t *handler = get_handler(caml_kafka_handler);
   const char* name = rd_kafka_name(handler);
-  
+
   size_t len = strlen(name);
   caml_name = caml_alloc_string(len);
   memcpy(String_val(caml_name), name, len);
@@ -335,7 +335,7 @@ value ocaml_kafka_new_topic(value caml_partitioner_callback, value caml_kafka_ha
      opaque = ocaml_kafka_opaque_create(caml_callback);
      rd_kafka_topic_conf_set_opaque(conf, (void*) opaque);
      rd_kafka_topic_conf_set_partitioner_cb(conf, ocaml_kafka_partitioner_callback);
-  } 
+  }
 
   char error_msg[160];
   rd_kafka_conf_res_t conf_err = configure_topic(conf, caml_topic_options, error_msg, sizeof(error_msg));
@@ -431,7 +431,7 @@ value ocaml_kafka_extract_topic_message(value caml_kafka_topic, rd_kafka_message
       memcpy(String_val(caml_key_payload), message->key, message->key_len);
 
       caml_key = caml_alloc_small(1,0); // Some(key)
-      Field(caml_key, 0) = caml_key_payload; 
+      Field(caml_key, 0) = caml_key_payload;
     } else {
       caml_key = Val_int(0); // None
     }
@@ -571,7 +571,7 @@ value ocaml_kafka_produce(value caml_kafka_topic, value caml_kafka_partition, va
      caml_key = Field(caml_opt_key, 0);
      key = String_val(caml_key);
      key_len = caml_string_length(caml_key);
-  } 
+  }
 
   long msg_id = Long_val(caml_msgid);
 
@@ -652,7 +652,7 @@ value ocaml_kafka_store_offset(value caml_kafka_topic, value caml_kafka_partitio
      field 0 : rd_kafka_queue = abstract tag
      field 1 : topics = caml list of topics
   }
-          
+
 **/
 
 extern CAMLprim
