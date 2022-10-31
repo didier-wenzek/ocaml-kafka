@@ -291,12 +291,7 @@ value ocaml_kafka_handler_name(value caml_kafka_handler)
   CAMLlocal1(caml_name);
 
   rd_kafka_t *handler = get_handler(caml_kafka_handler);
-  const char* name = rd_kafka_name(handler);
-
-  size_t len = strlen(name);
-  caml_name = caml_alloc_string(len);
-  memcpy(String_val(caml_name), name, len);
-
+  caml_name = caml_copy_string(rd_kafka_name(handler));
   CAMLreturn(caml_name);
 }
 
@@ -308,8 +303,7 @@ int32_t ocaml_kafka_partitioner_callback(const rd_kafka_topic_t *topic, const vo
 
   caml_callback = ((ocaml_kafka_opaque*)opaque)->caml_callback;
   caml_partition_cnt = Val_int(partition_cnt);
-  caml_key = caml_alloc_string(keylen);
-  memcpy(String_val(caml_key), key, keylen);
+  caml_key = caml_alloc_initialized_string(keylen, key);
 
   caml_partition = caml_callback2(caml_callback, caml_partition_cnt, caml_key);
   int32_t partition = RD_KAFKA_PARTITION_UA;
@@ -422,13 +416,11 @@ value ocaml_kafka_extract_topic_message(value caml_kafka_topic, rd_kafka_message
   CAMLlocal5(caml_msg, caml_msg_payload, caml_msg_offset, caml_key, caml_key_payload);
 
   if (!message->err) {
-    caml_msg_payload = caml_alloc_string(message->len);
-    memcpy(String_val(caml_msg_payload), message->payload, message->len);
+    caml_msg_payload = caml_alloc_initialized_string(message->len, message->payload);
     caml_msg_offset = caml_copy_int64(message->offset) ;
 
     if (message->key) {
-      caml_key_payload = caml_alloc_string(message->key_len);
-      memcpy(String_val(caml_key_payload), message->key, message->key_len);
+      caml_key_payload = caml_alloc_initialized_string(message->key_len, message->key);
 
       caml_key = caml_alloc_small(1,0); // Some(key)
       Field(caml_key, 0) = caml_key_payload;
@@ -561,11 +553,7 @@ value ocaml_kafka_produce(value caml_kafka_topic, value caml_kafka_partition, va
     partition = Int_val(Field(caml_kafka_partition, 0));
   }
 
-
-  void* payload = String_val(caml_msg);
-  size_t len = caml_string_length(caml_msg);
-
-  void* key = NULL;
+  const void* key = NULL;
   size_t key_len = 0;
   if (Is_block(caml_opt_key)) {
      caml_key = Field(caml_opt_key, 0);
@@ -575,7 +563,10 @@ value ocaml_kafka_produce(value caml_kafka_topic, value caml_kafka_partition, va
 
   long msg_id = Long_val(caml_msgid);
 
-  int err = rd_kafka_produce(topic, partition, RD_KAFKA_MSG_F_COPY, payload, len, key, key_len, (void *)msg_id);
+  int err = rd_kafka_produce(topic, partition, RD_KAFKA_MSG_F_COPY,
+                             (void *)String_val(caml_msg),
+                             caml_string_length(caml_msg),
+                             key, key_len, (void *)msg_id);
   if (err) {
      rd_kafka_resp_err_t rd_errno = rd_kafka_last_error();
      RAISE(rd_errno, "Failed to produce message (%s)", rd_kafka_err2str(rd_errno));
@@ -946,12 +937,7 @@ value ocaml_kafka_get_librdkafka_version(value unit)
 {
   CAMLparam1(unit);
   CAMLlocal1(caml_version);
-
-  const char* version = rd_kafka_version_str();
-  size_t len = strlen(version);
-  caml_version = caml_alloc_string(len);
-  memcpy(String_val(caml_version), version, len);
-
+  caml_version = caml_copy_string(rd_kafka_version_str());
   CAMLreturn(caml_version);
 }
 
