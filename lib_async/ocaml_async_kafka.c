@@ -109,7 +109,6 @@ CAMLprim value ocaml_kafka_async_subscribe(value caml_kafka_handler, value caml_
   rd_kafka_topic_partition_list_t *subscription;
   rd_kafka_resp_err_t err;
   rd_kafka_t* rk = handler_val(caml_kafka_handler);
-  rd_kafka_topic_t *topic;
   int topic_count = 0;
   const char* topic_name;
 
@@ -155,19 +154,15 @@ CAMLprim value ocaml_kafka_async_extract_message(rd_kafka_message_t* message) {
   CAMLlocal2(result, caml_kafka_topic);
 
   rd_kafka_topic_t* topic = message->rkt;
-  const char* topic_name = rd_kafka_topic_name(topic);
 
   caml_kafka_topic = alloc_caml_handler(topic);
 
   if (!message->err) {
-    caml_msg_payload = caml_alloc_string(message->len);
-    memcpy(String_val(caml_msg_payload), message->payload, message->len);
-
+    caml_msg_payload = caml_alloc_initialized_string(message->len, message->payload);
     caml_msg_offset = caml_copy_int64(message->offset) ;
 
     if (message->key) {
-      caml_key_payload = caml_alloc_string(message->key_len);
-      memcpy(String_val(caml_key_payload), message->key, message->key_len);
+      caml_key_payload = caml_alloc_initialized_string(message->key_len, message->key);
 
       caml_key = caml_alloc_small(1, 0); // Some(key)
       Field(caml_key, 0) = caml_key_payload;
@@ -221,41 +216,6 @@ CAMLprim value ocaml_kafka_async_consumer_poll(value caml_kafka_handler) {
     result = OK(option);
   }
 
-  CAMLreturn(result);
-}
-
-CAMLprim value ocaml_kafka_async_produce(value caml_kafka_topic, value caml_kafka_partition, value caml_opt_key, value caml_msgid, value caml_msg) {
-  CAMLparam5(caml_kafka_topic, caml_kafka_partition, caml_opt_key, caml_msgid, caml_msg);
-  CAMLlocal2(caml_key, result);
-
-  rd_kafka_topic_t *topic = handler_val(caml_kafka_topic);
-  int32_t partition = RD_KAFKA_PARTITION_UA;
-  if (Is_block(caml_kafka_partition) && Tag_val(caml_kafka_partition) == 0) {
-    partition = Int_val(Field(caml_kafka_partition, 0));
-  }
-
-  void* payload = String_val(caml_msg);
-  size_t len = caml_string_length(caml_msg);
-
-  void* key = NULL;
-  size_t key_len = 0;
-  if (Is_block(caml_opt_key)) {
-    caml_key = Field(caml_opt_key, 0);
-    key = String_val(caml_key);
-    key_len = caml_string_length(caml_key);
-  }
-
-  long msg_id = Long_val(caml_msgid);
-
-  int err = rd_kafka_produce(topic, partition, RD_KAFKA_MSG_F_COPY, payload, len, key, key_len, (void *)msg_id);
-
-  if (err) {
-    rd_kafka_resp_err_t rd_errno = rd_kafka_last_error();
-    result = ERROR(rd_errno, "Failed to produce message (%s)", rd_kafka_err2str(rd_errno));
-    CAMLreturn(result);
-  }
-
-  result = OK(Val_unit);
   CAMLreturn(result);
 }
 

@@ -2,8 +2,8 @@
  (names issue3)
  (libraries kafka_lwt kafka.helpers))
 
-(alias
- (name issue3)
+(rule
+ (alias issue3)
  (package kafka_lwt)
  (deps
   (:< issue3.exe))

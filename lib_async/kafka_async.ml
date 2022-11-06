@@ -33,7 +33,7 @@ external produce' :
   ?key:string ->
   msg_id:Kafka.msg_id ->
   string ->
-  unit response = "ocaml_kafka_async_produce"
+  unit response = "ocaml_kafka_produce"
 
 external poll' : Kafka.handler -> int = "ocaml_kafka_async_poll"
 
