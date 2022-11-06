@@ -86,6 +86,6 @@ let main () =
           ~doc:"TOPIC Which topic to use"
       in
       fun () -> main_or_error host port topic]
-  |> Command.run
+  |> Command_unix.run
 
 let () = main ()
