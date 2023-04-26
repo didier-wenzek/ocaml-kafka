@@ -214,6 +214,7 @@ CAMLprim value ocaml_kafka_async_consumer_poll(value caml_kafka_handler) {
     option = caml_alloc_small(1, 0);
     Field(option, 0) = ocaml_kafka_async_extract_message(rkm);
     result = OK(option);
+    rd_kafka_message_destroy(rkm);
   }
 
   CAMLreturn(result);
