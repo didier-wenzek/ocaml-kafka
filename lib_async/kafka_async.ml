@@ -27,25 +27,14 @@ let next_msg_id =
 
 let poll_interval = Time.Span.of_ms 50.
 
-external produce' :
-  Kafka.topic ->
-  ?partition:Kafka.partition ->
-  ?key:string ->
-  msg_id:Kafka.msg_id ->
-  string ->
-  unit response = "ocaml_kafka_produce"
-
 external poll' : Kafka.handler -> int = "ocaml_kafka_async_poll"
 
 let produce (t : producer) topic ?partition ?key msg =
   let msg_id = next_msg_id () in
   let ivar = Ivar.create () in
   Int.Table.add_exn t.pending_msg ~key:msg_id ~data:ivar;
-  match produce' topic ?partition ?key ~msg_id msg with
-  | Error _ as e ->
-      Int.Table.remove t.pending_msg msg_id;
-      return e
-  | Ok () -> Ivar.read ivar |> Deferred.ok
+  Kafka.produce topic ?partition ?key ~msg_id msg ;
+  Ivar.read ivar |> Deferred.ok
 
 external new_producer' :
   (Kafka.msg_id -> Kafka.error option -> unit) ->
