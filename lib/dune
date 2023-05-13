@@ -3,4 +3,4 @@
  (public_name kafka)
  ; the -I and -L flags are required for freebsd, harmless elsewhere
  (foreign_stubs (language c) (names ocaml_kafka) (flags -I/usr/local/include -Wall -Werror))
- (c_library_flags -L/usr/local/lib -lrdkafka -lpthread -lz))
+ (c_library_flags -L/usr/local/lib -lzstd -lrdkafka -lpthread -lz))
