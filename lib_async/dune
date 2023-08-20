@@ -3,9 +3,21 @@
  (public_name kafka_async)
  (libraries kafka async)
  (optional)
- (preprocess (pps ppx_let))
- ; the -I and -L flags are required for freebsd, harmless elsewhere
- (foreign_stubs (language c) (names ocaml_async_kafka) (flags -I/usr/local/include -Wall -Werror))
- (c_library_flags -L/usr/local/lib -lrdkafka))
+ (preprocess
+  (pps ppx_let))
+ (foreign_stubs
+  (language c)
+  (names ocaml_async_kafka)
+  (flags
+   (:include c_flags.sexp)
+   -Wall
+   -Werror))
+ (c_library_flags
+  (:include c_library_flags.sexp)))
+
+(rule
+ (targets c_flags.sexp c_library_flags.sexp)
+ (action
+  (run ../lib/config/discover.exe)))
 
 (copy_files ../lib/ocaml_kafka.h)
