@@ -48,8 +48,8 @@ let main_result host port topic =
                let topic_name = Kafka.topic_name topic in
                Log.Global.debug "Message on topic '%s', payload '%s'" topic_name
                  payload;
-               let remaining = String.Set.remove awaiting payload in
-               (match String.Set.is_empty remaining with
+               let remaining = Set.remove awaiting payload in
+               (match Set.is_empty remaining with
                | true -> Pipe.close_read reader
                | false -> ());
                Deferred.return remaining
@@ -57,7 +57,7 @@ let main_result host port topic =
                Log.Global.error "End of partition";
                Deferred.return awaiting)
   in
-  match String.Set.is_empty consumed with
+  match Set.is_empty consumed with
   | true -> return ()
   | false -> Deferred.return @@ Error (Kafka.FAIL, "Not all messages consumed")
 
