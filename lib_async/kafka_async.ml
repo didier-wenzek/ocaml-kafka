@@ -25,14 +25,14 @@ let next_msg_id =
     n := id + 1;
     id
 
-let poll_interval = Time.Span.of_ms 50.
+let poll_interval = Time_float.Span.of_ms 50.
 
 external poll' : Kafka.handler -> int = "ocaml_kafka_async_poll"
 
 let produce (t : producer) topic ?partition ?key msg =
   let msg_id = next_msg_id () in
   let ivar = Ivar.create () in
-  Int.Table.add_exn t.pending_msg ~key:msg_id ~data:ivar;
+  Hashtbl.add_exn  t.pending_msg ~key:msg_id ~data:ivar;
   Kafka.produce topic ?partition ?key ~msg_id msg ;
   Ivar.read ivar |> Deferred.ok
 
@@ -42,7 +42,7 @@ external new_producer' :
   Kafka.handler response = "ocaml_kafka_async_new_producer"
 
 let handle_producer_response pending_msg msg_id _maybe_error =
-  match Int.Table.find_and_remove pending_msg msg_id with
+  match Hashtbl.find_and_remove pending_msg msg_id with
   | Some ivar -> Ivar.fill ivar ()
   | None -> ()
 
@@ -65,7 +65,7 @@ let handle_incoming_message subscriptions = function
   | None | Some (Kafka.PartitionEnd _) -> ()
   | Some (Kafka.Message (topic, _, _, _, _) as msg) -> (
       let topic_name = Kafka.topic_name topic in
-      match String.Table.find subscriptions topic_name with
+      match Hashtbl.find subscriptions topic_name with
       | None -> ()
       | Some writer -> Pipe.write_without_pushback writer msg)
 
@@ -89,15 +89,15 @@ external subscribe' : Kafka.handler -> topics:string list -> unit response
 
 let consume consumer ~topic =
   let open Result.Let_syntax in
-  match String.Table.mem consumer.subscriptions topic with
+  match Hashtbl.mem consumer.subscriptions topic with
   | true -> Error (Kafka.FAIL, "Already subscribed to this topic")
   | false ->
       Ivar.fill_if_empty consumer.start_poll ();
       let subscribe_error = ref None in
       let reader =
         Pipe.create_reader ~close_on_exception:false (fun writer ->
-            String.Table.add_exn consumer.subscriptions ~key:topic ~data:writer;
-            let topics = String.Table.keys consumer.subscriptions in
+            Hashtbl.add_exn consumer.subscriptions ~key:topic ~data:writer;
+            let topics = Hashtbl.keys consumer.subscriptions in
             match subscribe' consumer.handler ~topics with
             | Ok () -> Ivar.read consumer.stop_poll
             | Error e ->
@@ -107,8 +107,8 @@ let consume consumer ~topic =
       don't_wait_for
         (let open Deferred.Let_syntax in
         let%map () = Pipe.closed reader in
-        String.Table.remove consumer.subscriptions topic;
-        let remaining_subs = String.Table.keys consumer.subscriptions in
+        Hashtbl.remove consumer.subscriptions topic;
+        let remaining_subs = Hashtbl.keys consumer.subscriptions in
         ignore @@ subscribe' consumer.handler ~topics:remaining_subs);
       match Pipe.is_closed reader with
       | false -> return reader
