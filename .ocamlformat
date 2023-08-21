@@ -1,2 +1,2 @@
-version=0.13.0
-indicate-multiline-delimiters=no
+profile=default
+version = 0.26.0

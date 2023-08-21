@@ -38,10 +38,11 @@ Kafka is a high-throughput distributed messaging system.
   (name kafka_async)
   (depends
     (ocaml (>= 4.03.0))
+    (ppx_let(>= v0.16))
     (kafka (= :version))
-    (async (>= v0.15))
-    (core (>= v0.15))
-    (core_unix (>= v0.15))
+    (async (>= v0.16))
+    (core (>= v0.16))
+    (core_unix (>= v0.16))
     (dune (>= 1.10)))
   (synopsis "OCaml bindings for Kafka, Async bindings")
   (description "
