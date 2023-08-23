@@ -55,7 +55,9 @@ let new_producer xs =
       ignore (poll' handler));
   return { handler; pending_msg; stop_poll }
 
-external new_consumer' : (string * string) list -> Kafka.handler response
+external new_consumer' :
+  ?rebalance_callback:(unit -> unit) ->
+  (string * string) list -> Kafka.handler response
   = "ocaml_kafka_async_new_consumer"
 
 external consumer_poll' : Kafka.handler -> Kafka.message option response
@@ -69,12 +71,12 @@ let handle_incoming_message subscriptions = function
       | None -> ()
       | Some writer -> Pipe.write_without_pushback writer msg)
 
-let new_consumer xs =
+let new_consumer ?rebalance_callback xs =
   let open Result.Let_syntax in
   let subscriptions = String.Table.create ~size:(8 * 1024) () in
   let stop_poll = Ivar.create () in
   let start_poll = Ivar.create () in
-  let%bind handler = new_consumer' xs in
+  let%bind handler = new_consumer' ?rebalance_callback xs in
   every ~start:(Ivar.read start_poll) ~stop:(Ivar.read stop_poll) poll_interval
     (fun () ->
       match consumer_poll' handler with
