@@ -1,7 +1,7 @@
 OCaml bindings for Kafka
 ====================================
 
-[![Build Status](https://travis-ci.org/didier-wenzek/ocaml-kafka.svg?branch=master)](https://travis-ci.org/didier-wenzek/ocaml-kafka)
+[![Build Status](https://github.com/didier-wenzek/ocaml-kafka/actions/workflows/workflow.yml/badge.svg)](https://github.com/didier-wenzek/ocaml-kafka/actions/workflows/workflow.yml)
 
 Pre-requisites
 --------------
