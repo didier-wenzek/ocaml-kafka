@@ -1,7 +1,8 @@
 (executables
  (names integration)
  (libraries core core_unix.command_unix async kafka_async)
- (preprocess (pps ppx_let)))
+ (preprocess
+  (pps ppx_let)))
 
 (rule
  (alias integration)
