@@ -1,6 +1,7 @@
 (executable
-  (name consumer)
-  (public_name kafka-async-consumer)
-  (package kafka_async)
-  (libraries core core_unix.command_unix async kafka_async)
-  (preprocess (pps ppx_let)))
+ (name consumer)
+ (public_name kafka-async-consumer)
+ (package kafka_async)
+ (libraries core core_unix.command_unix async kafka_async)
+ (preprocess
+  (pps ppx_let)))
